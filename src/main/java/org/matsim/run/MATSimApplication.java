@@ -31,7 +31,6 @@ import java.util.concurrent.Callable;
  */
 @CommandLine.Command(
         name = MATSimApplication.DEFAULT_NAME,
-        mixinStandardHelpOptions = true,
         description = {"", "Run the MATSim scenario"},
         headerHeading = MATSimApplication.HEADER,
         parameterListHeading = "%n@|bold,underline Parameters:|@%n",
@@ -41,6 +40,8 @@ import java.util.concurrent.Callable;
         footer = "@|cyan If you would like to contribute or report an issue please go to https://github.com/matsim-org.|@",
         usageHelpWidth = 120,
         usageHelpAutoWidth = true,
+        showDefaultValues = true,
+        mixinStandardHelpOptions = true,
         subcommands = AutoComplete.GenerateCompletion.class
 )
 public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaultValueProvider {
@@ -82,7 +83,6 @@ public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaul
      * The main scenario setup procedure.
      *
      * @return return code
-     * @throws Exception
      */
     @Override
     public Integer call() throws Exception {
