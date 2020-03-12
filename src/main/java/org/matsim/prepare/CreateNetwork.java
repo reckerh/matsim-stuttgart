@@ -23,6 +23,7 @@ import java.util.concurrent.Callable;
  * @author rakow
  */
 @CommandLine.Command(
+        name = "network",
         description = "Create MATSim network from OSM data",
         showDefaultValues = true
 )

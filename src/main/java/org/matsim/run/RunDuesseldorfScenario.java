@@ -1,11 +1,14 @@
 package org.matsim.run;
 
+import org.matsim.prepare.CreateNetwork;
+import org.matsim.prepare.CreateTransitSchedule;
 import picocli.CommandLine;
 
 @CommandLine.Command(
         header = ":: Open Düsseldorf Scenario ::",
         version = "1.0"
 )
+@MATSimApplication.Prepare({CreateNetwork.class, CreateTransitSchedule.class})
 public class RunDuesseldorfScenario extends MATSimApplication {
 
     public RunDuesseldorfScenario() {

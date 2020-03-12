@@ -10,12 +10,17 @@ import org.matsim.core.config.groups.GlobalConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.run.commands.ShowGUI;
 import picocli.AutoComplete;
 import picocli.CommandLine;
 
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
+import java.lang.annotation.ElementType;
+import java.lang.annotation.Retention;
+import java.lang.annotation.RetentionPolicy;
+import java.lang.annotation.Target;
 import java.lang.reflect.Field;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -28,10 +33,12 @@ import java.util.concurrent.Callable;
  * <code>
  * MATSimApplication.run(RunScenario.class, args);
  * </code>
+ * <p>
+ * This class also automatically registers classes from the {@link Prepare} annotation as subcommands.
  */
 @CommandLine.Command(
         name = MATSimApplication.DEFAULT_NAME,
-        description = {"", "Run the MATSim scenario"},
+        description = {"", "If no subcommand is specified, this will run the scenario using the CONFIG"},
         headerHeading = MATSimApplication.HEADER,
         parameterListHeading = "%n@|bold,underline Parameters:|@%n",
         optionListHeading = "%n@|bold,underline Options:|@%n",
@@ -42,7 +49,8 @@ import java.util.concurrent.Callable;
         usageHelpAutoWidth = true,
         showDefaultValues = true,
         mixinStandardHelpOptions = true,
-        subcommands = AutoComplete.GenerateCompletion.class
+        abbreviateSynopsis = true,
+        subcommands = {CommandLine.HelpCommand.class, AutoComplete.GenerateCompletion.class, ShowGUI.class}
 )
 public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaultValueProvider {
 
@@ -188,13 +196,21 @@ public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaul
 
         setupOptions(cli, app);
 
+        if (app.getClass().isAnnotationPresent(Prepare.class))
+            setupSubcommands(cli, app);
+
         List<ConfigGroup> modules = Lists.newArrayList();
         modules.addAll(app.getConfigurableModules());
         modules.addAll(app.getCustomModules());
 
         // setupConfig(cli, modules);
 
-        System.exit(cli.execute(args));
+        int code = cli.execute(args);
+
+        // Exit on error codes
+        if (code > 0)
+            System.exit(code);
+
     }
 
     private static void setupOptions(CommandLine cli, MATSimApplication app) {
@@ -207,6 +223,21 @@ public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaul
         }
 
         spec.defaultValueProvider(app);
+    }
+
+    /**
+     * Processes the {@link Prepare} annotation and inserts command automatically.
+     */
+    private static void setupSubcommands(CommandLine cli, MATSimApplication app) {
+
+        Prepare prepare = app.getClass().getAnnotation(Prepare.class);
+
+        cli.addSubcommand("prepare", new PrepareCommand());
+        CommandLine subcommand = cli.getSubcommands().get("prepare");
+
+        for (Class<?> aClass : prepare.value()) {
+            subcommand.addSubcommand(aClass);
+        }
     }
 
     /**
@@ -240,4 +271,28 @@ public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaul
             spec.addArgGroup(group.build());
         }
     }
+
+    @CommandLine.Command(name = "prepare", description = "Contains all commands for preparing the scenario. (See help prepare)",
+            helpCommand = true, subcommandsRepeatable = true)
+    public static class PrepareCommand implements Callable<Integer> {
+
+        @CommandLine.Spec
+        private CommandLine.Model.CommandSpec spec;
+
+        @Override
+        public Integer call() throws Exception {
+            System.out.println("No subcommand give. Chose on of: " + spec.subcommands().keySet());
+            return 0;
+        }
+    }
+
+    /**
+     * Classes from {@link #value()} will be registered as "prepare" subcommands.
+     */
+    @Retention(RetentionPolicy.RUNTIME)
+    @Target({ElementType.TYPE})
+    public @interface Prepare {
+        Class<?>[] value() default {};
+    }
+
 }

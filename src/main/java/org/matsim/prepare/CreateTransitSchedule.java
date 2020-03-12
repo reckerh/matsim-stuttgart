@@ -13,6 +13,7 @@ import java.util.concurrent.Callable;
  * @author rakow
  */
 @CommandLine.Command(
+        name = "transit",
         description = "Create transit schedule from GTFS data",
         showDefaultValues = true
 )
