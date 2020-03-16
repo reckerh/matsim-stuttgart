@@ -10,8 +10,8 @@
     <description>MATSim Open Düsseldorf scenario project</description>
 
     <properties>
-        <!-- <matsim.version>12.0-SNAPSHOT</matsim.version> -->
-        <matsim.version>12.0-2020w08-SNAPSHOT</matsim.version>
+        <matsim.version>12.0-SNAPSHOT</matsim.version>
+        <!-- <matsim.version>12.0-2020w08-SNAPSHOT</matsim.version> -->
     </properties>
 
     <repositories>
@@ -38,6 +38,16 @@
             <!-- Required for MATSim snaphots -->
             <id>ojo-snapshots</id>
             <url>http://oss.jfrog.org/libs-snapshot</url>
+        </repository>
+
+        <!-- Temporarily needed for the osm reader -->
+        <repository>
+            <id>topobyte</id>
+            <url>http://mvn.topobyte.de</url>
+        </repository>
+        <repository>
+            <id>slimjars</id>
+            <url>http://mvn.slimjars.com</url>
         </repository>
 
     </repositories>
@@ -85,6 +95,14 @@
             <version>${matsim.version}</version>
             <scope>compile</scope>
         </dependency>
+
+        <dependency>
+            <groupId>org.matsim.contrib</groupId>
+            <artifactId>osm</artifactId>
+            <version>${matsim.version}</version>
+            <scope>compile</scope>
+        </dependency>
+
 
         <!-- Include the JUnit testing library.  Not transitive. -->
         <dependency>
@@ -225,6 +243,7 @@
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <mainClass>org.matsim.run.RunDuesseldorfScenario</mainClass>
                                 </transformer>
+                                <transformer implementation="org.apache.maven.plugins.shade.resource.ServicesResourceTransformer" />
                             </transformers>
                         </configuration>
                     </execution>

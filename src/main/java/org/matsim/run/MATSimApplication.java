@@ -272,8 +272,7 @@ public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaul
         }
     }
 
-    @CommandLine.Command(name = "prepare", description = "Contains all commands for preparing the scenario. (See help prepare)",
-            helpCommand = true, subcommandsRepeatable = true)
+    @CommandLine.Command(name = "prepare", description = "Contains all commands for preparing the scenario. (See help prepare)")
     public static class PrepareCommand implements Callable<Integer> {
 
         @CommandLine.Spec
@@ -281,7 +280,7 @@ public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaul
 
         @Override
         public Integer call() throws Exception {
-            System.out.println("No subcommand give. Chose on of: " + spec.subcommands().keySet());
+            System.out.println("No subcommand given. Chose on of: " + spec.subcommands().keySet());
             return 0;
         }
     }

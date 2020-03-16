@@ -11,6 +11,11 @@ import picocli.CommandLine;
 @MATSimApplication.Prepare({CreateNetwork.class, CreateTransitSchedule.class})
 public class RunDuesseldorfScenario extends MATSimApplication {
 
+    /**
+     * Default coordinate system of the scenario.
+     */
+    public static final String COORDINATE_SYSTEM = "EPSG:25832";
+
     public RunDuesseldorfScenario() {
         super("scenarios/duesseldorf-1pct/input/duesseldorf-1pct.config.xml");
     }
