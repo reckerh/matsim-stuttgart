@@ -1,16 +1,22 @@
 package org.matsim.prepare;
 
+import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Scenario;
-import org.matsim.contrib.gtfs.RunGTFS2MATSim;
+import org.matsim.api.core.v01.network.NetworkWriter;
+import org.matsim.contrib.gtfs.GtfsConverter;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.CoordinateTransformation;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
-import org.matsim.pt.transitSchedule.api.TransitScheduleReader;
+import org.matsim.pt.transitSchedule.api.TransitScheduleWriter;
+import org.matsim.pt.utils.CreatePseudoNetwork;
+import org.matsim.pt.utils.CreateVehiclesForSchedule;
 import org.matsim.run.RunDuesseldorfScenario;
+import org.matsim.vehicles.MatsimVehicleWriter;
 import picocli.CommandLine;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.concurrent.Callable;
 
@@ -27,7 +33,7 @@ import java.util.concurrent.Callable;
 public class CreateTransitSchedule implements Callable<Integer> {
 
     @CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Input GTFS zip file", defaultValue = "scenarios/input/gtfs.zip")
-    private File gtfsZipFile;
+    private Path gtfsZipFile;
 
     @CommandLine.Option(names = "--output", description = "Output folder", defaultValue = "scenarios/input")
     private File output;
@@ -52,19 +58,34 @@ public class CreateTransitSchedule implements Callable<Integer> {
         File networkFile = new File(output, "network-with-pt.xml.gz");
         File transitVehiclesFile = new File(output, "transitVehicles.xml.gz");
 
-        RunGTFS2MATSim.convertGtfs(gtfsZipFile.getAbsolutePath(), scheduleFile.getAbsolutePath(), date, ct, false);
-
-        // TODO: filtering and pseudo network
-
-        // Parse the schedule again
         Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
-        new TransitScheduleReader(scenario).readFile(scheduleFile.getAbsolutePath());
+
+        GtfsConverter converter = GtfsConverter.newBuilder()
+                .setScenario(scenario)
+                .setTransform(ct)
+                .setDate(date)
+                .setFeed(gtfsZipFile)
+                .setIncludeAgency(agency -> agency.equals("rbg-70"))
+                .setFilterStops(stop -> {
+                    Coord coord = ct.transform(new Coord(stop.stop_lon, stop.stop_lat));
+                    return coord.getX() >= RunDuesseldorfScenario.X_EXTENT[0] && coord.getX() <= RunDuesseldorfScenario.X_EXTENT[1] &&
+                            coord.getY() >= RunDuesseldorfScenario.Y_EXTENT[0] && coord.getY() <= RunDuesseldorfScenario.Y_EXTENT[1];
+                })
+                .build();
+
+        converter.convert();
+
+        // TODO: filter more irrelevant pt
 
         // Create a network around the schedule
-//        new CreatePseudoNetwork(scenario.getTransitSchedule(), scenario.getNetwork(), "pt_" + fileName + "_").createNetwork();
+        new CreatePseudoNetwork(scenario.getTransitSchedule(), scenario.getNetwork(), "pt_").createNetwork();
+		new CreateVehiclesForSchedule(scenario.getTransitSchedule(), scenario.getTransitVehicles()).run();
 
+        new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(scheduleFile.getAbsolutePath());
+        new NetworkWriter(scenario.getNetwork()).write(networkFile.getAbsolutePath());
+        new MatsimVehicleWriter(scenario.getTransitVehicles()).writeFile(transitVehiclesFile.getAbsolutePath());
 
-        return null;
+        return 0;
     }
 
 

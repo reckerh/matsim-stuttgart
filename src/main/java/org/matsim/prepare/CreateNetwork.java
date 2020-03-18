@@ -50,12 +50,16 @@ public class CreateNetwork implements Callable<Integer> {
 
         Network network = new SupersonicOsmNetworkReader.Builder()
                 .setCoordinateTransformation(ct)
-                .setIncludeLinkAtCoordWithHierarchy((coord, hierachyLevel) -> hierachyLevel <= LinkProperties.LEVEL_SECONDARY)
+                .setIncludeLinkAtCoordWithHierarchy((coord, hierachyLevel) ->
+                        hierachyLevel <= LinkProperties.LEVEL_RESIDENTIAL &&
+                                coord.getX() >= RunDuesseldorfScenario.X_EXTENT[0] && coord.getX() <= RunDuesseldorfScenario.X_EXTENT[1] &&
+                                coord.getY() >= RunDuesseldorfScenario.Y_EXTENT[0] && coord.getY() <= RunDuesseldorfScenario.Y_EXTENT[1]
+                )
+
 //                .addOverridingLinkProperties("residential", new LinkProperties(9, 1, 30.0 / 3.6, 1500, false))
                 .setAfterLinkCreated((link, osmTags, isReverse) -> link.setAllowedModes(new HashSet<>(Arrays.asList(TransportMode.car, TransportMode.bike))))
                 .build()
                 .read(osmFile);
-
 
         new NetworkCleaner().run(network);
         new NetworkWriter(network).write(output.getAbsolutePath());
