@@ -1,7 +1,8 @@
 # Add own ignores on top, don't edit the template
 
 output/
-*.xml.gz
+scenarios/output
+*.gz
 *.pbf
 
 # Created by https://www.gitignore.io/api/osx,java,linux,maven,windows,intellij

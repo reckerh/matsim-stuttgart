@@ -1,5 +1,9 @@
 package org.matsim.run;
 
+import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
+import org.matsim.core.config.Config;
+import org.matsim.core.controler.AbstractModule;
+import org.matsim.core.controler.Controler;
 import org.matsim.prepare.CreateNetwork;
 import org.matsim.prepare.CreateTransitSchedule;
 import picocli.CommandLine;
@@ -22,6 +26,25 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
     public RunDuesseldorfScenario() {
         super("scenarios/duesseldorf-1pct/input/duesseldorf-1pct.config.xml");
+    }
+
+    @Override
+    protected Config prepareConfig(Config config) {
+
+        addDefaultActivityParams(config);
+
+        return config;
+    }
+
+    @Override
+    protected void prepareControler(Controler controler) {
+
+        controler.addOverridingModule( new AbstractModule() {
+            @Override
+            public void install() {
+                install( new SwissRailRaptorModule() );
+            }
+        } );
     }
 
     public static void main(String[] args) {

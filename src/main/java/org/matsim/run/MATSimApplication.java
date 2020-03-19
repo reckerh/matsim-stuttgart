@@ -7,6 +7,7 @@ import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.ControlerConfigGroup;
 import org.matsim.core.config.groups.GlobalConfigGroup;
+import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.scenario.ScenarioUtils;
@@ -14,7 +15,6 @@ import org.matsim.run.commands.ShowGUI;
 import picocli.AutoComplete;
 import picocli.CommandLine;
 
-import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import java.io.File;
 import java.lang.annotation.ElementType;
@@ -117,7 +117,6 @@ public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaul
      *
      * @return {@link ConfigGroup} to add
      */
-    @Nonnull
     protected List<ConfigGroup> getCustomModules() {
         return Lists.newArrayList();
     }
@@ -137,9 +136,8 @@ public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaul
      * Preparation step for the config.
      *
      * @param config initialized config
-     * @return prepared {@link Config}
+     * @return prepared {@link Config}, or null if same as input
      */
-    @Nonnull
     protected Config prepareConfig(Config config) {
         return config;
     }
@@ -147,13 +145,27 @@ public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaul
     /**
      * Preparation step for the scenario.
      */
-    protected void prepareScenario(@Nonnull Scenario scenario) {
+    protected void prepareScenario(Scenario scenario) {
     }
 
     /**
      * Preparation step for the controller.
      */
-    protected void prepareControler(@Nonnull Controler controler) {
+    protected void prepareControler(Controler controler) {
+    }
+
+    /**
+     * Adds default activity parameter to the plan score calculation.
+     */
+    protected void addDefaultActivityParams(Config config) {
+        for (long ii = 600; ii <= 97200; ii += 600) {
+            config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("home_" + ii + ".0").setTypicalDuration(ii));
+            config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("work_" + ii + ".0").setTypicalDuration(ii).setOpeningTime(6. * 3600.).setClosingTime(20. * 3600.));
+            config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("leisure_" + ii + ".0").setTypicalDuration(ii).setOpeningTime(9. * 3600.).setClosingTime(27. * 3600.));
+            config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("shopping_" + ii + ".0").setTypicalDuration(ii).setOpeningTime(8. * 3600.).setClosingTime(20. * 3600.));
+            config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("other_" + ii + ".0").setTypicalDuration(ii));
+        }
+        config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("freight").setTypicalDuration(12. * 3600.));
     }
 
 
@@ -161,8 +173,9 @@ public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaul
         List<ConfigGroup> customModules = getCustomModules();
 
         final Config config = ConfigUtils.loadConfig(path, customModules.toArray(new ConfigGroup[0]));
+        Config prepared = prepareConfig(config);
 
-        return prepareConfig(config);
+        return prepared != null ? prepared : config;
     }
 
     @Override

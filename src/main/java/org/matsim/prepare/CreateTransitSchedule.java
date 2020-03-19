@@ -2,9 +2,11 @@ package org.matsim.prepare;
 
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.NetworkWriter;
 import org.matsim.contrib.gtfs.GtfsConverter;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.CoordinateTransformation;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
@@ -16,6 +18,7 @@ import org.matsim.vehicles.MatsimVehicleWriter;
 import picocli.CommandLine;
 
 import java.io.File;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
 import java.util.concurrent.Callable;
@@ -34,6 +37,10 @@ public class CreateTransitSchedule implements Callable<Integer> {
 
     @CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Input GTFS zip file", defaultValue = "scenarios/input/gtfs.zip")
     private Path gtfsZipFile;
+
+    @CommandLine.Option(names = "--network", description = "Base network that will be merged with pt network.",
+            defaultValue = "scenarios/input/duesseldorf-network.xml.gz")
+    private Path networkFile;
 
     @CommandLine.Option(names = "--output", description = "Output folder", defaultValue = "scenarios/input")
     private File output;
@@ -55,7 +62,7 @@ public class CreateTransitSchedule implements Callable<Integer> {
 
         // Output files
         File scheduleFile = new File(output, "transitSchedule.xml.gz");
-        File networkFile = new File(output, "network-with-pt.xml.gz");
+        File networkPTFile = new File(output, "network-with-pt.xml.gz");
         File transitVehiclesFile = new File(output, "transitVehicles.xml.gz");
 
         Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
@@ -77,12 +84,14 @@ public class CreateTransitSchedule implements Callable<Integer> {
 
         // TODO: filter more irrelevant pt
 
+        Network network = Files.exists(networkFile) ? NetworkUtils.readNetwork(networkFile.toString()) : scenario.getNetwork();
+
         // Create a network around the schedule
-        new CreatePseudoNetwork(scenario.getTransitSchedule(), scenario.getNetwork(), "pt_").createNetwork();
+        new CreatePseudoNetwork(scenario.getTransitSchedule(), network, "pt_").createNetwork();
 		new CreateVehiclesForSchedule(scenario.getTransitSchedule(), scenario.getTransitVehicles()).run();
 
         new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(scheduleFile.getAbsolutePath());
-        new NetworkWriter(scenario.getNetwork()).write(networkFile.getAbsolutePath());
+        new NetworkWriter(network).write(networkPTFile.getAbsolutePath());
         new MatsimVehicleWriter(scenario.getTransitVehicles()).writeFile(transitVehiclesFile.getAbsolutePath());
 
         return 0;
