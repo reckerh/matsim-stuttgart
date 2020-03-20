@@ -11,6 +11,10 @@
     <!-- ====================================================================== -->
 
     <person id="1">
+        <attributes>
+            <attribute name="subpopulation" class="java.lang.String">person</attribute>
+        </attributes>
+
         <plan score="80.11179641489682" selected="yes">
             <activity type="home_46200.0" link="1454187830006r" x="344299.8126858568" y="5675402.628115339" end_time="03:59:47"/>
 
@@ -21,7 +25,7 @@
             <activity type="leisure_2400.0" link="1454187830006r" x="344299.8126858568" y="5675402.628115339" max_dur="00:00:00"/>
 
             <leg mode="non_network_walk" dep_time="04:15:07">
-                <route type="generic" start_link="1454187830006r" end_link="10723" trav_time="00:23:01" distance="2763.424921008634"/>
+                <route type="generic" start_link="1454187830006r" end_link="1454187830006r" trav_time="00:23:01" distance="2763.424921008634"/>
             </leg>
 
             <activity type="car interaction" link="1454187830006r" x="344299.8126858568" y="5675402.628115339" max_dur="00:00:00"/>
@@ -38,7 +42,7 @@
                 <route type="generic" start_link="234503380002f" end_link="234503380002f" trav_time="00:02:46" distance="332.50512540305425"/>
             </leg>
 
-            <activity type="work_28200.0" link="234503380002f"  x="344515.9594858251" y="5675801.578152071"  end_time="12:32:29"/>
+            <activity type="work_28200.0" link="234503380002f" x="344515.9594858251" y="5675801.578152071" end_time="12:32:29"/>
 
             <leg mode="non_network_walk" dep_time="12:32:29">
                 <route type="generic" start_link="234503380002f" end_link="234503380002f" trav_time="00:02:46" distance="332.50512540305425"/>
@@ -47,7 +51,8 @@
             <activity type="car interaction" link="234503380002f" x="4672232.820896338" y="5804186.049182902" max_dur="00:00:00"/>
 
             <leg mode="car" dep_time="12:35:15">
-                <route type="links" start_link="234503380002f" end_link="2355512200003f" trav_time="00:14:59" distance="13219.912287795654" vehicleRefId="1">
+                <route type="links" start_link="234503380002f" end_link="2355512200003f" trav_time="00:14:59" distance="13219.912287795654"
+                       vehicleRefId="1">
                     234503380015f 1490764620003f 1490764670002f 2355512190000f 2355512210002f 5450650390003f 2355512180000f 2355512200003f
                 </route>
             </leg>

@@ -23,25 +23,25 @@
 
     <module name="network">
         <param name="inputNetworkFile"
-               value="scenarios/input/network-with-pt.xml.gz"/>
+               value="../../input/network-with-pt.xml.gz"/>
     </module>
 
     <module name="plans">
         <param name="inputPlansFile"
-               value="scenarios/input/test-plans.xml"/>
+               value="../../input/test-plans.xml"/>
         <param name="removingUnnecessaryPlanAttributes" value="true"/>
     </module>
 
     <module name="vehicles">
         <param name="vehiclesFile"
-               value="scenarios/input/vehicle-types.xml"/>
+               value="../../input/vehicle-types.xml"/>
     </module>
 
     <module name="transit">
         <param name="transitScheduleFile"
-               value="scenarios/input/transitSchedule.xml.gz"/>
+               value="../../input/transitSchedule.xml.gz"/>
         <param name="vehiclesFile"
-               value="scenarios/input/transitVehicles.xml.gz"/>
+               value="../../input/transitVehicles.xml.gz"/>
         <param name="useTransit" value="true"/>
     </module>
 

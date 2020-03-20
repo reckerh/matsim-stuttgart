@@ -99,7 +99,7 @@ public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaul
 
         Objects.requireNonNull(config);
 
-        final Scenario scenario = ScenarioUtils.createScenario(config);
+        final Scenario scenario = ScenarioUtils.loadScenario(config);
 
         prepareScenario(scenario);
 
@@ -166,6 +166,7 @@ public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaul
             config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("other_" + ii + ".0").setTypicalDuration(ii));
         }
         config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("freight").setTypicalDuration(12. * 3600.));
+        config.planCalcScore().addActivityParams(new PlanCalcScoreConfigGroup.ActivityParams("car interaction").setTypicalDuration(60));
     }
 
 
