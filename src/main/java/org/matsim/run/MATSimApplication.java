@@ -294,7 +294,7 @@ public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaul
 
         @Override
         public Integer call() throws Exception {
-            System.out.println("No subcommand given. Chose on of: " + spec.subcommands().keySet());
+            System.out.printf("No subcommand given. Chose on of: %s", spec.subcommands().keySet());
             return 0;
         }
     }
