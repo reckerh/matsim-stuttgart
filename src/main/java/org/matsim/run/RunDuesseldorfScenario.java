@@ -19,7 +19,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
      */
     public static final String COORDINATE_SYSTEM = "EPSG:25832";
 
-    public static final double[] X_EXTENT = new double[]{336091.18, 357174.31};
+    public static final double[] X_EXTENT = new double[]{333926.98, 357174.31};
     public static final double[] Y_EXTENT = new double[]{5665283.05, 5687261.18};
 
 

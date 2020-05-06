@@ -18,4 +18,4 @@ scenarios/input/gtfs.zip:
 prepare: $(JAR) scenarios/input/network.osm.pbf scenarios/input/gtfs.zip
 
 	java -jar $(JAR) prepare network
-	java -jar $(JAR) prepare gtfs
+	java -jar $(JAR) prepare transit
