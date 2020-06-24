@@ -19,3 +19,6 @@ prepare: $(JAR) scenarios/input/network.osm.pbf scenarios/input/gtfs.zip
 
 	java -jar $(JAR) prepare network
 	java -jar $(JAR) prepare transit
+	java -jar $(JAR) prepare population\
+	 --population ../../shared-svn/komodnext/matsim-input-files/duesseldorf-senozon/optimizedPopulation_filtered.xml.gz\
+	 --attributes  ../../shared-svn/komodnext/matsim-input-files/duesseldorf-senozon/personAttributes.xml.gz
