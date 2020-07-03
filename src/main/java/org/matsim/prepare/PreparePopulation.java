@@ -1,6 +1,7 @@
 package org.matsim.prepare;
 
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.population.*;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.population.PopulationUtils;
@@ -32,11 +33,12 @@ public class PreparePopulation implements Callable<Integer> {
     @CommandLine.Option(names = "--output", description = "Output folder", defaultValue = "scenarios")
     private Path output;
 
+    public static void main(String[] args) {
+        System.exit(new CommandLine(new PreparePopulation()).execute(args));
+    }
+
     @Override
     public Integer call() throws Exception {
-
-        // TODO merge population and attributes
-        // also create a 1% scenario
 
         Config config = ConfigUtils.createConfig();
 
@@ -54,7 +56,9 @@ public class PreparePopulation implements Callable<Integer> {
         // Clear wrong coordinate system
         scenario.getPopulation().getAttributes().clear();
 
-        scenario.getPopulation().getPersons().forEach( (k,v) -> v.getAttributes().putAttribute("subpopulation", "person"));
+        scenario.getPopulation().getPersons().forEach((k, v) -> v.getAttributes().putAttribute("subpopulation", "person"));
+
+        splitActivityTypesBasedOnDuration(scenario.getPopulation());
 
         PopulationUtils.writePopulation(scenario.getPopulation(), input.resolve("duesseldorf-25pct.plans.xml.gz").toString());
 
@@ -70,7 +74,62 @@ public class PreparePopulation implements Callable<Integer> {
         return 0;
     }
 
-    public static void main(String[] args) {
-        System.exit(new CommandLine(new PreparePopulation()).execute(args));
+    /**
+     * Split activities into typical durations to improve value of travel time savings calculation.
+     * @see playground.vsp.openberlinscenario.planmodification.CemdapPopulationTools
+     */
+    private void splitActivityTypesBasedOnDuration(Population population) {
+
+        final double timeBinSize_s = 600.;
+
+        // Calculate activity durations for the next step
+        for (Person p : population.getPersons().values()) {
+            for (Plan plan : p.getPlans()) {
+                for (PlanElement el : plan.getPlanElements()) {
+
+                    if (!(el instanceof Activity))
+                        continue;
+
+                    Activity act = (Activity) el;
+                    double duration = act.getEndTime().orElse(24 * 3600)
+                            - act.getStartTime().orElse(0);
+
+                    int durationCategoryNr = (int) Math.round((duration / timeBinSize_s));
+
+                    if (durationCategoryNr <= 0) {
+                        durationCategoryNr = 1;
+                    }
+
+                    String newType = act.getType() + "_" + (durationCategoryNr * timeBinSize_s);
+                    act.setType(newType);
+
+                }
+
+                mergeOvernightActivities(plan);
+            }
+        }
+    }
+
+    /**
+      * See {@link playground.vsp.openberlinscenario.planmodification.CemdapPopulationTools}.
+     */
+    private void mergeOvernightActivities(Plan plan) {
+
+        if (plan.getPlanElements().size() > 1) {
+            Activity firstActivity = (Activity) plan.getPlanElements().get(0);
+            Activity lastActivity = (Activity) plan.getPlanElements().get(plan.getPlanElements().size() - 1);
+
+            String firstBaseActivity = firstActivity.getType().split("_")[0];
+            String lastBaseActivity = lastActivity.getType().split("_")[0];
+
+            if (firstBaseActivity.equals(lastBaseActivity)) {
+                double mergedDuration = Double.parseDouble(firstActivity.getType().split("_")[1]) + Double.parseDouble(lastActivity.getType().split("_")[1]);
+
+
+                firstActivity.setType(firstBaseActivity + "_" + mergedDuration);
+                lastActivity.setType(lastBaseActivity + "_" + mergedDuration);
+            }
+        }  // skipping plans with just one activity
+
     }
 }

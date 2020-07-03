@@ -70,6 +70,7 @@
         <param name="storageCapacityFactor" value="0.015"/>
         <param name="stuckTime" value="30.0"/>
         <param name="trafficDynamics" value="kinematicWaves"/>
+        <param name="useLanes" value="true" />
 
         <!-- TODO: change back to modeVehicleTypesFromVehiclesData -->
         <param name="vehiclesSource" value="defaultVehicle"/>
@@ -121,7 +122,13 @@
 
     <module name="travelTimeCalculator">
         <param name="analyzedModes" value="car,freight"/>
-        <param name="separateModes" value="true"/>
+
+        <!-- Not implemented for link2link routing -->
+        <param name="separateModes" value="false"/>
+
+        <!-- Needed for lane specific routing times -->
+        <param name="calculateLinkToLinkTravelTimes" value="true" />
+        <param name="calculateLinkTravelTimes" value="true" />
     </module>
 
     <module name="vspExperimental">
