@@ -1,21 +1,31 @@
 package org.matsim.prepare;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
+import org.matsim.api.core.v01.Coord;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.TransportMode;
-import org.matsim.api.core.v01.network.Network;
-import org.matsim.api.core.v01.network.NetworkWriter;
-import org.matsim.contrib.osm.networkReader.LinkProperties;
-import org.matsim.contrib.osm.networkReader.SupersonicOsmNetworkReader;
+import org.matsim.api.core.v01.network.*;
+import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.algorithms.NetworkCleaner;
 import org.matsim.core.utils.geometry.CoordinateTransformation;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
+import org.matsim.lanes.*;
 import org.matsim.run.RunDuesseldorfScenario;
+import org.xml.sax.SAXException;
 import picocli.CommandLine;
 
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Arrays;
-import java.util.HashSet;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Set;
 import java.util.concurrent.Callable;
+import java.util.stream.Collectors;
 
 /**
  * Creates the road network layer.
@@ -31,8 +41,10 @@ import java.util.concurrent.Callable;
 )
 public class CreateNetwork implements Callable<Integer> {
 
-    @CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Input osm file", defaultValue = "scenarios/input/network.osm.pbf")
-    private Path osmFile;
+    private static final Logger log = LogManager.getLogger(CreateNetwork.class);
+
+    @CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Input file", defaultValue = "scenarios/input/sumo.net.xml")
+    private Path input;
 
     @CommandLine.Option(names = "--output", description = "Output xml file", defaultValue = "scenarios/input/duesseldorf-network.xml.gz")
     private File output;
@@ -43,11 +55,16 @@ public class CreateNetwork implements Callable<Integer> {
     @CommandLine.Option(names = "--target-cs", description = "Target coordinate system of the network", defaultValue = RunDuesseldorfScenario.COORDINATE_SYSTEM)
     private String targetCS;
 
+    public static void main(String[] args) {
+        System.exit(new CommandLine(new CreateNetwork()).execute(args));
+    }
+
     @Override
     public Integer call() throws Exception {
 
         CoordinateTransformation ct = TransformationFactory.getCoordinateTransformation(inputCS, targetCS);
 
+        /*
         Network network = new SupersonicOsmNetworkReader.Builder()
                 .setCoordinateTransformation(ct)
                 .setIncludeLinkAtCoordWithHierarchy((coord, hierachyLevel) ->
@@ -59,15 +76,148 @@ public class CreateNetwork implements Callable<Integer> {
 //                .addOverridingLinkProperties("residential", new LinkProperties(9, 1, 30.0 / 3.6, 1500, false))
                 .setAfterLinkCreated((link, osmTags, isReverse) -> link.setAllowedModes(new HashSet<>(Arrays.asList(TransportMode.car, TransportMode.bike, TransportMode.ride))))
                 .build()
-                .read(osmFile);
+                .read(input);
 
-        new NetworkCleaner().run(network);
+         */
+
+        Network network = NetworkUtils.createNetwork();
+        Lanes lanes = LanesUtils.createLanesContainer();
+
+        convert(network, lanes);
+
+        // This needs to run without errors, otherwise network is broken
+        network.getLinks().values().forEach(link -> {
+            LanesToLinkAssignment l2l = lanes.getLanesToLinkAssignments().get(link.getId());
+            if (l2l != null)
+                LanesUtils.createLanes(link, l2l);
+        });
+
+
         new NetworkWriter(network).write(output.getAbsolutePath());
+        new LanesWriter(lanes).write(output.getAbsolutePath().replace(".xml", "-lanes.xml"));
 
         return 0;
     }
 
-    public static void main(String[] args) {
-        System.exit(new CommandLine(new CreateNetwork()).execute(args));
+    private void convert(Network network, Lanes lanes) throws ParserConfigurationException, SAXException, IOException {
+
+        log.info("Parsing SUMO network");
+
+        SAXParserFactory factory = SAXParserFactory.newInstance();
+        SAXParser saxParser = factory.newSAXParser();
+        SumoHandler sumoHandler = new SumoHandler();
+        saxParser.parse(input.toFile(), sumoHandler);
+
+        log.info("Parsed {} edges with {} junctions", sumoHandler.edges.size(), sumoHandler.junctions.size());
+
+        NetworkFactory f = network.getFactory();
+        LanesFactory lf = lanes.getFactory();
+
+        for (SumoHandler.Edge edge : sumoHandler.edges.values()) {
+
+            Link link = f.createLink(Id.createLinkId(edge.id),
+                    createNode(network, sumoHandler, edge.from),
+                    createNode(network, sumoHandler, edge.to)
+            );
+
+            // TODO: bikes can drive everywhere at the moment
+
+            link.setNumberOfLanes(edge.lanes.size());
+            link.setAllowedModes(Set.of(TransportMode.car, TransportMode.ride, TransportMode.bike));
+            link.setLength(edge.lanes.get(0).length);
+            link.getFreespeed(edge.lanes.get(0).speed);
+
+            LanesToLinkAssignment l2l = lf.createLanesToLinkAssignment(link.getId());
+
+            for (SumoHandler.Lane lane : edge.lanes) {
+                Lane mLane = lf.createLane(Id.create(lane.id, Lane.class));
+                mLane.setAlignment(lane.index);
+                mLane.setStartsAtMeterFromLinkEnd(lane.length);
+                l2l.addLane(mLane);
+            }
+
+            lanes.addLanesToLinkAssignment(l2l);
+            network.addLink(link);
+        }
+
+        // clean up network
+        new NetworkCleaner().run(network);
+
+        // also clean lanes
+        lanes.getLanesToLinkAssignments().keySet().removeIf(l2l -> !network.getLinks().containsKey(l2l));
+
+        for (List<SumoHandler.Connection> connections : sumoHandler.connections.values()) {
+            for (SumoHandler.Connection conn : connections) {
+
+                Id<Link> fromLink = Id.createLinkId(conn.from);
+                Id<Link> toLink = Id.createLinkId(conn.to);
+
+                LanesToLinkAssignment l2l = lanes.getLanesToLinkAssignments().get(fromLink);
+
+                // link was removed
+                if (l2l == null)
+                    continue;
+
+                Lane lane = l2l.getLanes().values().stream().filter(l -> l.getAlignment() == conn.fromLane).findFirst().orElse(null);
+                if (lane == null) {
+                    log.warn("Could not find from lane in network for {}", conn);
+                    continue;
+                }
+
+                lane.addToLinkId(toLink);
+            }
+        }
+
+        int removed = 0;
+
+        Iterator<LanesToLinkAssignment> it = lanes.getLanesToLinkAssignments().values().iterator();
+
+        // lanes needs to have a target, if missing we need to chose one
+        while (it.hasNext()) {
+            LanesToLinkAssignment l2l = it.next();
+
+            for (Lane lane : l2l.getLanes().values()) {
+
+                if (lane.getToLinkIds() == null) {
+                    // chose first reachable link from this lane
+                    Link out = network.getLinks().get(l2l.getLinkId()).getToNode().getOutLinks().values().iterator().next();
+                    lane.addToLinkId(out.getId());
+
+                    log.warn("No target for lane {}, chosen {}", lane.getId(), out);
+                }
+
+            }
+
+            Set<Id<Link>> targets = l2l.getLanes().values().stream().map(Lane::getToLinkIds).flatMap(List::stream).collect(Collectors.toSet());
+
+            // remove superfluous lanes (both pointing to same link with not alternative)
+            if (targets.size() == 1 && network.getLinks().get(l2l.getLinkId()).getToNode().getOutLinks().size() <= 1) {
+                it.remove();
+                removed++;
+            }
+        }
+
+        log.info("Removed {} superfluous lanes, total={}", removed, lanes.getLanesToLinkAssignments().size());
     }
+
+    private Node createNode(Network network, SumoHandler sumoHandler, String nodeId) {
+
+        Id<Node> id = Id.createNodeId(nodeId);
+        Node node = network.getNodes().get(id);
+        if (node != null)
+            return node;
+
+        Coord coord;
+        if (sumoHandler.junctions.containsKey(nodeId)) {
+            coord = sumoHandler.createCoord(sumoHandler.junctions.get(nodeId).coord);
+        } else {
+            throw new IllegalStateException("Junction not in network:" + nodeId);
+        }
+
+        node = network.getFactory().createNode(id, coord);
+        network.addNode(node);
+
+        return node;
+    }
+
 }

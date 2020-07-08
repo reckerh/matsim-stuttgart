@@ -62,7 +62,7 @@ public class CreateTransitSchedule implements Callable<Integer> {
 
         // Output files
         File scheduleFile = new File(output, "transitSchedule.xml.gz");
-        File networkPTFile = new File(output, "network-with-pt.xml.gz");
+        File networkPTFile = new File(output, networkFile.getFileName().toString().replace(".xml", "-with-pt.xml"));
         File transitVehiclesFile = new File(output, "transitVehicles.xml.gz");
 
         Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());

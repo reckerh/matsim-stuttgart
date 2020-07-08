@@ -22,8 +22,9 @@
     </module>
 
     <module name="network">
-        <param name="inputNetworkFile"
-               value="../../input/network-with-pt.xml.gz"/>
+        <!-- TODO: point to SVN -->
+        <param name="inputNetworkFile" value="../../input/duesseldorf-network-with-pt.xml.gz"/>
+        <param name="laneDefinitionsFile" value="../../input/duesseldorf-network-lanes.xml.gz" />
     </module>
 
     <module name="plans">
