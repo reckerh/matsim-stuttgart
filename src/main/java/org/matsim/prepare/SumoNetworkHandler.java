@@ -11,29 +11,34 @@ import java.util.*;
 /**
  * Parses specific information from sumo network file.
  */
-class SumoHandler extends DefaultHandler {
+class SumoNetworkHandler extends DefaultHandler {
 
     final double[] netOffset = new double[2];
 
     /**
      * All junctions.
      */
-    Map<String, Junction> junctions = new HashMap<>();
+    final Map<String, Junction> junctions = new HashMap<>();
 
     /**
      * Edges mapped by id.
      */
-    Map<String, Edge> edges = new HashMap<>();
+    final Map<String, Edge> edges = new HashMap<>();
 
     /**
      * Map lane id to their edge.
      */
-    Map<String, Edge> lanes = new HashMap<>();
+    final Map<String, Edge> lanes = new HashMap<>();
 
     /**
      * All connections mapped by the origin (from).
      */
-    Map<String, List<Connection>> connections = new HashMap<>();
+    final Map<String, List<Connection>> connections = new HashMap<>();
+
+    /**
+     * Parsed link types.
+     */
+    final Map<String, Type> types = new HashMap<>();
 
     /**
      * Stores current parsed edge.
@@ -50,6 +55,14 @@ class SumoHandler extends DefaultHandler {
                 String[] netOffsets = attributes.getValue("netOffset").split(",");
                 netOffset[0] = Double.parseDouble(netOffsets[0]);
                 netOffset[1] = Double.parseDouble(netOffsets[1]);
+
+                break;
+
+            case "type":
+
+                String typeId = attributes.getValue("id");
+
+                types.put(typeId, new Type(typeId, attributes.getValue("allow"), attributes.getValue("disallow")));
 
                 break;
 
@@ -254,4 +267,31 @@ class SumoHandler extends DefaultHandler {
         }
     }
 
+
+    static final class Type {
+
+        final String id;
+        final Set<String> allow = new HashSet<>();
+        final Set<String> disallow = new HashSet<>();
+
+        /**
+         * Set if id is highway.[type]
+         */
+        final String highway;
+
+        Type(String id, String allow, String disallow) {
+            this.id = id;
+            if (allow != null)
+                Collections.addAll(this.allow, allow.split(" "));
+
+            if (disallow != null)
+                Collections.addAll(this.disallow, disallow.split(" "));
+
+            if (id.startsWith("highway."))
+                highway = id.substring(8);
+            else
+                highway = null;
+
+        }
+    }
 }

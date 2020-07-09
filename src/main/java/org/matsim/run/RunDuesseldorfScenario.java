@@ -1,5 +1,6 @@
 package org.matsim.run;
 
+import org.matsim.contrib.signals.otfvis.OTFVisWithSignalsLiveModule;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
 import org.matsim.core.config.groups.PlansConfigGroup;
@@ -32,6 +33,8 @@ public class RunDuesseldorfScenario extends MATSimApplication {
      */
     public static final double[] Y_EXTENT = new double[]{5665283.05, 5687261.18};
 
+    @CommandLine.Option(names = "--otfvis", defaultValue = "false", description = "Enable OTFVis live view")
+    private boolean otfvis;
 
     public RunDuesseldorfScenario() {
         super("scenarios/duesseldorf-1pct/input/duesseldorf-1pct.config.xml");
@@ -68,6 +71,9 @@ public class RunDuesseldorfScenario extends MATSimApplication {
 
     @Override
     protected void prepareControler(Controler controler) {
+
+        if (otfvis)
+            controler.addOverridingModule(new OTFVisWithSignalsLiveModule());
 
         //  controler.addOverridingModule( new AbstractModule() {
         //      @Override

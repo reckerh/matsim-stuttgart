@@ -1,11 +1,13 @@
 package org.matsim.prepare;
 
+import com.google.common.collect.Sets;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.*;
+import org.matsim.contrib.osm.networkReader.LinkProperties;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.algorithms.NetworkCleaner;
 import org.matsim.core.utils.geometry.CoordinateTransformation;
@@ -20,9 +22,11 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
 import java.io.IOException;
+import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
@@ -105,7 +109,7 @@ public class CreateNetwork implements Callable<Integer> {
 
         SAXParserFactory factory = SAXParserFactory.newInstance();
         SAXParser saxParser = factory.newSAXParser();
-        SumoHandler sumoHandler = new SumoHandler();
+        SumoNetworkHandler sumoHandler = new SumoNetworkHandler();
         saxParser.parse(input.toFile(), sumoHandler);
 
         log.info("Parsed {} edges with {} junctions", sumoHandler.edges.size(), sumoHandler.junctions.size());
@@ -113,28 +117,38 @@ public class CreateNetwork implements Callable<Integer> {
         NetworkFactory f = network.getFactory();
         LanesFactory lf = lanes.getFactory();
 
-        for (SumoHandler.Edge edge : sumoHandler.edges.values()) {
+        Map<String, LinkProperties> linkProperties = getLinkProperties();
+
+        for (SumoNetworkHandler.Edge edge : sumoHandler.edges.values()) {
 
             Link link = f.createLink(Id.createLinkId(edge.id),
                     createNode(network, sumoHandler, edge.from),
                     createNode(network, sumoHandler, edge.to)
             );
 
-            // TODO: bikes can drive everywhere at the moment
-
             link.setNumberOfLanes(edge.lanes.size());
-            link.setAllowedModes(Set.of(TransportMode.car, TransportMode.ride, TransportMode.bike));
-            link.setLength(edge.lanes.get(0).length);
-            link.getFreespeed(edge.lanes.get(0).speed);
+            Set<String> modes = Sets.newHashSet(TransportMode.car, TransportMode.ride);
 
+            SumoNetworkHandler.Type type = sumoHandler.types.get(edge.type);
+
+            if (type.allow.contains("bicycle") || (type.allow.isEmpty() && !type.disallow.contains("bicycle")))
+                modes.add(TransportMode.bike);
+
+            link.setAllowedModes(modes);
+            link.setLength(edge.lanes.get(0).length);
             LanesToLinkAssignment l2l = lf.createLanesToLinkAssignment(link.getId());
 
-            for (SumoHandler.Lane lane : edge.lanes) {
+            for (SumoNetworkHandler.Lane lane : edge.lanes) {
                 Lane mLane = lf.createLane(Id.create(lane.id, Lane.class));
                 mLane.setAlignment(lane.index);
                 mLane.setStartsAtMeterFromLinkEnd(lane.length);
                 l2l.addLane(mLane);
             }
+
+            // set link prop based on MATSim defaults
+            LinkProperties prop = linkProperties.get(type.highway);
+            link.setFreespeed(prop.getFreespeed());
+            link.setCapacity(prop.getLaneCapacity() * edge.lanes.size());
 
             lanes.addLanesToLinkAssignment(l2l);
             network.addLink(link);
@@ -146,8 +160,8 @@ public class CreateNetwork implements Callable<Integer> {
         // also clean lanes
         lanes.getLanesToLinkAssignments().keySet().removeIf(l2l -> !network.getLinks().containsKey(l2l));
 
-        for (List<SumoHandler.Connection> connections : sumoHandler.connections.values()) {
-            for (SumoHandler.Connection conn : connections) {
+        for (List<SumoNetworkHandler.Connection> connections : sumoHandler.connections.values()) {
+            for (SumoNetworkHandler.Connection conn : connections) {
 
                 Id<Link> fromLink = Id.createLinkId(conn.from);
                 Id<Link> toLink = Id.createLinkId(conn.to);
@@ -200,7 +214,7 @@ public class CreateNetwork implements Callable<Integer> {
         log.info("Removed {} superfluous lanes, total={}", removed, lanes.getLanesToLinkAssignments().size());
     }
 
-    private Node createNode(Network network, SumoHandler sumoHandler, String nodeId) {
+    private Node createNode(Network network, SumoNetworkHandler sumoHandler, String nodeId) {
 
         Id<Node> id = Id.createNodeId(nodeId);
         Node node = network.getNodes().get(id);
@@ -218,6 +232,18 @@ public class CreateNetwork implements Callable<Integer> {
         network.addNode(node);
 
         return node;
+    }
+
+    private Map<String, LinkProperties> getLinkProperties() {
+
+        try {
+            Method method = LinkProperties.class.getDeclaredMethod("createLinkProperties");
+            method.setAccessible(true);
+            return (Map<String, LinkProperties>) method.invoke(null);
+        } catch (ReflectiveOperationException e) {
+            log.error("Could not get link properties");
+            throw new IllegalStateException("Unable to retrieve link properties", e);
+        }
     }
 
 }
