@@ -1,5 +1,6 @@
 package org.matsim.prepare;
 
+import org.locationtech.jts.geom.Geometry;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
@@ -9,6 +10,7 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.CoordinateTransformation;
+import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 import org.matsim.pt.transitSchedule.api.TransitScheduleWriter;
 import org.matsim.pt.utils.CreatePseudoNetwork;
@@ -42,6 +44,10 @@ public class CreateTransitSchedule implements Callable<Integer> {
             defaultValue = "scenarios/input/duesseldorf-network.xml.gz")
     private Path networkFile;
 
+    @CommandLine.Option(names = "--shp", description = "Shape file used for filtering",
+            defaultValue = "../../shared-svn/komodnext/matsim-input-files/duesseldorf-senozon/dilutionArea/dilutionArea.shp")
+    private Path shapeFile;
+
     @CommandLine.Option(names = "--output", description = "Output folder", defaultValue = "scenarios/input")
     private File output;
 
@@ -54,6 +60,9 @@ public class CreateTransitSchedule implements Callable<Integer> {
     @CommandLine.Option(names = "--date", description = "The day for which the schedules will be extracted", defaultValue = "2020-03-09")
     private LocalDate date;
 
+    public static void main(String[] args) {
+        System.exit(new CommandLine(new CreateTransitSchedule()).execute(args));
+    }
 
     @Override
     public Integer call() throws Exception {
@@ -67,6 +76,8 @@ public class CreateTransitSchedule implements Callable<Integer> {
 
         Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
 
+        Geometry shp = CreateNetwork.calculateNetworkArea(shapeFile);
+
         GtfsConverter converter = GtfsConverter.newBuilder()
                 .setScenario(scenario)
                 .setTransform(ct)
@@ -75,31 +86,23 @@ public class CreateTransitSchedule implements Callable<Integer> {
                 .setIncludeAgency(agency -> agency.equals("rbg-70"))
                 .setFilterStops(stop -> {
                     Coord coord = ct.transform(new Coord(stop.stop_lon, stop.stop_lat));
-                    return coord.getX() >= RunDuesseldorfScenario.X_EXTENT[0] && coord.getX() <= RunDuesseldorfScenario.X_EXTENT[1] &&
-                            coord.getY() >= RunDuesseldorfScenario.Y_EXTENT[0] && coord.getY() <= RunDuesseldorfScenario.Y_EXTENT[1];
+                    return shp.contains(MGC.coord2Point(coord));
                 })
                 .build();
 
         converter.convert();
 
-        // TODO: filter more irrelevant pt
-
         Network network = Files.exists(networkFile) ? NetworkUtils.readNetwork(networkFile.toString()) : scenario.getNetwork();
 
         // Create a network around the schedule
         new CreatePseudoNetwork(scenario.getTransitSchedule(), network, "pt_").createNetwork();
-		new CreateVehiclesForSchedule(scenario.getTransitSchedule(), scenario.getTransitVehicles()).run();
+        new CreateVehiclesForSchedule(scenario.getTransitSchedule(), scenario.getTransitVehicles()).run();
 
         new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(scheduleFile.getAbsolutePath());
         new NetworkWriter(network).write(networkPTFile.getAbsolutePath());
         new MatsimVehicleWriter(scenario.getTransitVehicles()).writeFile(transitVehiclesFile.getAbsolutePath());
 
         return 0;
-    }
-
-
-    public static void main(String[] args) {
-        System.exit(new CommandLine(new CreateTransitSchedule()).execute(args));
     }
 
 }

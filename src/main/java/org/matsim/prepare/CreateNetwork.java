@@ -3,6 +3,7 @@ package org.matsim.prepare;
 import com.google.common.collect.Sets;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.locationtech.jts.geom.Geometry;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.TransportMode;
@@ -11,7 +12,9 @@ import org.matsim.contrib.osm.networkReader.LinkProperties;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.algorithms.NetworkCleaner;
 import org.matsim.core.utils.geometry.CoordinateTransformation;
+import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
+import org.matsim.core.utils.gis.ShapeFileReader;
 import org.matsim.lanes.*;
 import org.matsim.run.RunDuesseldorfScenario;
 import org.xml.sax.SAXException;
@@ -53,6 +56,10 @@ public class CreateNetwork implements Callable<Integer> {
     @CommandLine.Option(names = "--output", description = "Output xml file", defaultValue = "scenarios/input/duesseldorf-network.xml.gz")
     private File output;
 
+    @CommandLine.Option(names = "--shp", description = "Shape file used for filtering",
+            defaultValue = "../../shared-svn/komodnext/matsim-input-files/duesseldorf-senozon/dilutionArea/dilutionArea.shp")
+    private Path shapeFile;
+
     @CommandLine.Option(names = "--input-cs", description = "Input coordinate system of the data", defaultValue = TransformationFactory.WGS84)
     private String inputCS;
 
@@ -61,6 +68,14 @@ public class CreateNetwork implements Callable<Integer> {
 
     public static void main(String[] args) {
         System.exit(new CommandLine(new CreateNetwork()).execute(args));
+    }
+
+    /**
+     * Network area based on the cut-out with an additional buffer around it
+     */
+    static Geometry calculateNetworkArea(Path shapeFile) {
+        // only the first feature is used
+       return ((Geometry) ShapeFileReader.getAllFeatures(shapeFile.toString()).iterator().next().getDefaultGeometry()).buffer(5000);
     }
 
     @Override
@@ -112,6 +127,8 @@ public class CreateNetwork implements Callable<Integer> {
         SumoNetworkHandler sumoHandler = new SumoNetworkHandler();
         saxParser.parse(input.toFile(), sumoHandler);
 
+        Geometry shp = calculateNetworkArea(shapeFile);
+
         log.info("Parsed {} edges with {} junctions", sumoHandler.edges.size(), sumoHandler.junctions.size());
 
         NetworkFactory f = network.getFactory();
@@ -152,6 +169,13 @@ public class CreateNetwork implements Callable<Integer> {
 
             lanes.addLanesToLinkAssignment(l2l);
             network.addLink(link);
+        }
+
+
+        // remove nodes outside defined area
+        for (Node node : network.getNodes().values()) {
+            if (!shp.contains(MGC.coord2Point(node.getCoord())))
+                network.removeNode(node.getId());
         }
 
         // clean up network
