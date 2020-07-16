@@ -1,9 +1,11 @@
 package org.matsim.run;
 
+import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import org.matsim.contrib.signals.otfvis.OTFVisWithSignalsLiveModule;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
 import org.matsim.core.config.groups.PlansConfigGroup;
+import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.prepare.CreateNetwork;
 import org.matsim.prepare.CreateTransitSchedule;
@@ -25,11 +27,11 @@ public class RunDuesseldorfScenario extends MATSimApplication {
     public static final String COORDINATE_SYSTEM = "EPSG:25832";
 
     /**
-     *  6.627° - 6.950°
+     * 6.627° - 6.950°
      */
     public static final double[] X_EXTENT = new double[]{333926.98, 357174.31};
     /**
-     *  51.121 - 51.319°
+     * 51.121 - 51.319°
      */
     public static final double[] Y_EXTENT = new double[]{5665283.05, 5687261.18};
 
@@ -75,11 +77,11 @@ public class RunDuesseldorfScenario extends MATSimApplication {
         if (otfvis)
             controler.addOverridingModule(new OTFVisWithSignalsLiveModule());
 
-        //  controler.addOverridingModule( new AbstractModule() {
-        //      @Override
-        //      public void install() {
-        //          install( new SwissRailRaptorModule() );
-        //      }
-        //  } );
+        controler.addOverridingModule(new AbstractModule() {
+            @Override
+            public void install() {
+                install(new SwissRailRaptorModule());
+            }
+        });
     }
 }

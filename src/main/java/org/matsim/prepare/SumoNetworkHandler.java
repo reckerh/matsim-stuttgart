@@ -62,7 +62,8 @@ class SumoNetworkHandler extends DefaultHandler {
 
                 String typeId = attributes.getValue("id");
 
-                types.put(typeId, new Type(typeId, attributes.getValue("allow"), attributes.getValue("disallow")));
+                types.put(typeId, new Type(typeId, attributes.getValue("allow"), attributes.getValue("disallow"),
+                        Double.parseDouble(attributes.getValue("speed"))));
 
                 break;
 
@@ -273,22 +274,29 @@ class SumoNetworkHandler extends DefaultHandler {
         final String id;
         final Set<String> allow = new HashSet<>();
         final Set<String> disallow = new HashSet<>();
+        final double speed;
 
         /**
          * Set if id is highway.[type]
          */
         final String highway;
 
-        Type(String id, String allow, String disallow) {
+        Type(String id, String allow, String disallow, double speed) {
             this.id = id;
+            this.speed = speed;
             if (allow != null)
                 Collections.addAll(this.allow, allow.split(" "));
 
             if (disallow != null)
                 Collections.addAll(this.disallow, disallow.split(" "));
 
-            if (id.startsWith("highway."))
+            if (id.startsWith("highway.")) {
+                // split compound types
+                if (id.contains("|"))
+                    id = id.split("\\|")[0];
+
                 highway = id.substring(8);
+            }
             else
                 highway = null;
 

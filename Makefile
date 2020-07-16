@@ -2,6 +2,7 @@
 JAR := matsim-duesseldorf-*.jar
 
 export SUMO_HOME := $(abspath ../../sumo-1.6.0/)
+osmosis := osmosis\bin\osmosis
 
 .PHONY: prepare
 
@@ -18,7 +19,23 @@ scenarios/input/gtfs.zip:
 	  -o scenarios/input/gtfs.zip
 
 scenarios/input/network.osm: scenarios/input/network.osm.pbf
-	osmconvert64 $< -o=$@ -b=6.62,51.12,7,51.32
+
+	$(osmosis) --rb file=$<\
+	 --tf accept-ways highway=motorway,motorway_link,trunk,trunk_link,primary,primary_link,secondary_link,secondary,tertiary,motorway_junction,residential,unclassified,living_street\
+	 --bounding-box top=51.36 left=6.67 bottom=51.11 right=6.94\
+	 --used-node --wb network-detailed.osm.pbf
+
+	$(osmosis) --rb file=$<\
+	 --tf accept-ways highway=motorway,motorway_link,trunk,trunk_link,primary,primary_link,secondary_link,secondary,tertiary,motorway_junction\
+	 --bounding-box top=51.46 left=6.60 bottom=50.98 right=7.03\
+	 --used-node --wb network-coarse.osm.pbf
+
+	$(osmosis) --rb file=network-detailed.osm.pbf --rb file=network-coarse.osm.pbf\
+  	 --merge --wx $@
+
+	rm network-detailed.osm.pbf
+	rm network-coarse.osm.pbf
+
 
 scenarios/input/sumo.net.xml: scenarios/input/network.osm
 

@@ -71,11 +71,11 @@ public class CreateNetwork implements Callable<Integer> {
     }
 
     /**
-     * Network area based on the cut-out with an additional buffer around it
+     * Network area based on the cut-out.
      */
     static Geometry calculateNetworkArea(Path shapeFile) {
         // only the first feature is used
-       return ((Geometry) ShapeFileReader.getAllFeatures(shapeFile.toString()).iterator().next().getDefaultGeometry()).buffer(5000);
+       return ((Geometry) ShapeFileReader.getAllFeatures(shapeFile.toString()).iterator().next().getDefaultGeometry());
     }
 
     @Override
@@ -127,14 +127,12 @@ public class CreateNetwork implements Callable<Integer> {
         SumoNetworkHandler sumoHandler = new SumoNetworkHandler();
         saxParser.parse(input.toFile(), sumoHandler);
 
-        Geometry shp = calculateNetworkArea(shapeFile);
-
         log.info("Parsed {} edges with {} junctions", sumoHandler.edges.size(), sumoHandler.junctions.size());
 
         NetworkFactory f = network.getFactory();
         LanesFactory lf = lanes.getFactory();
 
-        Map<String, LinkProperties> linkProperties = getLinkProperties();
+        Map<String, LinkProperties> linkProperties = LinkProperties.createLinkProperties();
 
         for (SumoNetworkHandler.Edge edge : sumoHandler.edges.values()) {
 
@@ -164,19 +162,19 @@ public class CreateNetwork implements Callable<Integer> {
 
             // set link prop based on MATSim defaults
             LinkProperties prop = linkProperties.get(type.highway);
-            link.setFreespeed(prop.getFreespeed());
-            link.setCapacity(prop.getLaneCapacity() * edge.lanes.size());
+
+            if (prop == null) {
+                log.warn("Skipping unknown link type: {}", type.highway);
+                continue;
+            }
+
+            link.setFreespeed(LinkProperties.calculateSpeedIfSpeedTag(type.speed));
+            link.setCapacity(LinkProperties.getLaneCapacity(link.getLength(), prop) * link.getNumberOfLanes());
 
             lanes.addLanesToLinkAssignment(l2l);
             network.addLink(link);
         }
 
-
-        // remove nodes outside defined area
-        for (Node node : network.getNodes().values()) {
-            if (!shp.contains(MGC.coord2Point(node.getCoord())))
-                network.removeNode(node.getId());
-        }
 
         // clean up network
         new NetworkCleaner().run(network);
@@ -256,18 +254,6 @@ public class CreateNetwork implements Callable<Integer> {
         network.addNode(node);
 
         return node;
-    }
-
-    private Map<String, LinkProperties> getLinkProperties() {
-
-        try {
-            Method method = LinkProperties.class.getDeclaredMethod("createLinkProperties");
-            method.setAccessible(true);
-            return (Map<String, LinkProperties>) method.invoke(null);
-        } catch (ReflectiveOperationException e) {
-            log.error("Could not get link properties");
-            throw new IllegalStateException("Unable to retrieve link properties", e);
-        }
     }
 
 }

@@ -76,18 +76,19 @@ public class CreateTransitSchedule implements Callable<Integer> {
 
         Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
 
-        Geometry shp = CreateNetwork.calculateNetworkArea(shapeFile);
+        Geometry shp = CreateNetwork.calculateNetworkArea(shapeFile).buffer(5000);
 
         GtfsConverter converter = GtfsConverter.newBuilder()
                 .setScenario(scenario)
                 .setTransform(ct)
                 .setDate(date)
                 .setFeed(gtfsZipFile)
-                .setIncludeAgency(agency -> agency.equals("rbg-70"))
+                //.setIncludeAgency(agency -> agency.equals("rbg-70"))
                 .setFilterStops(stop -> {
                     Coord coord = ct.transform(new Coord(stop.stop_lon, stop.stop_lat));
                     return shp.contains(MGC.coord2Point(coord));
                 })
+                .setMergeStops(true)
                 .build();
 
         converter.convert();

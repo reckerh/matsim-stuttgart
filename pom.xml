@@ -10,8 +10,8 @@
     <description>MATSim Open Düsseldorf scenario project</description>
 
     <properties>
-        <matsim.version>12.0</matsim.version>
-        <!-- <matsim.version>12.0-2020w08-SNAPSHOT</matsim.version> -->
+        <!-- <matsim.version>12.0</matsim.version> -->
+        <matsim.version>13.0-SNAPSHOT</matsim.version>
     </properties>
 
     <repositories>
@@ -141,10 +141,9 @@
         </dependency>
 
         <dependency>
-            <!-- TODO: group and artifact inconstant with release version -->
             <groupId>org.matsim.contrib</groupId>
             <artifactId>matsim-gtfs</artifactId>
-            <version>12.0-SNAPSHOT</version>
+            <version>13.0-SNAPSHOT</version>
             <exclusions>
                 <exclusion>
                     <artifactId>gt-epsg-hsql</artifactId>
