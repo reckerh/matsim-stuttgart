@@ -26,15 +26,6 @@ public class RunDuesseldorfScenario extends MATSimApplication {
      */
     public static final String COORDINATE_SYSTEM = "EPSG:25832";
 
-    /**
-     * 6.627° - 6.950°
-     */
-    public static final double[] X_EXTENT = new double[]{333926.98, 357174.31};
-    /**
-     * 51.121 - 51.319°
-     */
-    public static final double[] Y_EXTENT = new double[]{5665283.05, 5687261.18};
-
     @CommandLine.Option(names = "--otfvis", defaultValue = "false", description = "Enable OTFVis live view")
     private boolean otfvis;
 

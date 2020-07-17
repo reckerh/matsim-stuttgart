@@ -12,7 +12,6 @@ import org.matsim.contrib.osm.networkReader.LinkProperties;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.algorithms.NetworkCleaner;
 import org.matsim.core.utils.geometry.CoordinateTransformation;
-import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 import org.matsim.core.utils.gis.ShapeFileReader;
 import org.matsim.lanes.*;
@@ -25,7 +24,6 @@ import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
 import java.io.IOException;
-import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.util.Iterator;
 import java.util.List;
@@ -160,6 +158,18 @@ public class CreateNetwork implements Callable<Integer> {
                 l2l.addLane(mLane);
             }
 
+
+            // incoming lane connected to the others
+            // this is needed by matsim for lanes to work properly
+            if (edge.lanes.size() >= 1) {
+                Lane inLane = lf.createLane(Id.create(link.getId() + "_in", Lane.class));
+                inLane.setStartsAtMeterFromLinkEnd(link.getLength());
+                inLane.setAlignment(0);
+
+                l2l.getLanes().keySet().forEach(inLane::addToLaneId);
+                l2l.addLane(inLane);
+            }
+
             // set link prop based on MATSim defaults
             LinkProperties prop = linkProperties.get(type.highway);
 
@@ -213,18 +223,19 @@ public class CreateNetwork implements Callable<Integer> {
             LanesToLinkAssignment l2l = it.next();
 
             for (Lane lane : l2l.getLanes().values()) {
-
-                if (lane.getToLinkIds() == null) {
+                if (lane.getToLinkIds() == null && lane.getToLaneIds() == null) {
                     // chose first reachable link from this lane
                     Link out = network.getLinks().get(l2l.getLinkId()).getToNode().getOutLinks().values().iterator().next();
                     lane.addToLinkId(out.getId());
 
                     log.warn("No target for lane {}, chosen {}", lane.getId(), out);
                 }
-
             }
 
-            Set<Id<Link>> targets = l2l.getLanes().values().stream().map(Lane::getToLinkIds).flatMap(List::stream).collect(Collectors.toSet());
+            Set<Id<Link>> targets = l2l.getLanes().values().stream()
+                    .filter(l -> l.getToLinkIds() != null)
+                    .map(Lane::getToLinkIds).flatMap(List::stream)
+                    .collect(Collectors.toSet());
 
             // remove superfluous lanes (both pointing to same link with not alternative)
             if (targets.size() == 1 && network.getLinks().get(l2l.getLinkId()).getToNode().getOutLinks().size() <= 1) {
