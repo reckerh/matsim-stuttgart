@@ -12,6 +12,7 @@ import org.matsim.contrib.osm.networkReader.LinkProperties;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.algorithms.NetworkCleaner;
 import org.matsim.core.utils.geometry.CoordinateTransformation;
+import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 import org.matsim.core.utils.gis.ShapeFileReader;
 import org.matsim.lanes.*;
@@ -20,8 +21,6 @@ import org.xml.sax.SAXException;
 import picocli.CommandLine;
 
 import javax.xml.parsers.ParserConfigurationException;
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
@@ -48,8 +47,8 @@ public class CreateNetwork implements Callable<Integer> {
 
     private static final Logger log = LogManager.getLogger(CreateNetwork.class);
 
-    @CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Input file", defaultValue = "scenarios/input/sumo.net.xml")
-    private Path input;
+    @CommandLine.Parameters(arity = "1..*", paramLabel = "INPUT", description = "Input file", defaultValue = "scenarios/input/sumo.net.xml")
+    private List<Path> input;
 
     @CommandLine.Option(names = "--output", description = "Output xml file", defaultValue = "scenarios/input/duesseldorf-network.xml.gz")
     private File output;
@@ -57,12 +56,6 @@ public class CreateNetwork implements Callable<Integer> {
     @CommandLine.Option(names = "--shp", description = "Shape file used for filtering",
             defaultValue = "../../shared-svn/komodnext/matsim-input-files/duesseldorf-senozon/dilutionArea/dilutionArea.shp")
     private Path shapeFile;
-
-    @CommandLine.Option(names = "--input-cs", description = "Input coordinate system of the data", defaultValue = TransformationFactory.WGS84)
-    private String inputCS;
-
-    @CommandLine.Option(names = "--target-cs", description = "Target coordinate system of the network", defaultValue = RunDuesseldorfScenario.COORDINATE_SYSTEM)
-    private String targetCS;
 
     public static void main(String[] args) {
         System.exit(new CommandLine(new CreateNetwork()).execute(args));
@@ -73,13 +66,13 @@ public class CreateNetwork implements Callable<Integer> {
      */
     static Geometry calculateNetworkArea(Path shapeFile) {
         // only the first feature is used
-       return ((Geometry) ShapeFileReader.getAllFeatures(shapeFile.toString()).iterator().next().getDefaultGeometry());
+        return ((Geometry) ShapeFileReader.getAllFeatures(shapeFile.toString()).iterator().next().getDefaultGeometry());
     }
 
     @Override
     public Integer call() throws Exception {
 
-        CoordinateTransformation ct = TransformationFactory.getCoordinateTransformation(inputCS, targetCS);
+        // CoordinateTransformation ct = TransformationFactory.getCoordinateTransformation(inputCS, targetCS);
 
         /*
         Network network = new SupersonicOsmNetworkReader.Builder()
@@ -120,12 +113,18 @@ public class CreateNetwork implements Callable<Integer> {
 
         log.info("Parsing SUMO network");
 
-        SAXParserFactory factory = SAXParserFactory.newInstance();
-        SAXParser saxParser = factory.newSAXParser();
-        SumoNetworkHandler sumoHandler = new SumoNetworkHandler();
-        saxParser.parse(input.toFile(), sumoHandler);
-
+        SumoNetworkHandler sumoHandler = SumoNetworkHandler.read(input.get(0).toFile());
         log.info("Parsed {} edges with {} junctions", sumoHandler.edges.size(), sumoHandler.junctions.size());
+
+        for (int i = 1; i < input.size(); i++) {
+
+            CoordinateTransformation ct = TransformationFactory.getCoordinateTransformation("EPSG:32632", RunDuesseldorfScenario.COORDINATE_SYSTEM);
+
+            File file = input.get(i).toFile();
+            SumoNetworkHandler other = SumoNetworkHandler.read(file);
+            log.info("Merging {} edges with {} junctions from {} into base network", other.edges.size(), other.junctions.size(), file);
+            sumoHandler.merge(other, ct);
+        }
 
         NetworkFactory f = network.getFactory();
         LanesFactory lf = lanes.getFactory();
@@ -133,6 +132,10 @@ public class CreateNetwork implements Callable<Integer> {
         Map<String, LinkProperties> linkProperties = LinkProperties.createLinkProperties();
 
         for (SumoNetworkHandler.Edge edge : sumoHandler.edges.values()) {
+
+            // skip railways and unknowns
+            if (edge.type == null || !edge.type.startsWith("highway"))
+                continue;
 
             Link link = f.createLink(Id.createLinkId(edge.id),
                     createNode(network, sumoHandler, edge.from),
@@ -185,6 +188,15 @@ public class CreateNetwork implements Callable<Integer> {
             network.addLink(link);
         }
 
+        Geometry shp = calculateNetworkArea(shapeFile);
+
+        // remove lanes outside survey area
+        for (Node node : network.getNodes().values()) {
+            if (!shp.contains(MGC.coord2Point(node.getCoord()))) {
+                node.getOutLinks().keySet().forEach(l -> lanes.getLanesToLinkAssignments().remove(l));
+                node.getInLinks().keySet().forEach(l -> lanes.getLanesToLinkAssignments().remove(l));
+            }
+        }
 
         // clean up network
         new NetworkCleaner().run(network);

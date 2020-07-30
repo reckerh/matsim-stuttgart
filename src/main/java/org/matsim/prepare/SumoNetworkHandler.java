@@ -1,11 +1,17 @@
 package org.matsim.prepare;
 
 import org.matsim.api.core.v01.Coord;
+import org.matsim.core.utils.geometry.CoordinateTransformation;
 import org.xml.sax.Attributes;
 import org.xml.sax.SAXException;
 import org.xml.sax.helpers.DefaultHandler;
 
 import javax.annotation.Nullable;
+import javax.xml.parsers.ParserConfigurationException;
+import javax.xml.parsers.SAXParser;
+import javax.xml.parsers.SAXParserFactory;
+import java.io.File;
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -45,6 +51,53 @@ class SumoNetworkHandler extends DefaultHandler {
      */
     private Edge tmpEdge = null;
 
+    private SumoNetworkHandler() {
+    }
+
+    /**
+     * Creates a new sumo handler by reading data from xml file.
+     */
+    static SumoNetworkHandler read(File file) throws ParserConfigurationException, SAXException, IOException {
+        SAXParserFactory factory = SAXParserFactory.newInstance();
+        SAXParser saxParser = factory.newSAXParser();
+        SumoNetworkHandler sumoHandler = new SumoNetworkHandler();
+        saxParser.parse(file, sumoHandler);
+        return sumoHandler;
+    }
+
+    /**
+     * Merges another sumo network into this one.
+     * To work properly, this requires that edge und junction ids are the same in both networks.
+     * This function does not clean left over edges, when using this, a network cleaner should be user afterwards.
+     *
+     * @param other other network to merge into this one
+     * @param ct coordinate transformation to apply
+     */
+    void merge(SumoNetworkHandler other, CoordinateTransformation ct) {
+
+        edges.keySet().removeAll(other.edges.keySet());
+        lanes.keySet().removeAll(other.lanes.keySet());
+        junctions.keySet().removeAll(other.junctions.keySet());
+        connections.keySet().removeAll(other.connections.keySet());
+
+        // Re-project to new ct
+        other.edges.values().forEach(e -> e.proj(other.netOffset, netOffset, ct));
+        other.junctions.values().forEach(j -> j.proj(other.netOffset, netOffset, ct));
+
+        edges.putAll(other.edges);
+        lanes.putAll(other.lanes);
+        junctions.putAll(other.junctions);
+
+        // TODO: connections to links outside of other would be cut off
+
+        connections.putAll(other.connections);
+
+    }
+
+    Coord createCoord(double[] xy) {
+        return new Coord(xy[0] - netOffset[0], xy[1] - netOffset[1]);
+    }
+
     @Override
     public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
 
@@ -69,6 +122,10 @@ class SumoNetworkHandler extends DefaultHandler {
 
             case "edge":
 
+                // Internal edges are not needed
+                if ("internal" .equals(attributes.getValue("function")))
+                    break;
+
                 String shape = attributes.getValue("shape");
                 tmpEdge = new Edge(
                         attributes.getValue("id"),
@@ -81,6 +138,11 @@ class SumoNetworkHandler extends DefaultHandler {
                 break;
 
             case "lane":
+
+                // lane of internal edge
+                if (tmpEdge == null)
+                    break;
+
                 Lane lane = new Lane(
                         attributes.getValue("id"),
                         Integer.parseInt(attributes.getValue("index")),
@@ -151,14 +213,10 @@ class SumoNetworkHandler extends DefaultHandler {
 
     @Override
     public void endElement(String uri, String localName, String qName) throws SAXException {
-        if ("edge".equals(qName)) {
+        if ("edge" .equals(qName) && tmpEdge != null) {
             edges.put(tmpEdge.id, tmpEdge);
             tmpEdge = null;
         }
-    }
-
-    public Coord createCoord(double[] xy) {
-        return new Coord(xy[0] - netOffset[0], xy[1] - netOffset[1]);
     }
 
     /**
@@ -206,6 +264,21 @@ class SumoNetworkHandler extends DefaultHandler {
                     ", origTo='" + origTo + '\'' +
                     '}';
         }
+
+
+        /**
+         * Project edge geometry to new coordinate system. (in situ)
+         */
+        private void proj(double[] fromOffset, double[] toOffset, CoordinateTransformation ct) {
+            for (double[] xy : shape) {
+
+                Coord from = new Coord(xy[0] - fromOffset[0], xy[1] - fromOffset[1]);
+                Coord to = ct.transform(from);
+
+                xy[0] = to.getX() + toOffset[0];
+                xy[1] = to.getY() + toOffset[1];
+            }
+        }
     }
 
     static final class Lane {
@@ -235,6 +308,14 @@ class SumoNetworkHandler extends DefaultHandler {
             this.type = type;
             this.incLanes = incLanes;
             this.coord = coord;
+        }
+
+        private void proj(double[] fromOffset, double[] toOffset, CoordinateTransformation ct) {
+            Coord from = new Coord(coord[0] - fromOffset[0], coord[1] - fromOffset[1]);
+            Coord to = ct.transform(from);
+
+            coord[0] = to.getX() + toOffset[0];
+            coord[1] = to.getY() + toOffset[1];
         }
     }
 
@@ -296,8 +377,7 @@ class SumoNetworkHandler extends DefaultHandler {
                     id = id.split("\\|")[0];
 
                 highway = id.substring(8);
-            }
-            else
+            } else
                 highway = null;
 
         }

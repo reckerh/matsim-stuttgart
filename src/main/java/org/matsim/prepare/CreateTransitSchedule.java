@@ -1,6 +1,5 @@
 package org.matsim.prepare;
 
-import org.locationtech.jts.geom.Geometry;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
@@ -10,7 +9,6 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.CoordinateTransformation;
-import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 import org.matsim.pt.transitSchedule.api.TransitScheduleWriter;
 import org.matsim.pt.utils.CreatePseudoNetwork;
@@ -23,6 +21,7 @@ import java.io.File;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
+import java.util.List;
 import java.util.concurrent.Callable;
 
 /**
@@ -37,16 +36,12 @@ import java.util.concurrent.Callable;
 )
 public class CreateTransitSchedule implements Callable<Integer> {
 
-    @CommandLine.Parameters(arity = "1", paramLabel = "INPUT", description = "Input GTFS zip file", defaultValue = "scenarios/input/gtfs.zip")
-    private Path gtfsZipFile;
+    @CommandLine.Parameters(arity = "1..*", paramLabel = "INPUT", description = "Input GTFS zip files")
+    private List<Path> gtfsFiles;
 
     @CommandLine.Option(names = "--network", description = "Base network that will be merged with pt network.",
             defaultValue = "scenarios/input/duesseldorf-network.xml.gz")
     private Path networkFile;
-
-    @CommandLine.Option(names = "--shp", description = "Shape file used for filtering",
-            defaultValue = "../../shared-svn/komodnext/matsim-input-files/duesseldorf-senozon/dilutionArea/dilutionArea.shp")
-    private Path shapeFile;
 
     @CommandLine.Option(names = "--output", description = "Output folder", defaultValue = "scenarios/input")
     private File output;
@@ -57,7 +52,7 @@ public class CreateTransitSchedule implements Callable<Integer> {
     @CommandLine.Option(names = "--target-cs", description = "Target coordinate system of the network", defaultValue = RunDuesseldorfScenario.COORDINATE_SYSTEM)
     private String targetCS;
 
-    @CommandLine.Option(names = "--date", description = "The day for which the schedules will be extracted", defaultValue = "2020-03-09")
+    @CommandLine.Option(names = "--date", description = "The day for which the schedules will be extracted", defaultValue = "2020-06-08")
     private LocalDate date;
 
     public static void main(String[] args) {
@@ -76,22 +71,26 @@ public class CreateTransitSchedule implements Callable<Integer> {
 
         Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
 
-        Geometry shp = CreateNetwork.calculateNetworkArea(shapeFile).buffer(5000);
+        for (Path gtfsFile : gtfsFiles) {
 
-        GtfsConverter converter = GtfsConverter.newBuilder()
-                .setScenario(scenario)
-                .setTransform(ct)
-                .setDate(date)
-                .setFeed(gtfsZipFile)
-                //.setIncludeAgency(agency -> agency.equals("rbg-70"))
-                .setFilterStops(stop -> {
-                    Coord coord = ct.transform(new Coord(stop.stop_lon, stop.stop_lat));
-                    return shp.contains(MGC.coord2Point(coord));
-                })
-                .setMergeStops(true)
-                .build();
+            // TODO: possibly some SPNV could be duplicated
 
-        converter.convert();
+            GtfsConverter converter = GtfsConverter.newBuilder()
+                    .setScenario(scenario)
+                    .setTransform(ct)
+                    .setDate(date)
+                    .setFeed(gtfsFile)
+                    //.setIncludeAgency(agency -> agency.equals("rbg-70"))
+                    .setFilterStops(stop -> {
+                        Coord coord = ct.transform(new Coord(stop.stop_lon, stop.stop_lat));
+                        return coord.getX() >= RunDuesseldorfScenario.X_EXTENT[0] && coord.getX() <= RunDuesseldorfScenario.X_EXTENT[1] &&
+                                coord.getY() >= RunDuesseldorfScenario.Y_EXTENT[0] && coord.getY() <= RunDuesseldorfScenario.Y_EXTENT[1];
+                    })
+                    .setMergeStops(true)
+                    .build();
+
+            converter.convert();
+        }
 
         Network network = Files.exists(networkFile) ? NetworkUtils.readNetwork(networkFile.toString()) : scenario.getNetwork();
 

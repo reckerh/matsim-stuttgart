@@ -11,30 +11,38 @@ $(JAR):
 
 # Required files
 scenarios/input/network.osm.pbf:
-	curl https://download.geofabrik.de/europe/germany/nordrhein-westfalen/duesseldorf-regbez-latest.osm.pbf\
+	curl https://download.geofabrik.de/europe/germany/nordrhein-westfalen-latest.osm.pbf\
 	  -o scenarios/input/network.osm.pbf
 
-scenarios/input/gtfs.zip:
-	curl https://openvrr.de/dataset/c415abd6-3b63-4a1f-8a17-9b77cf5f09ec/resource/52d90889-8b74-4f1e-b3ee-1dc8af70d164/download/2020_03_03_google_transit_verbundweit_inkl_spnv.zip\
-	  -o scenarios/input/gtfs.zip
+scenarios/input/gtfs-vrr.zip:
+	curl https://openvrr.de/dataset/c415abd6-3b63-4a1f-8a17-9b77cf5f09ec/resource/7d1b5433-92c3-4603-851e-728acbb52793/download/2020_06_04_google_transit_verbundweit_inlkl_spnv.zip\
+	  -o $@
+
+scenarios/input/gtfs-vrs.zip:
+	curl https://download.vrsinfo.de/gtfs/GTFS_VRS_mit_SPNV_hID_GlobalID.zip\
+	 -o $@
+
+scenarios/input/gtfs-avv.zip:
+	curl http://opendata.avv.de/current_GTFS/AVV_GTFS_Masten_mit_SPNV_Global-ID.zip\
+	 -o $@
 
 scenarios/input/network.osm: scenarios/input/network.osm.pbf
 
 	$(osmosis) --rb file=$<\
 	 --tf accept-ways highway=motorway,motorway_link,trunk,trunk_link,primary,primary_link,secondary_link,secondary,tertiary,motorway_junction,residential,unclassified,living_street\
-	 --bounding-box top=51.36 left=6.67 bottom=51.11 right=6.94\
-	 --used-node --wb network-detailed.osm.pbf
+	 --bounding-box top=51.65 left=6.00 bottom=50.60 right=7.56\
+	 --used-node --wx $@
 
-	$(osmosis) --rb file=$<\
-	 --tf accept-ways highway=motorway,motorway_link,trunk,trunk_link,primary,primary_link,secondary_link,secondary,tertiary,motorway_junction\
-	 --bounding-box top=51.46 left=6.60 bottom=50.98 right=7.03\
-	 --used-node --wb network-coarse.osm.pbf
+	#$(osmosis) --rb file=$<\
+	# --tf accept-ways highway=motorway,motorway_link,trunk,trunk_link,primary,primary_link,secondary_link,secondary,tertiary,motorway_junction\
+	# --bounding-box top=51.46 left=6.60 bottom=50.98 right=7.03\
+	# --used-node --wb network-coarse.osm.pbf
 
-	$(osmosis) --rb file=network-detailed.osm.pbf --rb file=network-coarse.osm.pbf\
-  	 --merge --wx $@
+	#$(osmosis) --rb file=network-detailed.osm.pbf\
+  	# --merge --wx $@
 
-	rm network-detailed.osm.pbf
-	rm network-coarse.osm.pbf
+	#rm network-detailed.osm.pbf
+	#rm network-coarse.osm.pbf
 
 
 scenarios/input/sumo.net.xml: scenarios/input/network.osm
@@ -50,10 +58,11 @@ scenarios/input/sumo.net.xml: scenarios/input/network.osm
 
 
 scenarios/input/duesseldorf-network.xml.gz: scenarios/input/sumo.net.xml
-	java -jar $(JAR) prepare network $< --output $@
+	java -jar $(JAR) prepare network $< scenarios/input/herzogstraße.net.xml\
+	 --output $@
 
-scenarios/input/duesseldorf-network-with-pt.xml.gz: scenarios/input/duesseldorf-network.xml.gz scenarios/input/gtfs.zip
-	java -jar $(JAR) prepare transit --network $<
+scenarios/input/duesseldorf-network-with-pt.xml.gz: scenarios/input/duesseldorf-network.xml.gz scenarios/input/gtfs-vrs.zip scenarios/input/gtfs-vrr.zip scenarios/input/gtfs-avv.zip
+	java -jar $(JAR) prepare transit --network $< $(filter-out $<,$^)
 
 scenarios/duesseldorf-25pct/input/duesseldorf-25pct.plans.xml.gz:
 	java -jar $(JAR) prepare population\

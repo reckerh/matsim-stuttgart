@@ -9,6 +9,7 @@ import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.prepare.CreateNetwork;
 import org.matsim.prepare.CreateTransitSchedule;
+import org.matsim.prepare.ExtractEvents;
 import org.matsim.prepare.PreparePopulation;
 import picocli.CommandLine;
 
@@ -18,13 +19,22 @@ import java.util.List;
         header = ":: Open Düsseldorf Scenario ::",
         version = "1.0"
 )
-@MATSimApplication.Prepare({CreateNetwork.class, CreateTransitSchedule.class, PreparePopulation.class})
+@MATSimApplication.Prepare({CreateNetwork.class, CreateTransitSchedule.class, PreparePopulation.class, ExtractEvents.class})
 public class RunDuesseldorfScenario extends MATSimApplication {
 
     /**
      * Default coordinate system of the scenario.
      */
     public static final String COORDINATE_SYSTEM = "EPSG:25832";
+
+    /**
+     * 6.00° - 7.56°
+     */
+    public static final double[] X_EXTENT = new double[]{290_000.00, 400_000.0};
+    /**
+     * 50.60 - 51.65°
+     */
+    public static final double[] Y_EXTENT = new double[]{5_610_000.00, 5_722_000.00};
 
     @CommandLine.Option(names = "--otfvis", defaultValue = "false", description = "Enable OTFVis live view")
     private boolean otfvis;
@@ -53,6 +63,9 @@ public class RunDuesseldorfScenario extends MATSimApplication {
             config.planCalcScore().addActivityParams(new ActivityParams("leisure_" + ii + ".0").setTypicalDuration(ii).setOpeningTime(9. * 3600.).setClosingTime(27. * 3600.));
             config.planCalcScore().addActivityParams(new ActivityParams("shopping_" + ii + ".0").setTypicalDuration(ii).setOpeningTime(8. * 3600.).setClosingTime(20. * 3600.));
         }
+
+        // TODO: workaround to not use unnecessary resources for LinkToLink router
+        config.global().setNumberOfThreads(1);
 
         // config.planCalcScore().addActivityParams(new ActivityParams("freight").setTypicalDuration(12. * 3600.));
         config.planCalcScore().addActivityParams(new ActivityParams("car interaction").setTypicalDuration(60));
