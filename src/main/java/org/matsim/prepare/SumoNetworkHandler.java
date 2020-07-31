@@ -78,7 +78,6 @@ class SumoNetworkHandler extends DefaultHandler {
         edges.keySet().removeAll(other.edges.keySet());
         lanes.keySet().removeAll(other.lanes.keySet());
         junctions.keySet().removeAll(other.junctions.keySet());
-        connections.keySet().removeAll(other.connections.keySet());
 
         // Re-project to new ct
         other.edges.values().forEach(e -> e.proj(other.netOffset, netOffset, ct));
@@ -88,10 +87,24 @@ class SumoNetworkHandler extends DefaultHandler {
         lanes.putAll(other.lanes);
         junctions.putAll(other.junctions);
 
-        // TODO: connections to links outside of other would be cut off
+
+        // connections are merged individually
+        for (Map.Entry<String, List<Connection>> e : other.connections.entrySet()) {
+
+            if (connections.containsKey(e.getKey())) {
+
+                // remove connections that point to edges that are also in the other network
+                connections.get(e.getKey()).removeIf(c -> other.edges.containsKey(c.to));
+
+                // add all other connections
+                connections.get(e.getKey()).addAll(e.getValue());
+
+            } else
+                connections.put(e.getKey(), e.getValue());
+
+        }
 
         connections.putAll(other.connections);
-
     }
 
     Coord createCoord(double[] xy) {

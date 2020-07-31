@@ -9,6 +9,7 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.*;
 import org.matsim.contrib.osm.networkReader.LinkProperties;
+import org.matsim.contrib.osm.networkReader.SupersonicOsmNetworkReader;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.algorithms.NetworkCleaner;
 import org.matsim.core.utils.geometry.CoordinateTransformation;
@@ -24,10 +25,7 @@ import javax.xml.parsers.ParserConfigurationException;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
-import java.util.Iterator;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
@@ -59,6 +57,9 @@ public class CreateNetwork implements Callable<Integer> {
             defaultValue = "../../shared-svn/komodnext/matsim-input-files/duesseldorf-senozon/dilutionArea/dilutionArea.shp")
     private Path shapeFile;
 
+    @CommandLine.Option(names = "--from-osm", description = "Import from OSM without lane information", defaultValue = "false")
+    private boolean fromOSM;
+
     public static void main(String[] args) {
         System.exit(new CommandLine(new CreateNetwork()).execute(args));
     }
@@ -74,23 +75,27 @@ public class CreateNetwork implements Callable<Integer> {
     @Override
     public Integer call() throws Exception {
 
-        // CoordinateTransformation ct = TransformationFactory.getCoordinateTransformation(inputCS, targetCS);
+        if (fromOSM) {
 
-        /*
-        Network network = new SupersonicOsmNetworkReader.Builder()
-                .setCoordinateTransformation(ct)
-                .setIncludeLinkAtCoordWithHierarchy((coord, hierachyLevel) ->
-                        hierachyLevel <= LinkProperties.LEVEL_RESIDENTIAL &&
-                                coord.getX() >= RunDuesseldorfScenario.X_EXTENT[0] && coord.getX() <= RunDuesseldorfScenario.X_EXTENT[1] &&
-                                coord.getY() >= RunDuesseldorfScenario.Y_EXTENT[0] && coord.getY() <= RunDuesseldorfScenario.Y_EXTENT[1]
-                )
+            CoordinateTransformation ct = TransformationFactory.getCoordinateTransformation(TransformationFactory.WGS84, RunDuesseldorfScenario.COORDINATE_SYSTEM);
 
-//                .addOverridingLinkProperties("residential", new LinkProperties(9, 1, 30.0 / 3.6, 1500, false))
-                .setAfterLinkCreated((link, osmTags, isReverse) -> link.setAllowedModes(new HashSet<>(Arrays.asList(TransportMode.car, TransportMode.bike, TransportMode.ride))))
-                .build()
-                .read(input);
+            Network network = new SupersonicOsmNetworkReader.Builder()
+                    .setCoordinateTransformation(ct)
+                    .setIncludeLinkAtCoordWithHierarchy((coord, hierachyLevel) ->
+                            hierachyLevel <= LinkProperties.LEVEL_RESIDENTIAL &&
+                                    coord.getX() >= RunDuesseldorfScenario.X_EXTENT[0] && coord.getX() <= RunDuesseldorfScenario.X_EXTENT[1] &&
+                                    coord.getY() >= RunDuesseldorfScenario.Y_EXTENT[0] && coord.getY() <= RunDuesseldorfScenario.Y_EXTENT[1]
+                    )
 
-         */
+                    .setAfterLinkCreated((link, osmTags, isReverse) -> link.setAllowedModes(new HashSet<>(Arrays.asList(TransportMode.car, TransportMode.bike, TransportMode.ride))))
+                    .build()
+                    .read(input.get(0));
+
+            new NetworkWriter(network).write(output.getAbsolutePath());
+
+            return 0;
+        }
+
 
         Network network = NetworkUtils.createNetwork();
         Lanes lanes = LanesUtils.createLanesContainer();
