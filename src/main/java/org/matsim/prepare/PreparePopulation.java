@@ -12,6 +12,8 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 
+import static org.matsim.run.RunDuesseldorfScenario.VERSION;
+
 /**
  * Creates the population from the original input data.
  *
@@ -49,7 +51,7 @@ public class PreparePopulation implements Callable<Integer> {
 
         Scenario scenario = ScenarioUtils.loadScenario(config);
 
-        Path input = output.resolve("duesseldorf-25pct/input");
+        Path input = output.resolve("duesseldorf-" + VERSION + "-25pct/input");
         if (!Files.exists(input))
             Files.createDirectories(input);
 
@@ -60,22 +62,23 @@ public class PreparePopulation implements Callable<Integer> {
 
         splitActivityTypesBasedOnDuration(scenario.getPopulation());
 
-        PopulationUtils.writePopulation(scenario.getPopulation(), input.resolve("duesseldorf-25pct.plans.xml.gz").toString());
+        PopulationUtils.writePopulation(scenario.getPopulation(), input.resolve("duesseldorf-" + VERSION + "-25pct.plans.xml.gz").toString());
 
         // sample 25% to 1%
         PopulationUtils.sampleDown(scenario.getPopulation(), 0.04);
 
-        Path input1pct = output.resolve("duesseldorf-1pct/input");
+        Path input1pct = output.resolve("duesseldorf-" + VERSION + "-1pct/input");
         if (!Files.exists(input1pct))
             Files.createDirectories(input1pct);
 
-        PopulationUtils.writePopulation(scenario.getPopulation(), input1pct.resolve("duesseldorf-1pct.plans.xml.gz").toString());
+        PopulationUtils.writePopulation(scenario.getPopulation(), input1pct.resolve("duesseldorf-" + VERSION + "-1pct.plans.xml.gz").toString());
 
         return 0;
     }
 
     /**
      * Split activities into typical durations to improve value of travel time savings calculation.
+     *
      * @see playground.vsp.openberlinscenario.planmodification.CemdapPopulationTools
      */
     private void splitActivityTypesBasedOnDuration(Population population) {
@@ -111,7 +114,7 @@ public class PreparePopulation implements Callable<Integer> {
     }
 
     /**
-      * See {@link playground.vsp.openberlinscenario.planmodification.CemdapPopulationTools}.
+     * See {@link playground.vsp.openberlinscenario.planmodification.CemdapPopulationTools}.
      */
     private void mergeOvernightActivities(Plan plan) {
 

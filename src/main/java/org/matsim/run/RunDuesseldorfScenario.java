@@ -23,6 +23,11 @@ import java.util.List;
 public class RunDuesseldorfScenario extends MATSimApplication {
 
     /**
+     * Current version identifier.
+     */
+    public static final String VERSION = "v1.0";
+
+    /**
      * Default coordinate system of the scenario.
      */
     public static final String COORDINATE_SYSTEM = "EPSG:25832";
@@ -40,7 +45,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
     private boolean otfvis;
 
     public RunDuesseldorfScenario() {
-        super("scenarios/duesseldorf-1pct/input/duesseldorf-1pct.config.xml");
+        super(String.format("scenarios/duesseldorf-%s-1pct/input/duesseldorf-%s-1pct.config.xml", VERSION, VERSION));
     }
 
     public static void main(String[] args) {

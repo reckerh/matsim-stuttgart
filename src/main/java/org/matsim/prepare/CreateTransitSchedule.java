@@ -24,6 +24,8 @@ import java.time.LocalDate;
 import java.util.List;
 import java.util.concurrent.Callable;
 
+import static org.matsim.run.RunDuesseldorfScenario.VERSION;
+
 /**
  * This script utilizes GTFS2MATSim and creates a pseudo network and vehicles using MATSim standard API functionality.
  *
@@ -39,8 +41,7 @@ public class CreateTransitSchedule implements Callable<Integer> {
     @CommandLine.Parameters(arity = "1..*", paramLabel = "INPUT", description = "Input GTFS zip files")
     private List<Path> gtfsFiles;
 
-    @CommandLine.Option(names = "--network", description = "Base network that will be merged with pt network.",
-            defaultValue = "scenarios/input/duesseldorf-network.xml.gz")
+    @CommandLine.Option(names = "--network", description = "Base network that will be merged with pt network.", required = true)
     private Path networkFile;
 
     @CommandLine.Option(names = "--output", description = "Output folder", defaultValue = "scenarios/input")
@@ -65,9 +66,9 @@ public class CreateTransitSchedule implements Callable<Integer> {
         CoordinateTransformation ct = TransformationFactory.getCoordinateTransformation(inputCS, targetCS);
 
         // Output files
-        File scheduleFile = new File(output, "transitSchedule.xml.gz");
+        File scheduleFile = new File(output, "duesseldorf-" + VERSION + "-transitSchedule.xml.gz");
         File networkPTFile = new File(output, networkFile.getFileName().toString().replace(".xml", "-with-pt.xml"));
-        File transitVehiclesFile = new File(output, "transitVehicles.xml.gz");
+        File transitVehiclesFile = new File(output, "duesseldorf-" + VERSION + "-transitVehicles.xml.gz");
 
         Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
 

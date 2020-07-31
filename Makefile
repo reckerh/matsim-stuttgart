@@ -1,5 +1,6 @@
 
 JAR := matsim-duesseldorf-*.jar
+V := v1.0
 
 export SUMO_HOME := $(abspath ../../sumo-1.6.0/)
 osmosis := osmosis\bin\osmosis
@@ -57,19 +58,19 @@ scenarios/input/sumo.net.xml: scenarios/input/network.osm
 	 --osm-files $< -o=$@
 
 
-scenarios/input/duesseldorf-network.xml.gz: scenarios/input/sumo.net.xml
-	java -jar $(JAR) prepare network $< scenarios/input/herzogstraße.net.xml\
+scenarios/input/duesseldorf-$V-network.xml.gz: scenarios/input/sumo.net.xml
+	java -jar $(JAR) prepare network $< scenarios/input/herzogstrasse.net.xml\
 	 --output $@
 
-scenarios/input/duesseldorf-network-with-pt.xml.gz: scenarios/input/duesseldorf-network.xml.gz scenarios/input/gtfs-vrs.zip scenarios/input/gtfs-vrr.zip scenarios/input/gtfs-avv.zip
+scenarios/input/duesseldorf-$V-network-with-pt.xml.gz: scenarios/input/duesseldorf-$V-network.xml.gz scenarios/input/gtfs-vrs.zip scenarios/input/gtfs-vrr.zip scenarios/input/gtfs-avv.zip
 	java -jar $(JAR) prepare transit --network $< $(filter-out $<,$^)
 
-scenarios/duesseldorf-25pct/input/duesseldorf-25pct.plans.xml.gz:
+scenarios/duesseldorf-$V-25pct/input/duesseldorf-$V-25pct.plans.xml.gz:
 	java -jar $(JAR) prepare population\
 	 --population ../../shared-svn/komodnext/matsim-input-files/duesseldorf-senozon/optimizedPopulation_filtered.xml.gz\
 	 --attributes  ../../shared-svn/komodnext/matsim-input-files/duesseldorf-senozon/personAttributes.xml.gz
 
 
 # Aggregated target
-prepare: scenarios/duesseldorf-25pct/input/duesseldorf-25pct.plans.xml.gz scenarios/input/duesseldorf-network-with-pt.xml.gz
+prepare: scenarios/duesseldorf-$V-25pct/input/duesseldorf-$V-25pct.plans.xml.gz scenarios/input/duesseldorf-$V-network-with-pt.xml.gz
 	echo "Done"

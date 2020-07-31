@@ -31,6 +31,8 @@ import java.util.Set;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
+import static org.matsim.run.RunDuesseldorfScenario.VERSION;
+
 /**
  * Creates the road network layer.
  * <p>
@@ -50,7 +52,7 @@ public class CreateNetwork implements Callable<Integer> {
     @CommandLine.Parameters(arity = "1..*", paramLabel = "INPUT", description = "Input file", defaultValue = "scenarios/input/sumo.net.xml")
     private List<Path> input;
 
-    @CommandLine.Option(names = "--output", description = "Output xml file", defaultValue = "scenarios/input/duesseldorf-network.xml.gz")
+    @CommandLine.Option(names = "--output", description = "Output xml file", defaultValue = "scenarios/input/duesseldorf-" + VERSION + "-network.xml.gz")
     private File output;
 
     @CommandLine.Option(names = "--shp", description = "Shape file used for filtering",
