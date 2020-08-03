@@ -45,7 +45,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
     private boolean otfvis;
 
     public RunDuesseldorfScenario() {
-        super(String.format("scenarios/duesseldorf-%s-1pct/input/duesseldorf-%s-1pct.config.xml", VERSION, VERSION));
+        super(String.format("scenarios/input/duesseldorf-%s-1pct.config.xml", VERSION));
     }
 
     public static void main(String[] args) {

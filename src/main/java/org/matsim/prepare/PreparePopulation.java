@@ -32,7 +32,7 @@ public class PreparePopulation implements Callable<Integer> {
     @CommandLine.Option(names = "--attributes", description = "Input person attributes file", required = true)
     private Path attributes;
 
-    @CommandLine.Option(names = "--output", description = "Output folder", defaultValue = "scenarios")
+    @CommandLine.Option(names = "--output", description = "Output folder", defaultValue = "scenarios/input")
     private Path output;
 
     public static void main(String[] args) {
@@ -51,9 +51,7 @@ public class PreparePopulation implements Callable<Integer> {
 
         Scenario scenario = ScenarioUtils.loadScenario(config);
 
-        Path input = output.resolve("duesseldorf-" + VERSION + "-25pct/input");
-        if (!Files.exists(input))
-            Files.createDirectories(input);
+        Files.createDirectories(output);
 
         // Clear wrong coordinate system
         scenario.getPopulation().getAttributes().clear();
@@ -62,16 +60,12 @@ public class PreparePopulation implements Callable<Integer> {
 
         splitActivityTypesBasedOnDuration(scenario.getPopulation());
 
-        PopulationUtils.writePopulation(scenario.getPopulation(), input.resolve("duesseldorf-" + VERSION + "-25pct.plans.xml.gz").toString());
+        PopulationUtils.writePopulation(scenario.getPopulation(), output.resolve("duesseldorf-" + VERSION + "-25pct.plans.xml.gz").toString());
 
         // sample 25% to 1%
         PopulationUtils.sampleDown(scenario.getPopulation(), 0.04);
 
-        Path input1pct = output.resolve("duesseldorf-" + VERSION + "-1pct/input");
-        if (!Files.exists(input1pct))
-            Files.createDirectories(input1pct);
-
-        PopulationUtils.writePopulation(scenario.getPopulation(), input1pct.resolve("duesseldorf-" + VERSION + "-1pct.plans.xml.gz").toString());
+        PopulationUtils.writePopulation(scenario.getPopulation(), output.resolve("duesseldorf-" + VERSION + "-1pct.plans.xml.gz").toString());
 
         return 0;
     }

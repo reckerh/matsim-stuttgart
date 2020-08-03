@@ -13,6 +13,7 @@ import javax.xml.parsers.SAXParserFactory;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * Parses specific information from sumo network file.
@@ -71,13 +72,18 @@ class SumoNetworkHandler extends DefaultHandler {
      * This function does not clean left over edges, when using this, a network cleaner should be user afterwards.
      *
      * @param other other network to merge into this one
-     * @param ct coordinate transformation to apply
+     * @param ct    coordinate transformation to apply
      */
     void merge(SumoNetworkHandler other, CoordinateTransformation ct) {
 
+        Set<String> notDeadEnd = other.junctions.entrySet().stream()
+                .filter((e) -> !"dead_end" .equals(e.getValue().type))
+                .map(Map.Entry::getKey)
+                .collect(Collectors.toSet());
+
         edges.keySet().removeAll(other.edges.keySet());
         lanes.keySet().removeAll(other.lanes.keySet());
-        junctions.keySet().removeAll(other.junctions.keySet());
+        junctions.keySet().removeAll(notDeadEnd);
 
         // Re-project to new ct
         other.edges.values().forEach(e -> e.proj(other.netOffset, netOffset, ct));
@@ -85,8 +91,13 @@ class SumoNetworkHandler extends DefaultHandler {
 
         edges.putAll(other.edges);
         lanes.putAll(other.lanes);
-        junctions.putAll(other.junctions);
 
+        other.junctions.forEach((k, v) -> {
+            if (notDeadEnd.contains(k))
+                junctions.put(k, v);
+            else
+                junctions.putIfAbsent(k, v);
+        });
 
         // connections are merged individually
         for (Map.Entry<String, List<Connection>> e : other.connections.entrySet()) {

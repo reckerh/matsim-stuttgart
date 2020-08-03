@@ -10,7 +10,7 @@
         <param name="lastIteration" value="1"/>
         <param name="overwriteFiles" value="failIfDirectoryExists"/>
         <param name="runId" value="duesseldorf-1pct"/>
-        <param name="outputDirectory" value="./scenarios/output/output-duesseldorf-1pct"/>
+        <param name="outputDirectory" value="./output/output-duesseldorf-1pct"/>
         <param name="writeEventsInterval" value="50"/>
         <param name="writePlansInterval" value="50"/>
         <param name="enableLinkToLinkRouting" value="true" />
@@ -24,27 +24,26 @@
 
     <module name="network">
         <!-- TODO: point to SVN -->
-        <param name="inputNetworkFile" value="../../input/duesseldorf-network-with-pt.xml.gz"/>
-        <param name="laneDefinitionsFile" value="../../input/duesseldorf-network-lanes.xml.gz" />
+        <param name="inputNetworkFile" value="./duesseldorf-v1.0-network-with-pt.xml.gz"/>
+        <param name="laneDefinitionsFile" value="./duesseldorf-v1.0-network-lanes.xml.gz" />
     </module>
 
     <module name="plans">
         <param name="inputPlansFile"
-               value="duesseldorf-1pct.plans.xml.gz"/>
+               value="./duesseldorf-v1.0-1pct.plans.xml.gz"/>
         <param name="removingUnnecessaryPlanAttributes" value="true"/>
     </module>
 
     <module name="vehicles">
-        <param name="vehiclesFile"
-               value="../../input/vehicle-types.xml"/>
+        <param name="vehiclesFile" value="./vehicle-types.xml"/>
     </module>
 
     <!-- TODO link to SVN -->
     <module name="transit">
         <param name="transitScheduleFile"
-               value="../../input/transitSchedule.xml.gz"/>
+               value="./duesseldorf-v1.0-transitSchedule.xml.gz"/>
         <param name="vehiclesFile"
-               value="../../input/transitVehicles.xml.gz"/>
+               value="./duesseldorf-v1.0-transitVehicles.xml.gz"/>
         <param name="useTransit" value="true"/>
     </module>
 
