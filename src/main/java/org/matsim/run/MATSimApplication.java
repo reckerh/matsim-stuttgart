@@ -65,6 +65,9 @@ public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaul
     @CommandLine.Parameters(arity = "1", paramLabel = "CONFIG", description = "Scenario config used for the run.")
     protected File scenario;
 
+    @CommandLine.Option(names = "--iterations", description = "Overwrite number of iterations (if greater than 0).", defaultValue = "0")
+    protected int iterations;
+
     /**
      * Path to the default scenario config, if applicable.
      */
@@ -106,6 +109,9 @@ public class MATSimApplication implements Callable<Integer>, CommandLine.IDefaul
         final Controler controler = new Controler(scenario);
 
         prepareControler(controler);
+
+        if (iterations > 0)
+            config.controler().setLastIteration(iterations);
 
         controler.run();
         return 0;

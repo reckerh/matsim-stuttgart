@@ -17,7 +17,7 @@ import java.util.List;
 
 @CommandLine.Command(
         header = ":: Open Düsseldorf Scenario ::",
-        version = "1.0"
+        version = RunDuesseldorfScenario.VERSION
 )
 @MATSimApplication.Prepare({CreateNetwork.class, CreateTransitSchedule.class, PreparePopulation.class, ExtractEvents.class})
 public class RunDuesseldorfScenario extends MATSimApplication {
@@ -80,6 +80,9 @@ public class RunDuesseldorfScenario extends MATSimApplication {
             config.plans().setInputFile(config.plans().getInputFile().replace("-1pct", "-25pct"));
             config.controler().setRunId(config.controler().getRunId().replace("-1pct", "-25pct"));
             config.controler().setOutputDirectory(config.controler().getOutputDirectory().replace("-1pct", "-25pct"));
+
+            config.qsim().setFlowCapFactor(0.25);
+            config.qsim().setStorageCapFactor(0.25);
         }
 
         if (noLanes) {
