@@ -1,6 +1,5 @@
 #!/bin/bash --login
 #$ -l h_rt=86400
-#$ -o ./logfile_$JOB_NAME_$TASK_ID.log
 #$ -j y
 #$ -m a
 #$ -cwd

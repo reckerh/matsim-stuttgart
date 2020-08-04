@@ -44,6 +44,12 @@ public class RunDuesseldorfScenario extends MATSimApplication {
     @CommandLine.Option(names = "--otfvis", defaultValue = "false", description = "Enable OTFVis live view")
     private boolean otfvis;
 
+    @CommandLine.Option(names = {"--prod", "--25pct"}, defaultValue = "false", description = "Use the 25pct scenario")
+    private boolean prod;
+
+    @CommandLine.Option(names = {"--no-lanes"}, defaultValue = "false", description = "Deactivate the use of lane information")
+    private boolean noLanes;
+
     public RunDuesseldorfScenario() {
         super(String.format("scenarios/input/duesseldorf-%s-1pct.config.xml", VERSION));
     }
@@ -69,8 +75,29 @@ public class RunDuesseldorfScenario extends MATSimApplication {
             config.planCalcScore().addActivityParams(new ActivityParams("shopping_" + ii + ".0").setTypicalDuration(ii).setOpeningTime(8. * 3600.).setClosingTime(20. * 3600.));
         }
 
-        // TODO: workaround to not use unnecessary resources for LinkToLink router
-        config.global().setNumberOfThreads(1);
+        // Config changes for 25pct scenario
+        if (prod) {
+            config.plans().setInputFile(config.plans().getInputFile().replace("-1pct", "-25pct"));
+            config.controler().setRunId(config.controler().getRunId().replace("-1pct", "-25pct"));
+            config.controler().setOutputDirectory(config.controler().getOutputDirectory().replace("-1pct", "-25pct"));
+        }
+
+        if (noLanes) {
+
+            config.controler().setLinkToLinkRoutingEnabled(false);
+            config.network().setLaneDefinitionsFile(null);
+            config.travelTimeCalculator().setCalculateLinkToLinkTravelTimes(false);
+
+            config.controler().setRunId(config.controler().getRunId() + "-no-lanes");
+            config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "-no-lanes");
+
+
+        } else {
+
+            // TODO: workaround to not use unnecessary resources for LinkToLink router
+            config.global().setNumberOfThreads(1);
+
+        }
 
         // config.planCalcScore().addActivityParams(new ActivityParams("freight").setTypicalDuration(12. * 3600.));
         config.planCalcScore().addActivityParams(new ActivityParams("car interaction").setTypicalDuration(60));
