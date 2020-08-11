@@ -29,6 +29,7 @@ import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
 
+import static org.matsim.lanes.LanesUtils.calculateAndSetCapacity;
 import static org.matsim.run.RunDuesseldorfScenario.VERSION;
 
 /**
@@ -102,6 +103,8 @@ public class CreateNetwork implements Callable<Integer> {
 
         convert(network, lanes);
 
+        calculateLaneCapacities(network, lanes);
+
         // This needs to run without errors, otherwise network is broken
         network.getLinks().values().forEach(link -> {
             LanesToLinkAssignment l2l = lanes.getLanesToLinkAssignments().get(link.getId());
@@ -109,11 +112,23 @@ public class CreateNetwork implements Callable<Integer> {
                 LanesUtils.createLanes(link, l2l);
         });
 
-
         new NetworkWriter(network).write(output.getAbsolutePath());
         new LanesWriter(lanes).write(output.getAbsolutePath().replace(".xml", "-lanes.xml"));
 
         return 0;
+    }
+
+    /**
+     * Calculates lane capacities, according to {@link LanesUtils}.
+     */
+    private void calculateLaneCapacities(Network network, Lanes lanes) {
+        for (LanesToLinkAssignment l2l : lanes.getLanesToLinkAssignments().values()){
+            Link link = network.getLinks().get(l2l.getLinkId());
+            for (Lane lane : l2l.getLanes().values()){
+                calculateAndSetCapacity(lane,
+                        lane.getToLaneIds() == null || lane.getToLaneIds().isEmpty(), link, network);
+            }
+        }
     }
 
     private void convert(Network network, Lanes lanes) throws ParserConfigurationException, SAXException, IOException {

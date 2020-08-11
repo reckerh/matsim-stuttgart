@@ -2,6 +2,7 @@ package org.matsim.prepare;
 
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
+import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.events.Event;
 import org.matsim.api.core.v01.events.LinkEnterEvent;
 import org.matsim.api.core.v01.events.LinkLeaveEvent;
@@ -13,9 +14,10 @@ import org.matsim.core.api.experimental.events.LaneLeaveEvent;
 import org.matsim.core.api.experimental.events.handler.LaneEnterEventHandler;
 import org.matsim.core.api.experimental.events.handler.LaneLeaveEventHandler;
 import org.matsim.core.events.EventsManagerImpl;
-import org.matsim.core.events.EventsUtils;
+import org.matsim.core.events.MatsimEventsReader;
 import org.matsim.core.events.algorithms.EventWriterXML;
 import org.matsim.core.utils.io.IOUtils;
+import org.matsim.lanes.Lane;
 import picocli.CommandLine;
 
 import java.nio.file.Files;
@@ -45,6 +47,9 @@ public class ExtractEvents implements Callable<Integer>, LinkEnterEventHandler, 
     @CommandLine.Option(names = "--output", description = "Path to output file", required = true)
     private Path output;
 
+    @CommandLine.Option(names = "--no-lanes", description = "Don't parse lane events", defaultValue = "false")
+    private boolean noLanes;
+
     private SumoNetworkHandler sumo;
     private List<Event> events;
 
@@ -58,12 +63,34 @@ public class ExtractEvents implements Callable<Integer>, LinkEnterEventHandler, 
         sumo = SumoNetworkHandler.read(network.toFile());
         events = new ArrayList<>();
 
-        EventsManager manager =  new EventsManagerImpl();
+        EventsManager manager = new EventsManagerImpl();
         manager.addHandler(this);
         manager.initProcessing();
-        EventsUtils.readEvents(manager, input.toString());
-        manager.finishProcessing();
 
+        MatsimEventsReader reader = new MatsimEventsReader(manager);
+
+        if (!noLanes) {
+            reader.addCustomEventMapper(LaneLeaveEvent.EVENT_TYPE, event ->
+                    new LaneLeaveEvent(
+                            event.getTime(),
+                            Id.createVehicleId(event.getAttributes().get(LaneLeaveEvent.ATTRIBUTE_VEHICLE)),
+                            Id.createLinkId(event.getAttributes().get(LaneLeaveEvent.ATTRIBUTE_LINK)),
+                            Id.create(event.getAttributes().get(LaneLeaveEvent.ATTRIBUTE_LANE), Lane.class)
+                    )
+            );
+
+            reader.addCustomEventMapper(LaneEnterEvent.EVENT_TYPE, event ->
+                    new LaneEnterEvent(
+                            event.getTime(),
+                            Id.createVehicleId(event.getAttributes().get(LaneEnterEvent.ATTRIBUTE_VEHICLE)),
+                            Id.createLinkId(event.getAttributes().get(LaneEnterEvent.ATTRIBUTE_LINK)),
+                            Id.create(event.getAttributes().get(LaneEnterEvent.ATTRIBUTE_LANE), Lane.class)
+                    )
+            );
+        }
+
+        reader.readFile(input.toString());
+        manager.finishProcessing();
 
         log.info("Filtered {} events", events.size());
 
