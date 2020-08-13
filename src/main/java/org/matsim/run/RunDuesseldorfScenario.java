@@ -3,6 +3,7 @@ package org.matsim.run;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import org.matsim.contrib.signals.otfvis.OTFVisWithSignalsLiveModule;
 import org.matsim.core.config.Config;
+import org.matsim.core.config.groups.ControlerConfigGroup;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ActivityParams;
 import org.matsim.core.config.groups.PlansConfigGroup;
 import org.matsim.core.controler.AbstractModule;
@@ -94,11 +95,7 @@ public class RunDuesseldorfScenario extends MATSimApplication {
             config.controler().setRunId(config.controler().getRunId() + "-no-lanes");
             config.controler().setOutputDirectory(config.controler().getOutputDirectory() + "-no-lanes");
 
-
-        } else {
-
-            // TODO: workaround to not use unnecessary resources for LinkToLink router
-            config.global().setNumberOfThreads(1);
+            config.controler().setRoutingAlgorithmType(ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks);
 
         }
 
