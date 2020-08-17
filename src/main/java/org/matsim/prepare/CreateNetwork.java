@@ -22,8 +22,10 @@ import org.xml.sax.SAXException;
 import picocli.CommandLine;
 
 import javax.xml.parsers.ParserConfigurationException;
+import java.io.BufferedWriter;
 import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Callable;
@@ -122,9 +124,9 @@ public class CreateNetwork implements Callable<Integer> {
      * Calculates lane capacities, according to {@link LanesUtils}.
      */
     private void calculateLaneCapacities(Network network, Lanes lanes) {
-        for (LanesToLinkAssignment l2l : lanes.getLanesToLinkAssignments().values()){
+        for (LanesToLinkAssignment l2l : lanes.getLanesToLinkAssignments().values()) {
             Link link = network.getLinks().get(l2l.getLinkId());
-            for (Lane lane : l2l.getLanes().values()){
+            for (Lane lane : l2l.getLanes().values()) {
                 calculateAndSetCapacity(lane,
                         lane.getToLaneIds() == null || lane.getToLaneIds().isEmpty(), link, network);
             }
@@ -144,6 +146,9 @@ public class CreateNetwork implements Callable<Integer> {
 
             File file = input.get(i).toFile();
             SumoNetworkHandler other = SumoNetworkHandler.read(file);
+
+            writeInductionLoops(file, other);
+
             log.info("Merging {} edges with {} junctions from {} into base network", other.edges.size(), other.junctions.size(), file);
             sumoHandler.merge(other, ct);
         }
@@ -279,6 +284,31 @@ public class CreateNetwork implements Callable<Integer> {
         }
 
         log.info("Removed {} superfluous lanes, total={}", removed, lanes.getLanesToLinkAssignments().size());
+    }
+
+    private void writeInductionLoops(File file, SumoNetworkHandler other) throws IOException {
+        Path loops = Path.of(file.getAbsolutePath().replace(".xml", "_loops.xml"));
+        BufferedWriter writer = Files.newBufferedWriter(loops);
+
+        log.info("Writing induction loop definition {}", loops);
+        writer.write("<additional>\n");
+
+        // ignore duplicated
+        Set<String> written = new HashSet<>();
+
+        for (SumoNetworkHandler.Edge edge : other.edges.values()) {
+            for (SumoNetworkHandler.Lane lane : edge.lanes) {
+                if (!written.contains(lane.id)) {
+                    writer.write(String.format("    <inductionLoop id=\"mLoop_%s\" lane=\"%s\" pos=\"-0.1\" freq=\"900\" file=\"counts.xml\"/>\n", lane.id, lane.id));
+                    written.add(lane.id);
+                }
+
+            }
+        }
+
+        writer.write("</additional>");
+
+        writer.close();
     }
 
     private Node createNode(Network network, SumoNetworkHandler sumoHandler, String nodeId) {
