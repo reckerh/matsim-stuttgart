@@ -64,8 +64,11 @@ public class PreparePopulation implements Callable<Integer> {
 
         // sample 25% to 1%
         PopulationUtils.sampleDown(scenario.getPopulation(), 0.04);
-
         PopulationUtils.writePopulation(scenario.getPopulation(), output.resolve("duesseldorf-" + VERSION + "-1pct.plans.xml.gz").toString());
+
+        // sample 25% to 10%
+        PopulationUtils.sampleDown(scenario.getPopulation(), 0.4);
+        PopulationUtils.writePopulation(scenario.getPopulation(), output.resolve("duesseldorf-" + VERSION + "-10pct.plans.xml.gz").toString());
 
         return 0;
     }
