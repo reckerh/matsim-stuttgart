@@ -82,7 +82,7 @@ public class CreateTransitSchedule implements Callable<Integer> {
                     .setDate(date)
                     .setFeed(gtfsFile)
                     //.setIncludeAgency(agency -> agency.equals("rbg-70"))
-                    .setFilterStops(stop -> {
+                    .setIncludeStop(stop -> {
                         Coord coord = ct.transform(new Coord(stop.stop_lon, stop.stop_lat));
                         return coord.getX() >= RunDuesseldorfScenario.X_EXTENT[0] && coord.getX() <= RunDuesseldorfScenario.X_EXTENT[1] &&
                                 coord.getY() >= RunDuesseldorfScenario.Y_EXTENT[0] && coord.getY() <= RunDuesseldorfScenario.Y_EXTENT[1];
