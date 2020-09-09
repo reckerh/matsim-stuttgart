@@ -30,6 +30,8 @@ import picocli.CommandLine;
 public class PreparePopulation implements Callable<Integer> {
 
     private static final String VERSION = "v1.0";
+    
+    // --population ../shared-svn/projects/matsim-stuttgart/stuttgart-v1.0/input/optimizedPopulation_withoutNetworkInfo.xml.gz --attributes ../shared-svn/projects/matsim-stuttgart/stuttgart-v0.0-snz-original/optimizedPersonAttributes.xml.gz --output ../shared-svn/projects/matsim-stuttgart/stuttgart-v1.0/input/
 
 	@CommandLine.Option(names = "--population", description = "Input original population file", required = true)
     private Path population;
