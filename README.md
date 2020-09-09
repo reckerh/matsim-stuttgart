@@ -1,8 +1,8 @@
-# The MATSim Open Düsseldorf Scenario
+# The MATSim (Open) Stuttgart Scenario
 
 ### About this project
 
-This repository provides an open MATSim transport model for Düsseldorf, provided by the [Transport Systems Planning and Transport Telematics group](https://www.vsp.tu-berlin.de) of [Technische Universität Berlin](http://www.tu-berlin.de).
+This repository provides a partly open MATSim transport model for Stuttgart, provided by the [Transport Systems Planning and Transport Telematics group](https://www.vsp.tu-berlin.de) of [Technische Universität Berlin](http://www.tu-berlin.de).
 
 
 > Currently the model is work in progress and no release version is available.
@@ -18,6 +18,6 @@ The **MATSim input files, output files, analysis data and visualizations** are l
 
 ### Note
 
-Handling of large files within git is not without problems (git lfs files are not included in the zip download; we have to pay; ...).  In consequence, large files, both on the input and on the output side, reside at https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/duesseldorf .  
+Handling of large files within git is not without problems (git lfs files are not included in the zip download; we have to pay; ...).  In consequence, large files, both on the input and on the output side, reside at https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/stuttgart .  
 
 ----
