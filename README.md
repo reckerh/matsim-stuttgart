@@ -1,4 +1,4 @@
-# The MATSim (Open) Stuttgart Scenario
+# The MATSim Stuttgart Scenario
 
 ### About this project
 

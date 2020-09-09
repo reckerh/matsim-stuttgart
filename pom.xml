@@ -3,11 +3,11 @@
 
     <modelVersion>4.0.0</modelVersion>
     <groupId>com.github.matsim-scenarios</groupId>
-    <artifactId>matsim-duesseldorf</artifactId>
+    <artifactId>matsim-stuttgart</artifactId>
     <version>1.0-SNAPSHOT</version>
 
-    <name>MATSim Open Düsseldorf scenario project</name>
-    <description>MATSim Open Düsseldorf scenario project</description>
+    <name>MATSim Stuttgart scenario project</name>
+    <description>MATSim Stuttgart scenario project</description>
 
     <properties>
         <!-- <matsim.version>12.0</matsim.version> -->

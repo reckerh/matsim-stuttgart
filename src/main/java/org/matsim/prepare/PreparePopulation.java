@@ -1,18 +1,21 @@
 package org.matsim.prepare;
 
-import org.matsim.api.core.v01.Scenario;
-import org.matsim.api.core.v01.population.*;
-import org.matsim.core.config.Config;
-import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.population.PopulationUtils;
-import org.matsim.core.scenario.ScenarioUtils;
-import picocli.CommandLine;
-
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.concurrent.Callable;
 
-import static org.matsim.run.RunDuesseldorfScenario.VERSION;
+import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.population.Activity;
+import org.matsim.api.core.v01.population.Person;
+import org.matsim.api.core.v01.population.Plan;
+import org.matsim.api.core.v01.population.PlanElement;
+import org.matsim.api.core.v01.population.Population;
+import org.matsim.core.config.Config;
+import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.population.PopulationUtils;
+import org.matsim.core.scenario.ScenarioUtils;
+
+import picocli.CommandLine;
 
 /**
  * Creates the population from the original input data.
@@ -26,7 +29,9 @@ import static org.matsim.run.RunDuesseldorfScenario.VERSION;
 )
 public class PreparePopulation implements Callable<Integer> {
 
-    @CommandLine.Option(names = "--population", description = "Input original population file", required = true)
+    private static final String VERSION = "v1.0";
+
+	@CommandLine.Option(names = "--population", description = "Input original population file", required = true)
     private Path population;
 
     @CommandLine.Option(names = "--attributes", description = "Input person attributes file", required = true)
@@ -60,15 +65,15 @@ public class PreparePopulation implements Callable<Integer> {
 
         splitActivityTypesBasedOnDuration(scenario.getPopulation());
 
-        PopulationUtils.writePopulation(scenario.getPopulation(), output.resolve("duesseldorf-" + VERSION + "-25pct.plans.xml.gz").toString());
+        PopulationUtils.writePopulation(scenario.getPopulation(), output.resolve("stuttgart-" + VERSION + "-25pct.plans.xml.gz").toString());
 
         // sample 25% to 10%
         PopulationUtils.sampleDown(scenario.getPopulation(), 0.4);
-        PopulationUtils.writePopulation(scenario.getPopulation(), output.resolve("duesseldorf-" + VERSION + "-10pct.plans.xml.gz").toString());
+        PopulationUtils.writePopulation(scenario.getPopulation(), output.resolve("stuttgart-" + VERSION + "-10pct.plans.xml.gz").toString());
 
         // sample 10% to 1%
         PopulationUtils.sampleDown(scenario.getPopulation(), 0.1);
-        PopulationUtils.writePopulation(scenario.getPopulation(), output.resolve("duesseldorf-" + VERSION + "-1pct.plans.xml.gz").toString());
+        PopulationUtils.writePopulation(scenario.getPopulation(), output.resolve("stuttgart-" + VERSION + "-1pct.plans.xml.gz").toString());
 
 
         return 0;
