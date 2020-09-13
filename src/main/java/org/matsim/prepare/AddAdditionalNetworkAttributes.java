@@ -83,7 +83,10 @@ public class AddAdditionalNetworkAttributes {
         network.getLinks().values().stream()
                 .forEach(link -> {
 
+
+                    // Which coord is returned? => start node, end node? center of the link?
                     Coord coord = link.getCoord();
+
                     Point point = MGC.coord2Point(coord);
 
                     Double dailyPCost = 0.;
