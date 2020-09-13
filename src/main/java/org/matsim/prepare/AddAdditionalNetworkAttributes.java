@@ -78,7 +78,7 @@ public class AddAdditionalNetworkAttributes {
 
     private void mergeNetworkLinksWithParkingAttributes(Network network, Collection<SimpleFeature> features){
 
-        // Don't forget automatic coordinate detection & transformation ?
+        // Don't forget automatic crs detection & transformation ?
 
         network.getLinks().values().stream()
                 .forEach(link -> {
