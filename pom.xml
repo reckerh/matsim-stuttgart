@@ -11,7 +11,11 @@
 
     <properties>
         <!-- <matsim.version>12.0</matsim.version> -->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+
         <matsim.version>13.0-SNAPSHOT</matsim.version>
+        <geotools.version>25-SNAPSHOT</geotools.version>
+
     </properties>
 
     <repositories>
@@ -119,6 +123,7 @@
             <scope>test</scope>
         </dependency>
 
+
         <dependency>
             <!--MATSim test infrastructure.  Not transitive.-->
             <groupId>org.matsim</groupId>
@@ -142,7 +147,7 @@
 
         <dependency>
             <groupId>com.github.matsim-org</groupId>
-            <artifactId>gtfs2matsim</artifactId>
+            <artifactId>GTFS2MATSim</artifactId>
             <version>12.2</version>
             <exclusions>
                 <exclusion>
@@ -151,6 +156,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
+
         <dependency>
             <groupId>org.matsim.contrib</groupId>
             <artifactId>drt</artifactId>
@@ -179,6 +185,12 @@
         </dependency>
 
         <dependency>
+            <groupId>com.mapbox.mapboxsdk</groupId>
+            <artifactId>mapbox-sdk-turf</artifactId>
+            <version>5.5.0</version>
+        </dependency>
+
+        <dependency>
             <!-- This is the matsim "freight" contrib: -->
             <groupId>org.matsim.contrib</groupId>
             <artifactId>freight</artifactId>
@@ -197,6 +209,9 @@
             </exclusions>
 
         </dependency>
+
+
+
     </dependencies>
 
     <build>
@@ -257,7 +272,7 @@
                 </executions>
             </plugin>
 
-            <plugin>  <!-- Create sources.jar -->
+            <!--plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-source-plugin</artifactId>
                 <executions>
@@ -268,7 +283,8 @@
                         </goals>
                     </execution>
                 </executions>
-            </plugin>
+            </plugin>< -->
+
         </plugins>
     </build>
 
