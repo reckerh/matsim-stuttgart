@@ -191,6 +191,13 @@
         </dependency>
 
         <dependency>
+            <groupId>org.projectlombok</groupId>
+            <artifactId>lombok</artifactId>
+            <version>1.18.12</version>
+            <scope>provided</scope>
+        </dependency>
+
+        <dependency>
             <!-- This is the matsim "freight" contrib: -->
             <groupId>org.matsim.contrib</groupId>
             <artifactId>freight</artifactId>
