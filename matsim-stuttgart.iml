@@ -9,7 +9,6 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="library" name="Maven: com.github.matsim-org:GTFS2MATSim:12.2" level="project" />
     <orderEntry type="library" name="Maven: org.matsim:matsim:13.0-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: org.apache.logging.log4j:log4j-api:2.13.3" level="project" />
     <orderEntry type="library" name="Maven: org.apache.logging.log4j:log4j-core:2.13.3" level="project" />
@@ -87,7 +86,6 @@
     <orderEntry type="library" name="Maven: org.matsim.contrib:emissions:13.0-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: org.matsim.contrib:accidents:13.0-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: org.geotools.jdbc:gt-jdbc-postgis:21.5" level="project" />
-    <orderEntry type="library" name="Maven: org.postgresql:postgresql:42.2.5" level="project" />
     <orderEntry type="library" name="Maven: org.geotools:gt-jdbc:21.5" level="project" />
     <orderEntry type="library" name="Maven: commons-dbcp:commons-dbcp:1.4" level="project" />
     <orderEntry type="library" name="Maven: org.matsim.contrib:vsp:13.0-SNAPSHOT" level="project" />
@@ -242,6 +240,7 @@
     <orderEntry type="library" name="Maven: com.mapbox.mapboxsdk:mapbox-sdk-geojson:5.5.0" level="project" />
     <orderEntry type="library" name="Maven: com.google.code.gson:gson:2.8.6" level="project" />
     <orderEntry type="library" scope="PROVIDED" name="Maven: org.projectlombok:lombok:1.18.12" level="project" />
+    <orderEntry type="library" name="Maven: org.postgresql:postgresql:42.2.5" level="project" />
     <orderEntry type="library" name="Maven: org.matsim.contrib:freight:13.0-SNAPSHOT" level="project" />
     <orderEntry type="library" name="Maven: com.graphhopper:jsprit-core:1.8" level="project" />
     <orderEntry type="library" name="Maven: com.graphhopper:jsprit-io:1.8" level="project" />
