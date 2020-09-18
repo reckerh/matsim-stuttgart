@@ -4,6 +4,8 @@ import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import lombok.extern.log4j.Log4j2;
+import org.apache.commons.compress.utils.FileNameUtils;
+import org.apache.log4j.Logger;
 import org.matsim.Utils;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -11,7 +13,6 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
 import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
@@ -21,35 +22,43 @@ import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehiclesFactory;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
+
 
 @Log4j2
-public class RunBaseCase {
+public class RunStuttgartBaseCase {
 
-
+    private static final Logger log = Logger.getLogger(RunStuttgartBaseCase.class );
+    private static final String outputBasePath = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/output/";
 
     public static void main(String[] args) {
 
-        // Load Config, controler and scenario
-        Config config = loadConfig(args);
-        Scenario scenario = loadScenario(config);
-        Controler controler = loadControler(scenario);
+        // Show program arguments
+        for (String arg : args) {
+            log.info( arg );
+        }
 
+        // Prepare config, controler and scenario
+        Config config = prepareConfig( args );
+        Scenario scenario = prepareScenario( config );
+        Controler controler = prepareControler( scenario );
 
+        // Run controler
         controler.run();
+
     }
 
 
-    public static Config loadConfig(String[] args, ConfigGroup... modules) {
+    public static Config prepareConfig(String[] args, ConfigGroup... modules) {
 
 
         OutputDirectoryLogging.catchLogEntries();
         Config config = ConfigUtils.loadConfig(args, modules);
 
         // -- CONTROLER --
-        // Set Output directory
-        String basePath = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_Output/";
-        String outputDirectoryPath = Utils.setRunOutputDirectory(basePath);
-        config.controler().setOutputDirectory(outputDirectoryPath);
+        // Set Output directory according to config name
+        config.controler().setOutputDirectory(outputBasePath + setOutputFolder(args[0]) + "/");
 
         // Overwrite file settings if exist
         config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
@@ -69,7 +78,7 @@ public class RunBaseCase {
         config.qsim().setUsePersonIdForMissingVehicleId(false);
 
 
-        // Was ist das?
+        // -- SUB TOUR MODE CHOICE --
         config.subtourModeChoice().setProbaForRandomSingleTripMode(0.5);
 
 
@@ -89,10 +98,10 @@ public class RunBaseCase {
         Utils.createTypicalDurations("educ_secondary", minDuration, maxDuration, difference).forEach(params -> config.planCalcScore().addActivityParams(params));
         Utils.createTypicalDurations("educ_higher", minDuration, maxDuration, difference).forEach(params -> config.planCalcScore().addActivityParams(params));
 
-        // Scoring for pt interaction
+/*        // Scoring for pt interaction
         final PlanCalcScoreConfigGroup.ActivityParams params = new PlanCalcScoreConfigGroup.ActivityParams("pt interaction_86400.0");
         params.setScoringThisActivityAtAll(false);
-        config.planCalcScore().addActivityParams(params);
+        config.planCalcScore().addActivityParams(params);*/
 
 
         // -- SWISS RAIL RAPTOR --
@@ -103,15 +112,13 @@ public class RunBaseCase {
     }
 
 
-    public static Scenario loadScenario(Config config) {
+    public static Scenario prepareScenario(Config config) {
 
-        Scenario scenario = ScenarioUtils.loadScenario(config);
-
-        return scenario;
+        return ScenarioUtils.loadScenario(config);
     }
 
 
-    public static Controler loadControler(Scenario scenario) {
+    public static Controler prepareControler(Scenario scenario) {
 
         Controler controler = new Controler(scenario);
         if (!controler.getConfig().transit().isUsingTransitInMobsim())
@@ -167,14 +174,20 @@ public class RunBaseCase {
         paramSetAEBike.setSearchExtensionRadius(2000);
         paramSetAEBike.setMode(TransportMode.bike);
         paramSetAEBike.setMaxRadius(10000);
-
-        // Hier nur solche eintragen, die Bike&Ride haben.
+        // Later define such stops that have bike & ride facilities here
         // paramSetWalk.setStopFilterAttribute(null);
 
         configRaptor.addIntermodalAccessEgress(paramSetAEBike);
 
 
         return configRaptor;
+    }
+
+    private static String setOutputFolder(String configPath){
+
+        Path path = Paths.get( configPath );
+        return FileNameUtils.getBaseName(path.getFileName().toString());
+
     }
 
 }
