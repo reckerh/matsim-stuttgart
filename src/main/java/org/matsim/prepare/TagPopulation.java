@@ -36,8 +36,10 @@ public class TagPopulation {
         if (args.length > 0) {
             inputPlans = args[0];
             outputPlans = args[1];
+            shapeFile = args[2];
             log.info("input plans: " + inputPlans);
             log.info("output plans: " + outputPlans);
+            log.info("county shape file: " + shapeFile);
         }
 
         TagPopulation tagger = new TagPopulation();
@@ -79,7 +81,7 @@ public class TagPopulation {
     private String findHomeAgs(Person person, Collection<SimpleFeature> features) {
 
         String homeAgs = "";
-        Boolean homeInShape = false;
+        Boolean homeInShapes = false;
 
         Activity homeActivity = (Activity) person.getSelectedPlan().getPlanElements().get(getHomeActivity(person));
         Coord homeCoord = homeActivity.getCoord();
@@ -94,14 +96,14 @@ public class TagPopulation {
 
                 if (geometry.contains(point)) {
                     homeAgs = feature.getAttribute("ags").toString();
-                    homeInShape = true;
+                    homeInShapes = true;
                 }
 
             }
 
         }
 
-        if (! homeInShape) {
+        if (! homeInShapes) {
 
             // There are several home locations outside the shape File boundaries
             // as for performance reasons the shape File was reduced to Stuttgart Metropolitan Area

@@ -183,6 +183,7 @@ public class RunStuttgartBaseCase {
         return configRaptor;
     }
 
+
     private static String setOutputFolder(String configPath){
 
         Path path = Paths.get( configPath );
