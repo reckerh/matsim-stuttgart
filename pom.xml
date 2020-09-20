@@ -49,9 +49,15 @@
             <id>topobyte</id>
             <url>http://mvn.topobyte.de</url>
         </repository>
+
         <repository>
             <id>slimjars</id>
             <url>http://mvn.slimjars.com</url>
+        </repository>
+
+        <repository>
+            <id>SBB</id>
+            <url>https://schweizerischebundesbahnen.bintray.com/simba.mvn</url>
         </repository>
 
     </repositories>
@@ -201,6 +207,12 @@
             <groupId>org.postgresql</groupId>
             <artifactId>postgresql</artifactId>
             <version>42.2.5</version>
+        </dependency>
+
+        <dependency>
+            <groupId>ch.sbb</groupId>
+            <artifactId>matsim-sbb-extensions</artifactId>
+            <version>12.11</version>
         </dependency>
 
         <dependency>
