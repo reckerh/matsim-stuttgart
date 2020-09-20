@@ -1,8 +1,12 @@
 package org.matsim.run;
 
+import ch.sbb.matsim.config.SBBTransitConfigGroup;
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
+import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
+import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
 import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
+import com.google.inject.Provides;
 import lombok.extern.log4j.Log4j2;
 import org.apache.commons.compress.utils.FileNameUtils;
 import org.apache.log4j.Logger;
@@ -18,12 +22,18 @@ import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.OutputDirectoryLogging;
+import org.matsim.core.mobsim.qsim.components.QSimComponentsConfig;
+import org.matsim.core.mobsim.qsim.components.StandardQSimComponentConfigurator;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.parkingCost.ParkingCostConfigGroup;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehiclesFactory;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
 
 
 @Log4j2
@@ -50,11 +60,32 @@ public class RunStuttgartBaseCase {
     }
 
 
-    public static Config prepareConfig(String[] args, ConfigGroup... modules) {
+    public static Config prepareConfig(String[] args, ConfigGroup... customModules) {
 
 
         OutputDirectoryLogging.catchLogEntries();
-        Config config = ConfigUtils.loadConfig(args, modules);
+
+        // -- INCLUDE CUSTOM MODULES
+        ConfigGroup[] customModulesToAdd = new ConfigGroup[]{new ParkingCostConfigGroup()};
+        ConfigGroup[] customModulesAll = new ConfigGroup[customModules.length + customModulesToAdd.length];
+
+        // ToDo: Understand what is going on here
+        int counter = 0;
+        for (ConfigGroup customModule : customModules) {
+            customModulesAll[counter] = customModule;
+            counter++;
+        }
+
+        for (ConfigGroup customModule : customModulesToAdd) {
+            customModulesAll[counter] = customModule;
+            counter++;
+        }
+
+
+        // -- LOAD CONFIG WITH CUSTOM MODULES
+        Config config = ConfigUtils.loadConfig(args, customModules);
+
+
 
         // -- CONTROLER --
         // Set Output directory according to config name
@@ -98,17 +129,21 @@ public class RunStuttgartBaseCase {
         Utils.createTypicalDurations("educ_secondary", minDuration, maxDuration, difference).forEach(params -> config.planCalcScore().addActivityParams(params));
         Utils.createTypicalDurations("educ_higher", minDuration, maxDuration, difference).forEach(params -> config.planCalcScore().addActivityParams(params));
 
-/*        // Scoring for pt interaction
-        final PlanCalcScoreConfigGroup.ActivityParams params = new PlanCalcScoreConfigGroup.ActivityParams("pt interaction_86400.0");
-        params.setScoringThisActivityAtAll(false);
-        config.planCalcScore().addActivityParams(params);*/
-
 
         // -- SWISS RAIL RAPTOR --
         SwissRailRaptorConfigGroup raptor = setupRaptorConfigGroup();
         config.addModule(raptor);
 
+
+        // -- SBB Deterministic Transit Simulation
+        SBBTransitConfigGroup transit = new SBBTransitConfigGroup();
+        Set<String> modes = new HashSet<>(Arrays.asList(new String[]{"train", "tram", "bus"}));
+        transit.setDeterministicServiceModes(modes);
+        transit.setCreateLinkEventsInterval(10);
+        config.addModule(transit);
+
         return config;
+
     }
 
 
@@ -121,23 +156,57 @@ public class RunStuttgartBaseCase {
     public static Controler prepareControler(Scenario scenario) {
 
         Controler controler = new Controler(scenario);
+
         if (!controler.getConfig().transit().isUsingTransitInMobsim())
             throw new RuntimeException("Public transit will be teleported and not simulated in the mobsim! "
                     + "This will have a significant effect on pt-related parameters (travel times, modal split, and so on). "
                     + "Should only be used for testing or car-focused studies with fixed modal split.");
 
-        controler.addOverridingModule(new SwissRailRaptorModule());
+
         // use the (congested) car travel time for the teleported ride mode
+        controler.addOverridingModule( new AbstractModule() {
+            @Override
+            public void install() {
+                addTravelTimeBinding( TransportMode.ride ).to( networkTravelTime() );
+                addTravelDisutilityFactoryBinding( TransportMode.ride ).to( carTravelDisutilityFactoryKey() );
+
+            }
+        } );
+
+
+        // use the swiss rail raptor module
+        controler.addOverridingModule( new AbstractModule() {
+            @Override
+            public void install() {
+                install( new SwissRailRaptorModule() );
+            }
+        } );
+
+        // use scoring parameters for intermodal PT routing
+        controler.addOverridingModule(new AbstractModule(){
+            @Override
+            public void install() {
+                bind(RaptorIntermodalAccessEgress.class).to(org.matsim.run.StuttgartRaptorIntermodalAccessEgress.class);
+            }
+        });
+
+        // use deterministic pt simulation
         controler.addOverridingModule(new AbstractModule() {
             @Override
             public void install() {
-                addTravelTimeBinding(TransportMode.ride).to(networkTravelTime());
-                addTravelDisutilityFactoryBinding(TransportMode.ride).to(carTravelDisutilityFactoryKey());
-                bind(RaptorIntermodalAccessEgress.class).to(org.matsim.run.StuttgartRaptorIntermodalAccessEgress.class);
-                //install(new SBBTransitModule());
+                // To use the deterministic pt simulation (Part 1 of 2):
+                install(new SBBTransitModule());
             }
 
+            // To use the deterministic pt simulation (Part 2 of 2):
         });
+
+        controler.configureQSimComponents(components -> {
+            SBBTransitEngineQSimModule.configure(components);
+        });
+
+
+
         return controler;
     }
 
