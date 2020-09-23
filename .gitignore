@@ -204,6 +204,4 @@ $RECYCLE.BIN/
 *.lnk
 
 # End of https://www.gitignore.io/api/osx,java,linux,maven,windows,intellij
-matsim-stuttgart.iml
-matsim-stuttgart.iml
 *.iml
