@@ -23,6 +23,7 @@ import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.OutputDirectoryLogging;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.parkingCost.ParkingCostConfigGroup;
+import org.matsim.parkingCost.ParkingCostModule;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehiclesFactory;
 
@@ -201,6 +202,9 @@ public class RunStuttgartBaseCase {
         controler.configureQSimComponents(components -> {
             SBBTransitEngineQSimModule.configure(components);
         });
+
+        // add parking cost module
+        controler.addOverridingModule(new ParkingCostModule());
 
 
 

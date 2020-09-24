@@ -230,7 +230,11 @@
 
         </dependency>
 
-
+        <dependency>
+            <groupId>com.github.matsim-scenarios</groupId>
+            <artifactId>matsim-los-angeles</artifactId>
+            <version>v1.1</version>
+        </dependency>
 
     </dependencies>
 
