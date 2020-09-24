@@ -92,7 +92,7 @@ public class AddFareZonesToStops {
             Geometry geometry = (Geometry) feature.getDefaultGeometry();
 
             if (geometry.contains(point)) {
-                fareZone = feature.getAttribute("FareZone").toString();
+                fareZone = feature.getAttribute("ptFareZone").toString();
                 stopInShapes = true;
             }
 
