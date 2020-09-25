@@ -2,9 +2,11 @@ package org.matsim.ptFares;
 
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.events.ActivityStartEvent;
 import org.matsim.api.core.v01.events.PersonEntersVehicleEvent;
 import org.matsim.api.core.v01.events.PersonLeavesVehicleEvent;
 import org.matsim.api.core.v01.events.TransitDriverStartsEvent;
+import org.matsim.api.core.v01.events.handler.ActivityStartEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonEntersVehicleEventHandler;
 import org.matsim.api.core.v01.events.handler.PersonLeavesVehicleEventHandler;
 import org.matsim.api.core.v01.events.handler.TransitDriverStartsEventHandler;
@@ -23,7 +25,7 @@ import org.matsim.vehicles.Vehicle;
 import javax.inject.Inject;
 import java.util.*;
 
-final class PtFaresHandler implements TransitDriverStartsEventHandler, PersonLeavesVehicleEventHandler, PersonEntersVehicleEventHandler,VehicleArrivesAtFacilityEventHandler {
+final class PtFaresHandler implements TransitDriverStartsEventHandler, PersonLeavesVehicleEventHandler, PersonEntersVehicleEventHandler, VehicleArrivesAtFacilityEventHandler {
 
     private final Set<Id<Person>> ptDrivers = new HashSet<>();
     private final Map<Id<Vehicle>, Id<TransitStopFacility>> vehicle2StopFacility = new HashMap<>();
@@ -120,14 +122,23 @@ final class PtFaresHandler implements TransitDriverStartsEventHandler, PersonLea
                         onLine = true;
                     }
 
-                    if (stop.getStopFacility().getId() == stopEnteredPt){
+                    if (stop.getStopFacility().getId() == stopExitedPt){
                         onLine = false;
                         break;
                     }
 
                     if (onLine){
 
-                        //ToDo Fetch transitZone here and collect in person2fareZoneList for each person
+                        List<String> fareZones = person2fareZoneList.get(event.getPersonId());
+                        String currentFareZone = (String) stop.getStopFacility().getAttributes().getAttribute(ptFaresConfigGroup.getPtFareZoneAttributeName());
+
+                        if (fareZones.contains(currentFareZone)){
+                            // Do nothing when fareZone is in list already
+                        }else{
+                            // When fareZone is not in list, add ...
+                            fareZones.add(currentFareZone);
+                            person2fareZoneList.put(event.getPersonId(), fareZones);
+                        }
 
                     }
 
@@ -150,7 +161,8 @@ final class PtFaresHandler implements TransitDriverStartsEventHandler, PersonLea
         }
     }
 
-    //ToDo At the end of simulation or start of last activity of each person calculate optimal fare
+    //ToDo: Add MoneyEvent "at the end of the day"
+
 
 
 }
