@@ -24,6 +24,8 @@ import org.matsim.core.controler.OutputDirectoryLogging;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.parkingCost.ParkingCostConfigGroup;
 import org.matsim.parkingCost.ParkingCostModule;
+import org.matsim.ptFares.PtFaresConfigGroup;
+import org.matsim.ptFares.PtFaresModule;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehiclesFactory;
 
@@ -140,6 +142,10 @@ public class RunStuttgartBaseCase {
         transit.setCreateLinkEventsInterval(10);
         config.addModule(transit);
 
+        // -- PT Fares config
+        PtFaresConfigGroup ptFares = setupPTFaresGroup();
+        config.addModule(ptFares);
+
         return config;
 
     }
@@ -206,7 +212,8 @@ public class RunStuttgartBaseCase {
         // add parking cost module
         controler.addOverridingModule(new ParkingCostModule());
 
-
+        // add ptfares Module
+        controler.addOverridingModule(new PtFaresModule());
 
         return controler;
     }
@@ -253,6 +260,50 @@ public class RunStuttgartBaseCase {
         return configRaptor;
     }
 
+
+    private static PtFaresConfigGroup setupPTFaresGroup() {
+
+        PtFaresConfigGroup configFares = new PtFaresConfigGroup();
+
+        // For values, see https://www.vvs.de/tickets/zeittickets-abo-polygo/jahresticket-jedermann/
+
+        PtFaresConfigGroup.ZonePricesParameterSet paramSetZone1 = new PtFaresConfigGroup.ZonePricesParameterSet();
+        paramSetZone1.setNumberZones(1);
+        paramSetZone1.setTicketPrice(1.89);
+        configFares.addZonePriceSettings(paramSetZone1);
+
+        PtFaresConfigGroup.ZonePricesParameterSet paramSetZone2 = new PtFaresConfigGroup.ZonePricesParameterSet();
+        paramSetZone1.setNumberZones(2);
+        paramSetZone1.setTicketPrice(2.42);
+        configFares.addZonePriceSettings(paramSetZone2);
+
+        PtFaresConfigGroup.ZonePricesParameterSet paramSetZone3 = new PtFaresConfigGroup.ZonePricesParameterSet();
+        paramSetZone1.setNumberZones(3);
+        paramSetZone1.setTicketPrice(3.23);
+        configFares.addZonePriceSettings(paramSetZone3);
+
+        PtFaresConfigGroup.ZonePricesParameterSet paramSetZone4 = new PtFaresConfigGroup.ZonePricesParameterSet();
+        paramSetZone1.setNumberZones(4);
+        paramSetZone1.setTicketPrice(4.);
+        configFares.addZonePriceSettings(paramSetZone4);
+
+        PtFaresConfigGroup.ZonePricesParameterSet paramSetZone5 = new PtFaresConfigGroup.ZonePricesParameterSet();
+        paramSetZone1.setNumberZones(5);
+        paramSetZone1.setTicketPrice(4.68);
+        configFares.addZonePriceSettings(paramSetZone5);
+
+        PtFaresConfigGroup.ZonePricesParameterSet paramSetZone6 = new PtFaresConfigGroup.ZonePricesParameterSet();
+        paramSetZone1.setNumberZones(6);
+        paramSetZone1.setTicketPrice(5.51);
+        configFares.addZonePriceSettings(paramSetZone6);
+
+        PtFaresConfigGroup.ZonePricesParameterSet paramSetZone7 = new PtFaresConfigGroup.ZonePricesParameterSet();
+        paramSetZone1.setNumberZones(7);
+        paramSetZone1.setTicketPrice(6.22);
+        configFares.addZonePriceSettings(paramSetZone7);
+
+        return configFares;
+    }
 
     private static String setOutputFolder(String configPath){
 

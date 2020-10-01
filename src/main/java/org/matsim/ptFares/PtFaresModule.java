@@ -29,6 +29,8 @@ public class PtFaresModule extends AbstractModule {
 
     @Override
     public void install() {
+
         this.addEventHandlerBinding().to(PtFaresHandler.class);
+        this.addControlerListenerBinding().to(PtFaresHandler.class);
     }
 }
