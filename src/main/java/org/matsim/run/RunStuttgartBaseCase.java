@@ -288,8 +288,7 @@ public class RunStuttgartBaseCase {
         paramSetAEBike.setSearchExtensionRadius(2000);
         paramSetAEBike.setMode(TransportMode.bike);
         paramSetAEBike.setMaxRadius(10000);
-        // Later define such stops that have bike & ride facilities here
-        // paramSetWalk.setStopFilterAttribute(null);
+        paramSetAEBike.setStopFilterAttribute("VVSBikeAndRide");
 
         configRaptor.addIntermodalAccessEgress(paramSetAEBike);
 
