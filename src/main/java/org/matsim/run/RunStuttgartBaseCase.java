@@ -39,6 +39,11 @@ import java.util.Set;
 @Log4j2
 public class RunStuttgartBaseCase {
 
+    private static final Boolean withIntermodalRouter = true;
+    private static final Boolean withDeterministicPt = true;
+    private static final Boolean withParkingCosts = false;
+    private static final Boolean withPtFares = false;
+
     private static final Logger log = Logger.getLogger(RunStuttgartBaseCase.class );
     private static final String outputBasePath = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/output/";
 
@@ -66,10 +71,24 @@ public class RunStuttgartBaseCase {
         OutputDirectoryLogging.catchLogEntries();
 
         // -- INCLUDE CUSTOM MODULES
-        ConfigGroup[] customModulesToAdd = new ConfigGroup[]{new ParkingCostConfigGroup()};
+        ConfigGroup[] customModulesToAdd;
+
+        if (withParkingCosts & withPtFares){
+            customModulesToAdd = new ConfigGroup[]{new ParkingCostConfigGroup(), new PtFaresConfigGroup()};
+
+        } else if (withParkingCosts & !withPtFares){
+            customModulesToAdd = new ConfigGroup[]{new ParkingCostConfigGroup()};
+
+        } else if (!withParkingCosts & withPtFares){
+            customModulesToAdd = new ConfigGroup[]{new PtFaresConfigGroup()};
+
+        } else {
+            customModulesToAdd = new ConfigGroup[]{};
+        }
+
         ConfigGroup[] customModulesAll = new ConfigGroup[customModules.length + customModulesToAdd.length];
 
-        // ToDo: Understand what is going on here
+
         int counter = 0;
         for (ConfigGroup customModule : customModules) {
             customModulesAll[counter] = customModule;
@@ -136,15 +155,21 @@ public class RunStuttgartBaseCase {
 
 
         // -- SBB Deterministic Transit Simulation
-        SBBTransitConfigGroup transit = new SBBTransitConfigGroup();
-        Set<String> modes = new HashSet<>(Arrays.asList(new String[]{"train", "tram", "bus"}));
-        transit.setDeterministicServiceModes(modes);
-        transit.setCreateLinkEventsInterval(10);
-        config.addModule(transit);
+        if (withDeterministicPt){
+            SBBTransitConfigGroup transit = new SBBTransitConfigGroup();
+            Set<String> modes = new HashSet<>(Arrays.asList(new String[]{"train", "tram", "bus"}));
+            transit.setDeterministicServiceModes(modes);
+            transit.setCreateLinkEventsInterval(10);
+            config.addModule(transit);
+        }
+
 
         // -- PT Fares config
-        PtFaresConfigGroup ptFares = setupPTFaresGroup();
-        config.addModule(ptFares);
+        if (withPtFares){
+            PtFaresConfigGroup ptFares = setupPTFaresGroup();
+            config.addModule(ptFares);
+        }
+
 
         return config;
 
@@ -187,33 +212,45 @@ public class RunStuttgartBaseCase {
         } );
 
         // use scoring parameters for intermodal PT routing
-        controler.addOverridingModule(new AbstractModule(){
-            @Override
-            public void install() {
-                bind(RaptorIntermodalAccessEgress.class).to(org.matsim.run.StuttgartRaptorIntermodalAccessEgress.class);
-            }
-        });
+        if (withIntermodalRouter){
+            controler.addOverridingModule(new AbstractModule(){
+                @Override
+                public void install() {
+                    bind(RaptorIntermodalAccessEgress.class).to(org.matsim.run.StuttgartRaptorIntermodalAccessEgress.class);
+                }
+            });
+        }
+
 
         // use deterministic pt simulation
-        controler.addOverridingModule(new AbstractModule() {
-            @Override
-            public void install() {
-                // To use the deterministic pt simulation (Part 1 of 2):
-                install(new SBBTransitModule());
-            }
+        if (withDeterministicPt){
+            controler.addOverridingModule(new AbstractModule() {
+                @Override
+                public void install() {
+                    // To use the deterministic pt simulation (Part 1 of 2):
+                    install(new SBBTransitModule());
+                }
 
-            // To use the deterministic pt simulation (Part 2 of 2):
-        });
+                // To use the deterministic pt simulation (Part 2 of 2):
+            });
 
-        controler.configureQSimComponents(components -> {
-            SBBTransitEngineQSimModule.configure(components);
-        });
+            controler.configureQSimComponents(components -> {
+                SBBTransitEngineQSimModule.configure(components);
+            });
+        }
+
 
         // add parking cost module
-        controler.addOverridingModule(new ParkingCostModule());
+        if (withParkingCosts){
+            controler.addOverridingModule(new ParkingCostModule());
+        }
+
 
         // add ptfares Module
-        controler.addOverridingModule(new PtFaresModule());
+        if (withPtFares){
+            controler.addOverridingModule(new PtFaresModule());
+        }
+
 
         return controler;
     }
@@ -308,7 +345,8 @@ public class RunStuttgartBaseCase {
     private static String setOutputFolder(String configPath){
 
         Path path = Paths.get( configPath );
-        return FileNameUtils.getBaseName(path.getFileName().toString());
+        String outputPath = FileNameUtils.getBaseName(path.getFileName().toString());
+        return outputPath.replace(".config", "");
 
     }
 
