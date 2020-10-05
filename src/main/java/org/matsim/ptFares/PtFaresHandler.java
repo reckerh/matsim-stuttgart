@@ -176,13 +176,21 @@ final class PtFaresHandler implements TransitDriverStartsEventHandler, PersonLea
 
         person2fareZoneList.entrySet().stream().forEach(entry ->{
 
-            Integer numberFareZones = entry.getValue().size();
-            Double ticketCosts = allFares.get(numberFareZones);
-            Double scoringAmount = - ticketCosts;
+            List<String> fareZones = entry.getValue();
+
+            // Include hybrid zones
+            // Hybrid zones are named ',' sepparated
+            List<List<String>> fareZonesInclHybrid = new ArrayList<>();
+
+            //fareZones.stream().allMatch()
+
+
+            //Double ticketCosts = allFares.get(numberFareZones);
+            //Double scoringAmount = - ticketCosts;
 
             // Why is PersonMoneyEvent deprecated?
             // Which time to enter?
-            events.processEvent(new PersonMoneyEvent( 0, entry.getKey(), scoringAmount));
+            //events.processEvent(new PersonMoneyEvent( 0, entry.getKey(), scoringAmount));
 
         });
 
