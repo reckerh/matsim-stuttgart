@@ -1,22 +1,34 @@
-<?xml version="1.0" ?>
+<?xml version="1.0" encoding="UTF-8"?>
 <!DOCTYPE config SYSTEM "http://www.matsim.org/files/dtd/config_v2.dtd">
 <config>
 
+	<!-- This config has been taken over from the Duessseldorf scenario as a starting point -->
+	
 	<module name="global">
 		<param name="randomSeed" value="4711"/>
 		<param name="coordinateSystem" value="Atlantis"/>
 	</module>
 
-	<module name="network">
-		<param name="inputNetworkFile" value="network.xml"/>
-	</module>
+    <module name="network">
+        <param name="inputNetworkFile" value="network.xml"/>
+    </module>
 
-	<module name="plans">
-		<param name="inputPlansFile" value="plans.xml"/>
-	</module>
+    <module name="plans">
+        <param name="inputPlansFile"
+               value="plans.xml"/>
+        <param name="removingUnnecessaryPlanAttributes" value="true"/>
+    </module>
+
+    <module name="transit">
+        <param name="transitScheduleFile"
+               value="transitSchedule.xml"/>
+        <param name="vehiclesFile"
+               value="transitVehicles.xml"/>
+        <param name="useTransit" value="true"/>
+    </module>
 
 	<module name="controler">
-		<param name="outputDirectory" value="./output/ptFareTest"/>
+		<param name="outputDirectory" value="./../output/"/>
 		<param name="firstIteration" value="0"/>
 		<param name="lastIteration" value="0"/>
 		<param name="eventsFileFormat" value="xml"/>
@@ -32,15 +44,63 @@
 		<param name="snapshotperiod" value="00:00:00"/> <!-- 00:00:00 means NO snapshot writing -->
 	</module>
 
+    <module name="strategy">
+        <param name="fractionOfIterationsToDisableInnovation" value="0.8"/>
+        <parameterset type="strategysettings">
+            <param name="strategyName" value="ChangeExpBeta"/>
+            <param name="subpopulation" value="person"/>
+            <param name="weight" value="0.7"/>
+        </parameterset>
+        <parameterset type="strategysettings">
+            <param name="strategyName" value="ReRoute"/>
+            <param name="subpopulation" value="person"/>
+            <param name="weight" value="0.05"/>
+        </parameterset>
+        <parameterset type="strategysettings">
+            <param name="strategyName" value="SubtourModeChoice"/>
+            <param name="subpopulation" value="person"/>
+            <param name="weight" value="0.2"/>
+        </parameterset>
+        <parameterset type="strategysettings">
+            <param name="strategyName" value="TimeAllocationMutator"/>
+            <param name="subpopulation" value="person"/>
+            <param name="weight" value="0.05"/>
+        </parameterset>
+    </module>
+
+    <module name="subtourModeChoice">
+        <param name="chainBasedModes" value="car,bike"/>
+        <param name="modes" value="car,pt,bike,walk"/>
+    </module>
+
+    <module name="transitRouter">
+        <param name="extensionRadius" value="500.0"/>
+    </module>
+
+    <module name="travelTimeCalculator">
+        <param name="analyzedModes" value="car"/>
+
+        <!-- Not implemented for link2link routing -->
+        <param name="separateModes" value="false"/>
+
+        <!-- Needed for lane specific routing times -->
+        <param name="calculateLinkToLinkTravelTimes" value="false" />
+        <param name="calculateLinkTravelTimes" value="true" />
+    </module>
+
+    <module name="vspExperimental">
+        <param name="vspDefaultsCheckingLevel" value="warn"/>
+    </module>
+
 	<module name="planCalcScore">
-		<param name="learningRate" value="0.0"/>
-		<param name="BrainExpBeta" value="0.0"/>
+		<param name="learningRate" value="0"/>
+		<param name="BrainExpBeta" value="0"/>
 
 		<param name="lateArrival" value="0"/>
-		<param name="earlyDeparture" value="0"/>
+		<param name="earlyDeparture" value="-0"/>
 		<param name="performing" value="0"/>
 		<param name="traveling" value="0"/>
-		<param name="waiting" value="0"/>
+		<param name="waiting" value="-0"/>
 
 		<param name="activityType_0" value="h"/> <!-- home -->
 		<param name="activityPriority_0" value="1"/>
@@ -56,33 +116,21 @@
 		<param name="activityEarliestEndTime_1" value=""/>
 		<param name="activityClosingTime_1" value="18:00:00"/>
 
+		<param name="activityType_2" value="s"/> <!-- shop -->
+		<param name="activityPriority_2" value="1"/>
+		<param name="activityTypicalDuration_2" value="00:40:00"/>
+		<param name="activityMinimalDuration_2" value="00:10:00"/>
+		<param name="activityOpeningTime_2" value="08:00:00"/>
+		<param name="activityLatestStartTime_2" value=""/>
+		<param name="activityEarliestEndTime_2" value=""/>
+		<param name="activityClosingTime_2" value="20:00:00"/>
+
 	</module>
 
-	<module name="strategy">
-		<param name="maxAgentPlanMemorySize" value="5"/> <!-- 0 means unlimited -->
-
-		<param name="ModuleProbability_1" value="0.7"/>
-		<param name="Module_1" value="BestScore"/>
-
-		<param name="ModuleProbability_2" value="0.1"/>
-		<param name="Module_2" value="ReRoute"/>
-
-		<param name="ModuleProbability_3" value="0.1"/>
-		<param name="Module_3" value="TimeAllocationMutator"/>
-
-		<param name="ModuleProbability_4" value="0.1"/>
-		<param name="Module_4" value="ChangeTripMode"/>
-	</module>
-
-	<module name="transit">
-		<param name="useTransit" value="true"/>
-		<param name="transitScheduleFile" value="transitSchedule.xml"/>
-		<param name="vehiclesFile" value="transitVehicles.xml"/>
-		<param name="transitModes" value="pt"/>
-	</module>
-
-	<module name="changeMode">
-		<param name="modes" value="car,pt"/>
-	</module>
-
+    <module name="transitRouter">
+        <!-- Factor with which direct walk generalized cost is multiplied before it is compared to the pt generalized cost.  Set to a very high value to reduce direct walk results. -->
+        <param name="directWalkFactor" value="1.0"/>
+        <!-- maximum beeline distance between stops that agents could transfer to by walking -->
+        <param name="maxBeelineWalkConnectionDistance" value="300.0"/>
+    </module>
 </config>

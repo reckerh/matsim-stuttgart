@@ -8,12 +8,10 @@
 	<person id="1" employed="no">
 		<plan selected="yes">
 			<act type="h"  x="1040.0" y="1040.0" end_time="07:18:16" />
-			<leg mode="pt" >
-				
+			<leg mode="pt" >				
 			</leg>
 			<act type="w"  x="3980.0" y="3080.0" end_time="17:43:36" />
-			<leg mode="pt">
-				
+			<leg mode="pt">				
 			</leg>
 			<act type="h"  x="1040.0" y="1040.0" />
 		</plan>
@@ -23,12 +21,10 @@
 	<person id="2" employed="no">
 		<plan selected="yes">
 			<act type="h"  x="1040.0" y="1040.0" end_time="07:18:16" />
-			<leg mode="pt" >
-				
+			<leg mode="pt" >				
 			</leg>
 			<act type="w"  x="3960.0" y="1100.0" end_time="17:43:36" />
-			<leg mode="pt">
-				
+			<leg mode="pt">				
 			</leg>
 			<act type="h"  x="1040.0" y="1040.0" />
 		</plan>
@@ -38,12 +34,10 @@
 	<person id="3" employed="no">
 		<plan selected="yes">
 			<act type="h"  x="1000.0" y="3000.0" end_time="07:18:16" />
-			<leg mode="pt" >
-				
+			<leg mode="pt" >				
 			</leg>
 			<act type="w"  x="3960.0" y="1100.0" end_time="17:43:36" />
-			<leg mode="pt">
-				
+			<leg mode="pt">				
 			</leg>
 			<act type="h"  x="1000.0" y="3000.0" />
 		</plan>
@@ -53,16 +47,52 @@
 	<person id="4" employed="no">
 		<plan selected="yes">
 			<act type="h"  x="1000.0" y="3000.0" end_time="07:18:16" />
-			<leg mode="pt" >
-				
+			<leg mode="pt" >				
 			</leg>
 			<act type="w"  x="3980.0" y="3080.0" end_time="17:43:36" />
-			<leg mode="pt">
-				
+			<leg mode="pt">			
+			</leg>
+			<act type="h"  x="1000.0" y="3000.0" />
+		</plan>
+
+	</person>
+	
+	<person id="5" employed="no">
+		<plan selected="yes">
+			<act type="h"  x="1000.0" y="3000.0" end_time="07:18:16" />
+			<leg mode="pt" >				
+			</leg>
+			<act type="w"  x="3980.0" y="3080.0" end_time="15:43:36" />
+			<leg mode="pt">				
+			</leg>
+			<act type="h"  x="1000.0" y="3000.0" />
+			<leg mode="pt" >				
+			</leg>
+			<act type="s"  x="3980.0" y="1060.0" end_time="19:43:36" />
+			<leg mode="pt">				
 			</leg>
 			<act type="h"  x="1000.0" y="3000.0" />
 		</plan>
 
 	</person>
 
+	<person id="6" employed="no">
+		<plan selected="yes">
+			<act type="h"  x="1000.0" y="3000.0" end_time="07:18:16" />
+			<leg mode="pt" >				
+			</leg>
+			<act type="w"  x="3980.0" y="3080.0" end_time="15:43:36" />
+			<leg mode="pt">				
+			</leg>
+			<act type="h"  x="1000.0" y="3000.0" />
+			<leg mode="pt" >				
+			</leg>
+			<act type="s"  x="1040.0" y="1060.0" end_time="19:43:36" />
+			<leg mode="pt">				
+			</leg>
+			<act type="h"  x="1000.0" y="3000.0" />
+		</plan>
+
+	</person>
+	
 </plans>
