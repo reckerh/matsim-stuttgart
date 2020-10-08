@@ -24,6 +24,8 @@ import org.matsim.core.controler.OutputDirectoryLogging;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.parkingCost.ParkingCostConfigGroup;
 import org.matsim.parkingCost.ParkingCostModule;
+import org.matsim.prepare.PrepareTransitSchedule;
+import org.matsim.pt.transitSchedule.api.TransitScheduleWriter;
 import org.matsim.ptFares.PtFaresConfigGroup;
 import org.matsim.ptFares.PtFaresModule;
 import org.matsim.vehicles.VehicleType;
@@ -178,7 +180,16 @@ public class RunStuttgartBaseCase {
 
     public static Scenario prepareScenario(Config config) {
 
-        return ScenarioUtils.loadScenario(config);
+        Scenario scenario = ScenarioUtils.loadScenario(config);
+
+        // Add fareZones and VVSBikeAndRideStops
+        PrepareTransitSchedule preparer = new PrepareTransitSchedule();
+        preparer.run(scenario);
+
+        // Tag population
+
+
+        return scenario;
     }
 
 
@@ -289,6 +300,7 @@ public class RunStuttgartBaseCase {
         paramSetAEBike.setMode(TransportMode.bike);
         paramSetAEBike.setMaxRadius(10000);
         paramSetAEBike.setStopFilterAttribute("VVSBikeAndRide");
+        paramSetAEBike.setStopFilterValue("true");
 
         configRaptor.addIntermodalAccessEgress(paramSetAEBike);
 

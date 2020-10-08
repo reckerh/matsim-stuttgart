@@ -1,6 +1,7 @@
 package org.matsim.prepare;
 
 import org.apache.log4j.Logger;
+import org.geotools.data.shapefile.ShapefileDataStore;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 import org.matsim.api.core.v01.Coord;
@@ -12,7 +13,13 @@ import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.gis.ShapeFileReader;
 import org.matsim.pt.transitSchedule.api.*;
 import org.opengis.feature.simple.SimpleFeature;
+import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
+
+import javax.imageio.IIOException;
+import java.io.IOException;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.*;
 
 
@@ -45,18 +52,52 @@ public class PrepareTransitSchedule {
             log.info("fare zone shape file: " + fareZoneShapeFile);
         }
 
-        PrepareTransitSchedule adder = new PrepareTransitSchedule();
-        adder.run(inputSchedule, outputSchedule);
+        // Parse Transit Schedule and put into scenario
+        PrepareTransitSchedule preparer = new PrepareTransitSchedule();
+        Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
+        new TransitScheduleReader(scenario).readFile(inputSchedule);
+
+        preparer.run(scenario);
+
+        new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(outputSchedule);
+
 
     }
 
-
-    public void run(String inputSchedule, String outputSchedule){
+    public void run(Scenario scenario) {
 
         //Parse the transit schedule
-        Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
-        new TransitScheduleReader(scenario).readFile(inputSchedule);
+
         TransitSchedule schedule = scenario.getTransitSchedule();
+
+        // Do a crs check
+        // ToDo: Fix crs check!
+
+//        try {
+//            URL url = new URL("file:///" + fareZoneShapeFile);
+//            ShapefileDataStore shpDataStore = new ShapefileDataStore(url);
+//            CoordinateReferenceSystem shapeFileCRS = shpDataStore.getFeatureSource().getSchema().getCoordinateReferenceSystem();
+//
+//            System.out.println(shapeFileCRS.getCoordinateSystem().getName().toString());
+//
+//            if (shapeFileCRS.getCoordinateSystem().getName().toString() == "ETRS_1989_UTM_Zone_32N") {
+//                //shapeFileCRS and MATSim CRS match
+//                log.info("Shape File CRS is of needed type: " + shapeFileCRS.toString());
+//
+//            } else {
+//                throw new Exception("Shape File CRS is not of needed type!");
+//            }
+//
+//        }catch (MalformedURLException e) {
+//            e.printStackTrace();
+//
+//        }catch (IIOException e){
+//            e.printStackTrace();
+//
+//        }catch (Exception e) {
+//            e.printStackTrace();
+//        }
+
 
         // Read-In Shape Files which provide tag inputs
         Collection<SimpleFeature> fareZoneFeatures = ShapeFileReader.getAllFeatures(fareZoneShapeFile);
@@ -85,8 +126,6 @@ public class PrepareTransitSchedule {
                     transitStopFacility.getAttributes().putAttribute("VVSBikeAndRide", bikeAndRide);
 
                 });
-
-        new TransitScheduleWriter(schedule).writeFile(outputSchedule);
 
     }
 
@@ -121,7 +160,7 @@ public class PrepareTransitSchedule {
             // How to deal with the people that do not live in Stuttgart Metropolitan Area?
             // Will we need more detailed information on their home locations as well?
 
-            log.info("No fareZone found for transit stop facility with id: " + transitStopFacility.getId());
+            //log.info("No fareZone found for transit stop facility with id: " + transitStopFacility.getId());
         }
 
         return fareZone;
