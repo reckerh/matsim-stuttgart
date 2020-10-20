@@ -80,7 +80,7 @@
 			</departures>
 		</transitRoute>
 		<transitRoute id="3to1">
-			<transportMode>pt</transportMode>
+			<transportMode>train</transportMode>
 			<routeProfile>
 				<stop refId="3" departureOffset="00:00:00"/>
 				<stop refId="2b" arrivalOffset="00:05:00" departureOffset="00:05:40"/>
@@ -214,7 +214,7 @@
 			</departures>
 		</transitRoute>
 		<transitRoute id="6to4">
-			<transportMode>pt</transportMode>
+			<transportMode>train</transportMode>
 			<routeProfile>
 				<stop refId="6" departureOffset="00:00:00"/>
 				<stop refId="5b" arrivalOffset="00:04:00" departureOffset="00:04:40"/>
