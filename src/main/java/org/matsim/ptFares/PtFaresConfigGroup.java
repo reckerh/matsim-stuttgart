@@ -61,9 +61,11 @@ public class PtFaresConfigGroup extends ReflectiveConfigGroup {
         super.addParameterSet(settings);
     }
 
+
     public List<ZonePricesParameterSet> getZonePricesParameterSets() {
         return this.zonePriceSettings;
     }
+
 
     public Map<Integer, Double> getAllFares(){
 
@@ -73,6 +75,7 @@ public class PtFaresConfigGroup extends ReflectiveConfigGroup {
         });
         return priceZoneAssignment;
     }
+
 
     public static class ZonePricesParameterSet extends ReflectiveConfigGroup {
 

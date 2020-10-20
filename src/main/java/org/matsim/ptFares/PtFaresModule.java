@@ -30,7 +30,15 @@ public class PtFaresModule extends AbstractModule {
     @Override
     public void install() {
 
-        this.addEventHandlerBinding().to(PtFaresHandler.class);
-        this.addControlerListenerBinding().to(PtFaresHandler.class);
+        // IntermodalTripFareCompensatorPerDay compensatorPerDay = new IntermodalTripFareCompensatorPerDay(intermodalFareConfigGroup);
+        // addEventHandlerBinding().toInstance(compensatorPerDay);
+        // addControlerListenerBinding().toInstance(compensatorPerDay);
+
+        PtFaresHandler ptHandler = new PtFaresHandler();
+        addEventHandlerBinding().toInstance(ptHandler);
+        addControlerListenerBinding().toInstance(ptHandler);
+
+        // this.addEventHandlerBinding().to(PtFaresHandler.class);
+        // this.addControlerListenerBinding().to(PtFaresHandler.class);
     }
 }

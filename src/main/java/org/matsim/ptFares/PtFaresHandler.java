@@ -40,6 +40,7 @@ final class PtFaresHandler implements TransitDriverStartsEventHandler, PersonLea
     private Map<Id<Person>, Id<TransitStopFacility>> person2StopFacility = new HashMap<>();
     private Map<Id<Vehicle>, Id<TransitLine>> vehicle2transitLine = new HashMap<>();
     private Map<Id<Vehicle>, Id<TransitRoute>> vehicle2transitRoute = new HashMap<>();
+
     private Map<Id<Person>, List<String>> person2fareZoneList = new HashMap<>();
     private double compensationTime = Double.NaN;
 
@@ -55,11 +56,17 @@ final class PtFaresHandler implements TransitDriverStartsEventHandler, PersonLea
     @Inject
     private QSimConfigGroup qSimConfigGroup;
 
+
+
+
+
+
     @Override
     public void reset(int iteration) {
         vehicle2StopFacility.clear();
         person2StopFacility.clear();
     }
+
 
     public PtFaresHandler(){
 
@@ -67,7 +74,7 @@ final class PtFaresHandler implements TransitDriverStartsEventHandler, PersonLea
         // What is the case for one transit vehicle being assigned to multiple routes/ lines
         // This case is not fetched
 
-        scenario.getTransitSchedule().getTransitLines().values().parallelStream().forEach(transitLine -> {
+/*        scenario.getTransitSchedule().getTransitLines().values().parallelStream().forEach(transitLine -> {
 
             transitLine.getRoutes().values().stream().forEach(transitRoute -> {
 
@@ -80,7 +87,56 @@ final class PtFaresHandler implements TransitDriverStartsEventHandler, PersonLea
 
 
             });
+        });*/
+    }
+
+
+    @Inject
+    public Map<Id<Vehicle>, Id<TransitRoute>> getVehicle2transitRoute(){
+
+        Map<Id<Vehicle>, Id<TransitRoute>> vehicle2transitRoute = new HashMap<>();
+
+        scenario.getTransitSchedule().getTransitLines().values().parallelStream().forEach(transitLine -> {
+
+            transitLine.getRoutes().values().stream().forEach(transitRoute -> {
+
+                transitRoute.getDepartures().values().stream().forEach(departure -> {
+
+                    vehicle2transitRoute.put(departure.getVehicleId(),transitRoute.getId());
+
+                });
+
+
+            });
         });
+
+        return vehicle2transitRoute;
+
+    }
+
+
+
+    @Inject
+    public Map<Id<Vehicle>, Id<TransitLine>> getVehicle2transitLine(){
+
+        Map<Id<Vehicle>, Id<TransitLine>> vehicle2transitLine = new HashMap<>();
+
+        scenario.getTransitSchedule().getTransitLines().values().parallelStream().forEach(transitLine -> {
+
+            transitLine.getRoutes().values().stream().forEach(transitRoute -> {
+
+                transitRoute.getDepartures().values().stream().forEach(departure -> {
+
+                    vehicle2transitLine.put(departure.getVehicleId(),transitLine.getId());
+
+                });
+
+
+            });
+        });
+
+        return vehicle2transitLine;
+
     }
 
 
@@ -111,6 +167,9 @@ final class PtFaresHandler implements TransitDriverStartsEventHandler, PersonLea
 
     @Override
     public void handleEvent(PersonLeavesVehicleEvent event) {
+
+        vehicle2transitLine = getVehicle2transitLine();
+        vehicle2transitRoute = getVehicle2transitRoute();
 
         if (ptDrivers.contains(event.getPersonId())){
             // skip pt-drivers
