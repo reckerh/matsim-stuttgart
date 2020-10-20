@@ -24,8 +24,8 @@ import org.matsim.core.controler.OutputDirectoryLogging;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.parkingCost.ParkingCostConfigGroup;
 import org.matsim.parkingCost.ParkingCostModule;
+import org.matsim.prepare.AddAdditionalNetworkAttributes;
 import org.matsim.prepare.PrepareTransitSchedule;
-import org.matsim.pt.transitSchedule.api.TransitScheduleWriter;
 import org.matsim.ptFares.PtFaresConfigGroup;
 import org.matsim.ptFares.PtFaresModule;
 import org.matsim.vehicles.VehicleType;
@@ -43,7 +43,7 @@ public class RunStuttgartBaseCase {
 
     private static final Boolean withIntermodalRouter = true;
     private static final Boolean withDeterministicPt = true;
-    private static final Boolean withParkingCosts = false;
+    private static final Boolean withParkingCosts = true;
     private static final Boolean withPtFares = false;
 
     private static final Logger log = Logger.getLogger(RunStuttgartBaseCase.class );
@@ -183,11 +183,12 @@ public class RunStuttgartBaseCase {
         Scenario scenario = ScenarioUtils.loadScenario(config);
 
         // Add fareZones and VVSBikeAndRideStops
-        PrepareTransitSchedule preparer = new PrepareTransitSchedule();
-        preparer.run(scenario);
+        PrepareTransitSchedule ptPreparer = new PrepareTransitSchedule();
+        ptPreparer.run(scenario);
 
-        // Tag population
-
+        // Add parking costs to network
+        AddAdditionalNetworkAttributes parkingPreparer = new AddAdditionalNetworkAttributes();
+        parkingPreparer.run(scenario);
 
         return scenario;
     }
