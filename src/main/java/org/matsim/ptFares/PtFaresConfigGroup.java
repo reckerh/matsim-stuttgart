@@ -34,6 +34,9 @@ public class PtFaresConfigGroup extends ReflectiveConfigGroup {
     }
 
 
+    // ToDo: Add: Parameter cannot be zero exception...
+
+
     @Override
     public ConfigGroup createParameterSet(String type) {
         if (ZonePricesParameterSet.TYPE.equals(type)) {
@@ -56,7 +59,7 @@ public class PtFaresConfigGroup extends ReflectiveConfigGroup {
 
     public void addZonePriceSettings(ZonePricesParameterSet settings) {
 
-        // check if every tarif module is added to the settings...
+        // check if every tariff module is added to the settings...
         this.zonePriceSettings.add(settings);
         super.addParameterSet(settings);
     }

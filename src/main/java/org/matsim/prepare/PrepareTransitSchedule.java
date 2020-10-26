@@ -110,7 +110,13 @@ public class PrepareTransitSchedule {
                 .forEach(transitStopFacility -> {
 
                     String fareZone = findFareZone(transitStopFacility, fareZoneFeatures);
-                    transitStopFacility.getAttributes().putAttribute("FareZone", fareZone);
+
+                    if (fareZone.isEmpty()){
+                        transitStopFacility.getAttributes().putAttribute("ptFareZone", "out");
+                    }else{
+                        transitStopFacility.getAttributes().putAttribute("ptFareZone", fareZone);
+                    }
+
 
                     Boolean bikeAndRide = false;
 

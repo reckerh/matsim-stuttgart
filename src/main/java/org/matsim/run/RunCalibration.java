@@ -54,12 +54,9 @@ import org.matsim.ptFares.PtFaresModule;
 
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
 
-/**
- * @author nagel, ikaddoura
- *
- */
-public class RunIhabsClass {
-    private static final Logger log = Logger.getLogger(RunIhabsClass.class );
+
+public class RunCalibration {
+    private static final Logger log = Logger.getLogger(RunCalibration.class );
 
     public static void main(String[] args) {
 
@@ -146,8 +143,6 @@ public class RunIhabsClass {
         Utils.createTypicalDurations("business", minDuration, maxDuration, difference).forEach(params -> config.planCalcScore().addActivityParams(params));
         Utils.createTypicalDurations("educ_secondary", minDuration, maxDuration, difference).forEach(params -> config.planCalcScore().addActivityParams(params));
         Utils.createTypicalDurations("educ_higher", minDuration, maxDuration, difference).forEach(params -> config.planCalcScore().addActivityParams(params));
-
-        ConfigUtils.writeConfig(config, "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/config.xml");
 
         ConfigUtils.applyCommandline( config, typedArgs ) ;
 

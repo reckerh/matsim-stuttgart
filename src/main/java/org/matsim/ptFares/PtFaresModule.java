@@ -35,7 +35,7 @@ public class PtFaresModule extends AbstractModule {
         // addControlerListenerBinding().toInstance(compensatorPerDay);
 
         // Test purposes
-        PtFaresHandler_v2 ptHandler = new PtFaresHandler_v2();
+        PtFaresHandler ptHandler = new PtFaresHandler();
         //PtFaresHandler ptHandler = new PtFaresHandler();
 
         addEventHandlerBinding().toInstance(ptHandler);
