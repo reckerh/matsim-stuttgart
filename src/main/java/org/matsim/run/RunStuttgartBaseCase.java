@@ -151,6 +151,8 @@ public class RunStuttgartBaseCase {
         Utils.createTypicalDurations("educ_higher", minDuration, maxDuration, difference).forEach(params -> config.planCalcScore().addActivityParams(params));
 
 
+
+
         // -- SWISS RAIL RAPTOR --
         SwissRailRaptorConfigGroup raptor = setupRaptorConfigGroup();
         config.addModule(raptor);

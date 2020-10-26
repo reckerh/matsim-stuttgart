@@ -8,14 +8,10 @@ import java.util.Random;
 
 import ch.sbb.matsim.routing.pt.raptor.RaptorStopFinder;
 import org.matsim.api.core.v01.Id;
-import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.Leg;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.api.core.v01.population.PlanElement;
-import org.matsim.contrib.av.robotaxi.fares.drt.DrtFareConfigGroup;
-import org.matsim.contrib.av.robotaxi.fares.drt.DrtFaresConfigGroup;
 import org.matsim.core.config.Config;
-import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup.ScoringParameterSet;
 import org.matsim.core.gbl.MatsimRandom;
 import org.matsim.core.utils.misc.OptionalTime;

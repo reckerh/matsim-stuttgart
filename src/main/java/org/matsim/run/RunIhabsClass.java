@@ -147,6 +147,7 @@ public class RunIhabsClass {
         Utils.createTypicalDurations("educ_secondary", minDuration, maxDuration, difference).forEach(params -> config.planCalcScore().addActivityParams(params));
         Utils.createTypicalDurations("educ_higher", minDuration, maxDuration, difference).forEach(params -> config.planCalcScore().addActivityParams(params));
 
+        ConfigUtils.writeConfig(config, "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/config.xml");
 
         ConfigUtils.applyCommandline( config, typedArgs ) ;
 

@@ -12,6 +12,10 @@ import org.locationtech.jts.util.Assert;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
+import org.matsim.api.core.v01.events.PersonMoneyEvent;
+import org.matsim.api.core.v01.events.handler.PersonMoneyEventHandler;
+import org.matsim.api.core.v01.population.Person;
+import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
@@ -28,9 +32,7 @@ import org.matsim.parkingCost.ParkingCostModule;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
+import java.util.*;
 
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
 
@@ -38,7 +40,7 @@ public class PtFaresHandlerTest {
     private static final Logger log = Logger.getLogger(PtFaresHandlerTest.class );
 
     @Test
-    public final void testPtFaresHandlerTest2(){
+    public final void testPtFaresHandlerTest(){
 
         String configPath = "./test/input/config.xml";
 
@@ -48,7 +50,19 @@ public class PtFaresHandlerTest {
         // Prepare scenario
         Scenario scenario = prepareScenario(config) ;
         Controler controler = prepareControler(scenario) ;
+
+        EventsManager events = controler.getEvents();
+        Tester tester = new Tester();
+        events.addHandler(tester);
+
+
         controler.run();
+
+        tester.getPerson2Purpose().entrySet().stream().forEach(entry ->{
+            System.out.printf("Person %$1s enters vehicle %$2d", entry.getKey().toString(), entry.getValue());
+        });
+
+        //
 
         // Check output param
         Assert.equals(scenario.getPopulation().getPersons().get(Id.createPersonId("1")).getSelectedPlan().getScore(), 200);
@@ -97,7 +111,7 @@ public class PtFaresHandlerTest {
             }
         } );
 
-        // use deterministic transport simulation of SBB
+/*        // use deterministic transport simulation of SBB
         controler.addOverridingModule(new AbstractModule() {
             @Override
             public void install() {
@@ -110,7 +124,7 @@ public class PtFaresHandlerTest {
 
         controler.configureQSimComponents(components -> {
             SBBTransitEngineQSimModule.configure(components);
-        });
+        });*/
 
         // use parking cost module
         controler.addOverridingModule(new ParkingCostModule());
@@ -148,8 +162,8 @@ public class PtFaresHandlerTest {
 
     private Config prepareConfig(String configPath) {
 
-
-        ConfigGroup[] customModulesToAdd = new ConfigGroup[]{ setupRaptorConfigGroup(), setupPTFaresGroup(), setupSBBTransit(), new ParkingCostConfigGroup()};
+        ConfigGroup[] customModulesToAdd = new ConfigGroup[]{ setupRaptorConfigGroup(), setupPTFaresGroup(), new ParkingCostConfigGroup()};
+        // ConfigGroup[] customModulesToAdd = new ConfigGroup[]{ setupRaptorConfigGroup(), setupPTFaresGroup(), setupSBBTransit(), new ParkingCostConfigGroup()};
         ConfigGroup[] customModulesAll = new ConfigGroup[customModulesToAdd.length];
 
         int counter = 0;
@@ -223,6 +237,48 @@ public class PtFaresHandlerTest {
         sbbTransit.setCreateLinkEventsInterval(1);
 
         return sbbTransit;
+    }
+
+
+    private static class FareSumCalculator implements PersonMoneyEventHandler {
+        Map<Id<Person>, Double> person2Fare = new HashMap<>();
+
+        @Override
+        public void handleEvent(PersonMoneyEvent event) {
+
+            person2Fare.put(event.getPersonId(), event.getAmount());
+
+        }
+
+        @Override
+        public void reset(int iteration) {
+            person2Fare.clear();
+        }
+
+        private Map<Id<Person>, Double> getPerson2Fare() {
+            return person2Fare;
+        }
+    }
+
+
+    private static class Tester implements PersonMoneyEventHandler {
+        Map<Id<Person>, String> person2Purpose = new HashMap<>();
+
+        @Override
+        public void handleEvent(PersonMoneyEvent event) {
+
+            person2Purpose.put(event.getPersonId(), event.getPurpose());
+
+        }
+
+        @Override
+        public void reset(int iteration) {
+            person2Purpose.clear();
+        }
+
+        private Map<Id<Person>, String> getPerson2Purpose() {
+            return person2Purpose;
+        }
     }
 
 }

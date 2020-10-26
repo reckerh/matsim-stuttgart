@@ -46,11 +46,17 @@
 	
 	<person id="4" employed="no">
 		<plan selected="yes">
-			<act type="h"  x="1000.0" y="3000.0" end_time="07:18:16" />
+			<act type="h"  x="1000.0" y="3000.0" end_time="06:18:16" />
 			<leg mode="pt" >				
 			</leg>
-			<act type="w"  x="3980.0" y="3080.0" end_time="17:43:36" />
+			<act type="w"  x="3980.0" y="3080.0" end_time="14:43:36" />
 			<leg mode="pt">			
+			</leg>
+			<act type="h"  x="1000.0" y="3000.0" end_time="17:43:36"/>
+			<leg mode="car" >				
+			</leg>
+			<act type="s"  x="1040.0" y="1060.0" end_time="19:43:36" />
+			<leg mode="car">				
 			</leg>
 			<act type="h"  x="1000.0" y="3000.0" />
 		</plan>
@@ -65,7 +71,7 @@
 			<act type="w"  x="3980.0" y="3080.0" end_time="15:43:36" />
 			<leg mode="pt">				
 			</leg>
-			<act type="h"  x="1000.0" y="3000.0" />
+			<act type="h"  x="1000.0" y="3000.0" end_time="17:43:36" />
 			<leg mode="pt" >				
 			</leg>
 			<act type="s"  x="3980.0" y="1060.0" end_time="19:43:36" />
@@ -81,10 +87,10 @@
 			<act type="h"  x="1000.0" y="3000.0" end_time="07:18:16" />
 			<leg mode="pt" >				
 			</leg>
-			<act type="w"  x="3980.0" y="3080.0" end_time="15:43:36" />
+			<act type="w"  x="3980.0" y="3080.0" end_time="17:43:36" />
 			<leg mode="pt">				
 			</leg>
-			<act type="h"  x="1000.0" y="3000.0" />
+			<act type="h"  x="1000.0" y="3000.0" end_time="18:43:36" />
 			<leg mode="pt" >				
 			</leg>
 			<act type="s"  x="1040.0" y="1060.0" end_time="19:43:36" />
