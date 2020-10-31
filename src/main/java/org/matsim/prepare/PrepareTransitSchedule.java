@@ -1,7 +1,6 @@
 package org.matsim.prepare;
 
 import org.apache.log4j.Logger;
-import org.geotools.data.shapefile.ShapefileDataStore;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 import org.matsim.api.core.v01.Coord;
@@ -13,13 +12,7 @@ import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.gis.ShapeFileReader;
 import org.matsim.pt.transitSchedule.api.*;
 import org.opengis.feature.simple.SimpleFeature;
-import org.opengis.referencing.crs.CoordinateReferenceSystem;
 
-
-import javax.imageio.IIOException;
-import java.io.IOException;
-import java.net.MalformedURLException;
-import java.net.URL;
 import java.util.*;
 
 
@@ -31,10 +24,8 @@ import java.util.*;
 
 public class PrepareTransitSchedule {
 
-    private static final Logger log = Logger.getLogger(TagPopulation.class);
+    private static final Logger log = Logger.getLogger(PrepareTransitSchedule.class);
 
-    // Hardcoded file locations
-    // Otherwise use command line with args: java AddFareZonesToStops <inputSchedulePath> <outputSchedulePath> <PathToFareZonesShape>
     private static String inputSchedule = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v0.0-snz-original/optimizedSchedule.xml.gz";
     private static String outputSchedule = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/optimizedSchedule-edd.xml.gz";
     private static String fareZoneShapeFile = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/01_prep/03_FareZones/fareZones_sp.shp";
@@ -57,50 +48,22 @@ public class PrepareTransitSchedule {
         Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
         new TransitScheduleReader(scenario).readFile(inputSchedule);
 
-        preparer.run(scenario);
+        preparer.run(scenario, fareZoneShapeFile);
 
         new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(outputSchedule);
 
 
     }
 
-    public void run(Scenario scenario) {
+    public void run(Scenario scenario, String shapeFile) {
 
         //Parse the transit schedule
 
         TransitSchedule schedule = scenario.getTransitSchedule();
 
-        // Do a crs check
-        // ToDo: Fix crs check!
-
-//        try {
-//            URL url = new URL("file:///" + fareZoneShapeFile);
-//            ShapefileDataStore shpDataStore = new ShapefileDataStore(url);
-//            CoordinateReferenceSystem shapeFileCRS = shpDataStore.getFeatureSource().getSchema().getCoordinateReferenceSystem();
-//
-//            System.out.println(shapeFileCRS.getCoordinateSystem().getName().toString());
-//
-//            if (shapeFileCRS.getCoordinateSystem().getName().toString() == "ETRS_1989_UTM_Zone_32N") {
-//                //shapeFileCRS and MATSim CRS match
-//                log.info("Shape File CRS is of needed type: " + shapeFileCRS.toString());
-//
-//            } else {
-//                throw new Exception("Shape File CRS is not of needed type!");
-//            }
-//
-//        }catch (MalformedURLException e) {
-//            e.printStackTrace();
-//
-//        }catch (IIOException e){
-//            e.printStackTrace();
-//
-//        }catch (Exception e) {
-//            e.printStackTrace();
-//        }
-
 
         // Read-In Shape Files which provide tag inputs
-        Collection<SimpleFeature> fareZoneFeatures = ShapeFileReader.getAllFeatures(fareZoneShapeFile);
+        Collection<SimpleFeature> fareZoneFeatures = ShapeFileReader.getAllFeatures(shapeFile);
 
         // Create map with all bikeAndRideAssignments in vvs area
         List<Id<TransitStopFacility>> bikeAndRideAssignment = tagBikeAndRide(schedule);

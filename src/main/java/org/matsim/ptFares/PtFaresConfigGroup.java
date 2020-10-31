@@ -8,6 +8,10 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+/**
+ * @author dwedekind
+ */
+
 public class PtFaresConfigGroup extends ReflectiveConfigGroup {
 
     public static final String GROUP_NAME = "ptFares";

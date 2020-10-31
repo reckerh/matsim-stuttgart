@@ -54,6 +54,9 @@ import org.matsim.ptFares.PtFaresModule;
 
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
 
+/**
+ * @author dwedekind, gleich
+ */
 
 public class RunCalibration {
     private static final Logger log = Logger.getLogger(RunCalibration.class );
@@ -65,11 +68,10 @@ public class RunCalibration {
         }
 
         if ( args.length==0 ) {
-            args = new String[] {"C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/stuttgart-v1.0_fstRun01/stuttgart-v1.0-25pct.config_fstRun01_Test.xml"}  ;
+            args = new String[] {"C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/stuttgart-v1.0_fstRun01/stuttgart-v1.0-25pct.config_fstRun01.xml"}  ;
         }
 
         Config config = prepareConfig( args ) ;
-        // ConfigUtils.writeConfig(config, "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/stuttgart-v1.0_fstRun01/stuttgart-v1.0-25pct.config_fstRun01_Test_ed.xml");
 
         Scenario scenario = prepareScenario( config ) ;
         Controler controler = prepareControler( scenario ) ;
@@ -84,7 +86,7 @@ public class RunCalibration {
         // -- PREPARE CUSTOM MODULES
         String[] typedArgs = Arrays.copyOfRange( args, 1, args.length );
 
-        ConfigGroup[] customModulesToAdd = new ConfigGroup[]{ setupRaptorConfigGroup(), setupPTFaresGroup(), setupSBBTransit(), new ParkingCostConfigGroup()};
+        ConfigGroup[] customModulesToAdd = new ConfigGroup[]{ setupRaptorConfigGroup(), setupPTFaresGroup(), setupSBBTransit(), setupParkingCostConfigGroup()};
         ConfigGroup[] customModulesAll = new ConfigGroup[customModules.length + customModulesToAdd.length];
 
         int counter = 0;
@@ -118,16 +120,7 @@ public class RunCalibration {
         config.qsim().setUsePersonIdForMissingVehicleId(false);
         config.controler().setRoutingAlgorithmType(FastAStarLandmarks);
         config.subtourModeChoice().setProbaForRandomSingleTripMode( 0.5 );
-        // config.plansCalcRoute().setRoutingRandomness( 3. );
-        // config.plansCalcRoute().removeModeRoutingParams(TransportMode.ride); // since we are using the (congested) car travel time
-        // config.plansCalcRoute().removeModeRoutingParams(TransportMode.pt); // since we are using simulated public transit
-        // config.plansCalcRoute().removeModeRoutingParams("undefined"); // since we don't have such a mode
         config.qsim().setInsertingWaitingVehiclesBeforeDrivingVehicles( true );
-
-
-        // -- MODES --
-        // config.plansCalcRoute().getOrCreateModeRoutingParams("bike").setBeelineDistanceFactor(1.27);
-        // config.plansCalcRoute().getOrCreateModeRoutingParams("bike").setTeleportedModeSpeed(14.6/3.6);
 
 
         // -- ACTIVITIES --
@@ -146,6 +139,8 @@ public class RunCalibration {
 
         ConfigUtils.applyCommandline( config, typedArgs ) ;
 
+        log.info("Config successfully prepared...");
+
         return config ;
     }
 
@@ -156,12 +151,16 @@ public class RunCalibration {
         Scenario scenario = ScenarioUtils.loadScenario(config);
 
         // Add fareZones and VVSBikeAndRideStops
+        String ptShapeFile = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/stuttgart-v1.0_fstRun01/input/fareZones_sp.shp";
         PrepareTransitSchedule ptPreparer = new PrepareTransitSchedule();
-        ptPreparer.run(scenario);
+        ptPreparer.run(scenario, ptShapeFile);
 
         // Add parking costs to network
+        String parkingShapeFile = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/stuttgart-v1.0_fstRun01/input/parkingShapes.shp";
         AddAdditionalNetworkAttributes parkingPreparer = new AddAdditionalNetworkAttributes();
-        parkingPreparer.run(scenario);
+        parkingPreparer.run(scenario, parkingShapeFile);
+
+        log.info("Scenario successfully prepared...");
 
         return scenario;
     }
@@ -218,31 +217,14 @@ public class RunCalibration {
             SBBTransitEngineQSimModule.configure(components);
         });
 
-/*        // use our own Analysis(Main-)ModeIdentifier
-        controler.addOverridingModule( new AbstractModule() {
-            @Override
-            public void install() {
-                // mainly relevant for DRT applications:
-                bind(MainModeIdentifier.class).to(LosAngelesIntermodalPtDrtRouterModeIdentifier.class);
-                // in order to look into the different types of intermodal pt trips:
-                bind(AnalysisMainModeIdentifier.class).to(LosAngelesIntermodalPtDrtRouterAnalysisModeIdentifier.class);
-            }
-        } );*/
-
-/*        // use income dependent marginal utility of money
-        LosAngelesPlanScoringFunctionFactory initialPlanScoringFunctionFactory = new LosAngelesPlanScoringFunctionFactory(controler.getScenario());
-        controler.addOverridingModule(new AbstractModule() {
-            @Override
-            public void install() {
-                this.bindScoringFunctionFactory().toInstance(initialPlanScoringFunctionFactory);
-            }
-        });*/
 
         // use parking cost module
         controler.addOverridingModule(new ParkingCostModule());
 
         // use pt fares module
         controler.addOverridingModule(new PtFaresModule());
+
+        log.info("Controler successfully prepared...");
 
         return controler;
     }
@@ -334,6 +316,18 @@ public class RunCalibration {
         sbbTransit.setCreateLinkEventsInterval(10);
 
         return sbbTransit;
+    }
+
+
+    private static ParkingCostConfigGroup setupParkingCostConfigGroup() {
+
+        ParkingCostConfigGroup parkingCostConfigGroup = new ParkingCostConfigGroup();
+
+        parkingCostConfigGroup.setFirstHourParkingCostLinkAttributeName("oneHourPCost");
+        parkingCostConfigGroup.setExtraHourParkingCostLinkAttributeName("extraHourPCost");
+        parkingCostConfigGroup.setMaxDailyParkingCostLinkAttributeName("maxDailyPCost");
+
+        return parkingCostConfigGroup;
     }
 
 

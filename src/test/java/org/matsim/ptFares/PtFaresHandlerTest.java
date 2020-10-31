@@ -1,7 +1,10 @@
 package org.matsim.ptFares;
 
 
+import ch.sbb.matsim.config.SBBTransitConfigGroup;
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
+import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
+import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
 import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import org.apache.log4j.Logger;
@@ -104,6 +107,21 @@ public class PtFaresHandlerTest {
             }
         });
 
+        // use deterministic transport simulation of SBB
+        controler.addOverridingModule(new AbstractModule() {
+            @Override
+            public void install() {
+                // To use the deterministic pt simulation (Part 1 of 2):
+                install(new SBBTransitModule());
+            }
+
+            // To use the deterministic pt simulation (Part 2 of 2):
+        });
+
+        controler.configureQSimComponents(components -> {
+            SBBTransitEngineQSimModule.configure(components);
+        });
+
         // use pt fares module
         controler.addOverridingModule(new PtFaresModule());
 
@@ -139,7 +157,7 @@ public class PtFaresHandlerTest {
     private Config prepareConfig(String configPath) {
 
         // Add custom modules
-        ConfigGroup[] customModulesToAdd = new ConfigGroup[]{setupPTFaresGroup(), setupRaptorConfigGroup()};
+        ConfigGroup[] customModulesToAdd = new ConfigGroup[]{setupPTFaresGroup(), setupRaptorConfigGroup(), setupSBBTransit()};
         ConfigGroup[] customModulesAll = new ConfigGroup[customModulesToAdd.length];
 
         int counter = 0;
@@ -201,6 +219,17 @@ public class PtFaresHandlerTest {
         configRaptor.setUseIntermodalAccessEgress(false);
 
         return configRaptor;
+    }
+
+
+    private static SBBTransitConfigGroup setupSBBTransit() {
+
+        SBBTransitConfigGroup sbbTransit = new SBBTransitConfigGroup();
+        Set<String> modes = new HashSet<>(Arrays.asList(new String[]{"train"}));
+        sbbTransit.setDeterministicServiceModes(modes);
+        sbbTransit.setCreateLinkEventsInterval(0);
+
+        return sbbTransit;
     }
 
 

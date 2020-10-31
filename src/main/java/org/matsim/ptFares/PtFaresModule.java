@@ -22,7 +22,7 @@ package org.matsim.ptFares;
 import org.matsim.core.controler.AbstractModule;
 
 /**
- * @author dwedekind
+ * @author dwedekind, gleich
  */
 
 public class PtFaresModule extends AbstractModule {
@@ -30,18 +30,10 @@ public class PtFaresModule extends AbstractModule {
     @Override
     public void install() {
 
-        // IntermodalTripFareCompensatorPerDay compensatorPerDay = new IntermodalTripFareCompensatorPerDay(intermodalFareConfigGroup);
-        // addEventHandlerBinding().toInstance(compensatorPerDay);
-        // addControlerListenerBinding().toInstance(compensatorPerDay);
-
-        // Test purposes
         PtFaresHandler ptHandler = new PtFaresHandler();
-        //PtFaresHandler ptHandler = new PtFaresHandler();
 
         addEventHandlerBinding().toInstance(ptHandler);
         addControlerListenerBinding().toInstance(ptHandler);
 
-        // this.addEventHandlerBinding().to(PtFaresHandler.class);
-        // this.addControlerListenerBinding().to(PtFaresHandler.class);
     }
 }

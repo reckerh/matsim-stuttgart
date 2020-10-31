@@ -1,17 +1,8 @@
 package org.matsim;
-
-import org.apache.commons.compress.utils.FileNameUtils;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
-import java.io.File;
-import java.io.FileFilter;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 /**

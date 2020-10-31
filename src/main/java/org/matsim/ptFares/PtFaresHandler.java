@@ -17,9 +17,11 @@ import org.matsim.core.controler.events.AfterMobsimEvent;
 import org.matsim.core.controler.listener.AfterMobsimListener;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 import org.matsim.vehicles.Vehicle;
-
-
 import java.util.*;
+
+/**
+ * @author dwedekind
+ */
 
 
 @Log4j2

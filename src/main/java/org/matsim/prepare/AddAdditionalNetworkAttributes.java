@@ -10,7 +10,6 @@ import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.NetworkWriter;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.geotools.MGC;
@@ -50,23 +49,16 @@ public class AddAdditionalNetworkAttributes {
         Network network = scenario.getNetwork();
         new MatsimNetworkReader(network).readFile(inputNetwork);
 
-        extender.run(scenario);
+        extender.run(scenario, shapeFile);
 
         // Write Network Output
         new NetworkWriter(scenario.getNetwork()).write(outputNetwork);
     }
 
 
-    public void run (Scenario scenario){
+    public void run (Scenario scenario, String shapeFile){
 
         Network network = scenario.getNetwork();
-
-        // ---------------------------
-        // -- ADD PARKING ATTRIBUTES
-
-        // Collect shapes from postgis
-
-        //* Code to be inserted here */
 
         // Read-In shape File
 
@@ -82,7 +74,6 @@ public class AddAdditionalNetworkAttributes {
 
     private void mergeNetworkLinksWithParkingAttributes(Network network, Collection<SimpleFeature> features){
 
-        // Don't forget automatic crs detection & transformation ?
 
         network.getLinks().values().stream()
                 .forEach(link -> {
@@ -93,40 +84,52 @@ public class AddAdditionalNetworkAttributes {
 
                     Point point = MGC.coord2Point(coord);
 
-                    Double dailyPCost = 0.;
                     Double oneHourPCost = 0.;
                     Double extraHourPCost = 0.;
                     Double maxDailyPCost = 0.;
+                    Double maxParkingTime = 1800.;
+                    Double pFine = 0.;
+                    Double resPCosts = 0.;
 
                     for (SimpleFeature feature : features ) {
                         Geometry geometry = (Geometry) feature.getDefaultGeometry();
 
                         if (geometry.contains(point)) {
 
-                            if (feature.getAttribute("daily") != null){
-                                dailyPCost = (Double) feature.getAttribute("daily");
+                            if (feature.getAttribute("h_costs") != null){
+                                oneHourPCost = (Double) feature.getAttribute("h_costs");
                             }
 
-                            if (feature.getAttribute("oneHour") != null){
-                                oneHourPCost = (Double) feature.getAttribute("oneHour");
+                            if (feature.getAttribute("h_costs") != null){
+                                extraHourPCost = (Double) feature.getAttribute("h_costs");
                             }
 
-                            if (feature.getAttribute("extraHour") != null){
-                                extraHourPCost = (Double) feature.getAttribute("extraHour");
+                            if (feature.getAttribute("dmax_costs") != null){
+                                maxDailyPCost = (Double) feature.getAttribute("dmax_costs");
                             }
 
-                            if (feature.getAttribute("maxDaily") != null){
-                                maxDailyPCost = (Double) feature.getAttribute("maxDaily");
+                            if (feature.getAttribute("maxTime") != null){
+                                maxParkingTime = (Double) feature.getAttribute("maxTime");
+                            }
+
+                            if (feature.getAttribute("penalty") != null){
+                                pFine = (Double) feature.getAttribute("penalty");
+                            }
+
+                            if (feature.getAttribute("res_costs") != null){
+                                resPCosts = (Double) feature.getAttribute("res_costs");
                             }
 
                             break;
                         }
                     }
 
-                    link.getAttributes().putAttribute("dailyPCost", dailyPCost);
                     link.getAttributes().putAttribute("oneHourPCost", oneHourPCost);
                     link.getAttributes().putAttribute("extraHourPCost", extraHourPCost);
                     link.getAttributes().putAttribute("maxDailyPCost", maxDailyPCost);
+                    link.getAttributes().putAttribute("maxPTime", maxParkingTime);
+                    link.getAttributes().putAttribute("pFine", pFine);
+                    link.getAttributes().putAttribute("resPCosts", resPCosts);
 
                 });
 
