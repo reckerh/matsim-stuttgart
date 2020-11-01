@@ -78,58 +78,80 @@ public class AddAdditionalNetworkAttributes {
         network.getLinks().values().stream()
                 .forEach(link -> {
 
+                    if (link.getAllowedModes().contains("pt")){
 
-                    // Which coord is returned? => start node, end node? center of the link?
-                    Coord coord = link.getCoord();
+                        // pTLinks are not relevant for parking
 
-                    Point point = MGC.coord2Point(coord);
+                    }else{
 
-                    Double oneHourPCost = 0.;
-                    Double extraHourPCost = 0.;
-                    Double maxDailyPCost = 0.;
-                    Double maxParkingTime = 1800.;
-                    Double pFine = 0.;
-                    Double resPCosts = 0.;
+                        // Which coord is returned? => start node, end node? center of the link?
+                        Coord coord = link.getCoord();
 
-                    for (SimpleFeature feature : features ) {
-                        Geometry geometry = (Geometry) feature.getDefaultGeometry();
+                        Point point = MGC.coord2Point(coord);
 
-                        if (geometry.contains(point)) {
+                        Double oneHourPCost = 0.;
+                        Double extraHourPCost = 0.;
+                        Double maxDailyPCost = 0.;
+                        Integer maxParkingTime = 1800;
+                        Double pFine = 0.;
+                        Double resPCosts = 0.;
+                        String zoneName = "";
+                        String zoneGroup = "";
 
-                            if (feature.getAttribute("h_costs") != null){
-                                oneHourPCost = (Double) feature.getAttribute("h_costs");
+
+                        for (SimpleFeature feature : features ) {
+                            Geometry geometry = (Geometry) feature.getDefaultGeometry();
+
+
+                            if (geometry.contains(point)) {
+
+                                if (feature.getAttribute("zone_name") != null){
+                                    zoneName = (String) feature.getAttribute("zone_name");
+                                }
+
+                                if (feature.getAttribute("zone_group") != null){
+                                    zoneGroup = (String) feature.getAttribute("zone_group");
+                                }
+
+                                if (feature.getAttribute("h_costs") != null){
+                                    oneHourPCost = (Double) feature.getAttribute("h_costs");
+                                }
+
+                                if (feature.getAttribute("h_costs") != null){
+                                    extraHourPCost = (Double) feature.getAttribute("h_costs");
+                                }
+
+                                if (feature.getAttribute("dmax_costs") != null){
+                                    maxDailyPCost = (Double) feature.getAttribute("dmax_costs");
+                                }
+
+                                if (feature.getAttribute("max_time") != null){
+                                    maxParkingTime = (Integer) feature.getAttribute("max_time");
+                                }
+
+                                if (feature.getAttribute("penalty") != null){
+                                    pFine = (Double) feature.getAttribute("penalty");
+                                }
+
+                                if (feature.getAttribute("res_costs") != null){
+                                    resPCosts = (Double) feature.getAttribute("res_costs");
+                                }
+
+                                break;
                             }
-
-                            if (feature.getAttribute("h_costs") != null){
-                                extraHourPCost = (Double) feature.getAttribute("h_costs");
-                            }
-
-                            if (feature.getAttribute("dmax_costs") != null){
-                                maxDailyPCost = (Double) feature.getAttribute("dmax_costs");
-                            }
-
-                            if (feature.getAttribute("maxTime") != null){
-                                maxParkingTime = (Double) feature.getAttribute("maxTime");
-                            }
-
-                            if (feature.getAttribute("penalty") != null){
-                                pFine = (Double) feature.getAttribute("penalty");
-                            }
-
-                            if (feature.getAttribute("res_costs") != null){
-                                resPCosts = (Double) feature.getAttribute("res_costs");
-                            }
-
-                            break;
                         }
+
+                        link.getAttributes().putAttribute("oneHourPCost", oneHourPCost);
+                        link.getAttributes().putAttribute("extraHourPCost", extraHourPCost);
+                        link.getAttributes().putAttribute("maxDailyPCost", maxDailyPCost);
+                        link.getAttributes().putAttribute("maxPTime", maxParkingTime);
+                        link.getAttributes().putAttribute("pFine", pFine);
+                        link.getAttributes().putAttribute("resPCosts", resPCosts);
+                        link.getAttributes().putAttribute("zoneName", zoneName);
+                        link.getAttributes().putAttribute("zoneGroup", zoneGroup);
+
                     }
 
-                    link.getAttributes().putAttribute("oneHourPCost", oneHourPCost);
-                    link.getAttributes().putAttribute("extraHourPCost", extraHourPCost);
-                    link.getAttributes().putAttribute("maxDailyPCost", maxDailyPCost);
-                    link.getAttributes().putAttribute("maxPTime", maxParkingTime);
-                    link.getAttributes().putAttribute("pFine", pFine);
-                    link.getAttributes().putAttribute("resPCosts", resPCosts);
 
                 });
 
