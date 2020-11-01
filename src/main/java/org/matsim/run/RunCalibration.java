@@ -21,7 +21,6 @@ package org.matsim.run;
 import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
-
 import ch.sbb.matsim.config.SBBTransitConfigGroup;
 import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
 import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
@@ -40,20 +39,16 @@ import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.OutputDirectoryLogging;
 import org.matsim.core.gbl.Gbl;
-import org.matsim.core.network.io.NetworkWriter;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.parkingCost.ParkingCostConfigGroup;
 import org.matsim.parkingCost.ParkingCostModule;
-
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import org.matsim.prepare.AddAdditionalNetworkAttributes;
 import org.matsim.prepare.PrepareTransitSchedule;
-import org.matsim.pt.transitSchedule.api.TransitScheduleWriter;
 import org.matsim.ptFares.PtFaresConfigGroup;
 import org.matsim.ptFares.PtFaresModule;
-
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
 
 /**
@@ -69,24 +64,8 @@ public class RunCalibration {
             log.info( arg );
         }
 
-        if ( args.length==0 ) {
-            args = new String[] {"C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/stuttgart-v1.0_fstRun01/stuttgart-v1.0-25pct.config_fstRun01.xml"}  ;
-        }
-
         Config config = prepareConfig( args ) ;
-
         Scenario scenario = prepareScenario( config ) ;
-
-        // ------
-        // To Remove
-        TransitScheduleWriter tsWriter = new TransitScheduleWriter(scenario.getTransitSchedule());
-        tsWriter.writeFile("C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/transitSchedule.xml");
-
-        NetworkWriter nWriter = new NetworkWriter(scenario.getNetwork());
-        nWriter.write("C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/network.xml");
-
-        // ------
-
         Controler controler = prepareControler( scenario ) ;
         controler.run() ;
     }
@@ -118,7 +97,6 @@ public class RunCalibration {
 
 
         // -- CONTROLER --
-        config.controler().setLastIteration(2);
         config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
 
 
@@ -150,6 +128,12 @@ public class RunCalibration {
         Utils.createTypicalDurations("educ_secondary", minDuration, maxDuration, difference).forEach(params -> config.planCalcScore().addActivityParams(params));
         Utils.createTypicalDurations("educ_higher", minDuration, maxDuration, difference).forEach(params -> config.planCalcScore().addActivityParams(params));
 
+
+        // -- SET OUTPUT DIRECTORY FOR HOME PC RUNS
+        String outputDir = args[0].replace((args[0].substring(args[0].lastIndexOf("/") + 1)),"") + "output";
+        config.controler().setOutputDirectory(outputDir);
+
+        // -- SET PROPERTIES BY BASH SCRIPT (FOR CLUSTER USAGE ONLY)
         ConfigUtils.applyCommandline( config, typedArgs ) ;
 
         log.info("Config successfully prepared...");
@@ -163,15 +147,15 @@ public class RunCalibration {
 
         Scenario scenario = ScenarioUtils.loadScenario(config);
 
+
         // Add fareZones and VVSBikeAndRideStops
-        String ptShapeFile = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/stuttgart-v1.0_fstRun01/input/fareZones_sp.shp";
+        String inputFolderPath = config.controler().getOutputDirectory().replace("output", "input");
         PrepareTransitSchedule ptPreparer = new PrepareTransitSchedule();
-        ptPreparer.run(scenario, ptShapeFile);
+        ptPreparer.run(scenario, inputFolderPath + "/fareZones_sp.shp");
 
         // Add parking costs to network
-        String parkingShapeFile = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/stuttgart-v1.0_fstRun01/input/parkingShapes.shp";
         AddAdditionalNetworkAttributes parkingPreparer = new AddAdditionalNetworkAttributes();
-        parkingPreparer.run(scenario, parkingShapeFile);
+        parkingPreparer.run(scenario, inputFolderPath + "/parkingShapes.shp");
 
         log.info("Scenario successfully prepared...");
 
