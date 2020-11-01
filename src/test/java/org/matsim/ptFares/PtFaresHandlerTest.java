@@ -43,7 +43,7 @@ public class PtFaresHandlerTest {
     @Test
     public final void testPtFaresHandlerTest_v2() {
 
-        String configPath = "./test/input/config.xml";
+        String configPath = "./test/input/ptFares/config.xml";
 
         // Prepare config
         Config config = prepareConfig(configPath);

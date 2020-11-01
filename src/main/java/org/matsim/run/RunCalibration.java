@@ -40,6 +40,7 @@ import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.OutputDirectoryLogging;
 import org.matsim.core.gbl.Gbl;
+import org.matsim.core.network.io.NetworkWriter;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.parkingCost.ParkingCostConfigGroup;
 import org.matsim.parkingCost.ParkingCostModule;
@@ -49,6 +50,7 @@ import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import org.matsim.prepare.AddAdditionalNetworkAttributes;
 import org.matsim.prepare.PrepareTransitSchedule;
+import org.matsim.pt.transitSchedule.api.TransitScheduleWriter;
 import org.matsim.ptFares.PtFaresConfigGroup;
 import org.matsim.ptFares.PtFaresModule;
 
@@ -74,6 +76,17 @@ public class RunCalibration {
         Config config = prepareConfig( args ) ;
 
         Scenario scenario = prepareScenario( config ) ;
+
+        // ------
+        // To Remove
+        TransitScheduleWriter tsWriter = new TransitScheduleWriter(scenario.getTransitSchedule());
+        tsWriter.writeFile("C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/transitSchedule.xml");
+
+        NetworkWriter nWriter = new NetworkWriter(scenario.getNetwork());
+        nWriter.write("C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/network.xml");
+
+        // ------
+
         Controler controler = prepareControler( scenario ) ;
         controler.run() ;
     }
