@@ -12,6 +12,8 @@
     <properties>
         <matsim.version>13.0-2020w41-SNAPSHOT</matsim.version>
         <!--		<matsim.version>13.0-2020w37-SNAPSHOT</matsim.version>-->
+        <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
+        <geotools.version> 24-SNAPSHOT</geotools.version>
     </properties>
 
     <repositories>
@@ -250,6 +252,17 @@
             <version>4.1.0</version>
         </dependency>
         -->
+
+        <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-shapefile</artifactId>
+            <version>${geotools.version}</version>
+        </dependency>
+        <dependency>
+            <groupId>org.geotools</groupId>
+            <artifactId>gt-swing</artifactId>
+            <version>${geotools.version}</version>
+        </dependency>
 
     </dependencies>
 

@@ -18,12 +18,12 @@
  * *********************************************************************** */
 package org.matsim.run;
 
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 import ch.sbb.matsim.config.SBBTransitConfigGroup;
+import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
 import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
+import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
+import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import org.apache.log4j.Logger;
 import org.matsim.Utils;
 import org.matsim.api.core.v01.Scenario;
@@ -42,21 +42,21 @@ import org.matsim.core.gbl.Gbl;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.parkingCost.ParkingCostConfigGroup;
 import org.matsim.parkingCost.ParkingCostModule;
-import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
-import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
-import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import org.matsim.prepare.AddAdditionalNetworkAttributes;
 import org.matsim.prepare.PrepareTransitSchedule;
-import org.matsim.ptFares.PtFaresConfigGroup;
-import org.matsim.ptFares.PtFaresModule;
+
+import java.util.Arrays;
+import java.util.HashSet;
+import java.util.Set;
+
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
 
 /**
  * @author dwedekind, gleich
  */
 
-public class RunCalibration {
-    private static final Logger log = Logger.getLogger(RunCalibration.class );
+public class RunCalibrationWithoutPTHandler {
+    private static final Logger log = Logger.getLogger(RunCalibrationWithoutPTHandler.class );
 
     public static void main(String[] args) {
 
@@ -78,7 +78,7 @@ public class RunCalibration {
         // -- PREPARE CUSTOM MODULES
         String[] typedArgs = Arrays.copyOfRange( args, 1, args.length );
 
-        ConfigGroup[] customModulesToAdd = new ConfigGroup[]{ setupRaptorConfigGroup(), setupPTFaresGroup(), setupSBBTransit(), setupParkingCostConfigGroup()};
+        ConfigGroup[] customModulesToAdd = new ConfigGroup[]{ setupRaptorConfigGroup() /*, setupPTFaresGroup()*/, setupSBBTransit(), setupParkingCostConfigGroup()};
         ConfigGroup[] customModulesAll = new ConfigGroup[customModules.length + customModulesToAdd.length];
 
         int counter = 0;
@@ -149,13 +149,12 @@ public class RunCalibration {
 
 
         // Add fareZones and VVSBikeAndRideStops
-        String inputFolderPath = config.controler().getOutputDirectory().replace("output", "input");
         PrepareTransitSchedule ptPreparer = new PrepareTransitSchedule();
-        ptPreparer.run(scenario, inputFolderPath + "/fareZones_sp.shp");
+        ptPreparer.run(scenario, "./input/fareZones_sp.shp");
 
         // Add parking costs to network
         AddAdditionalNetworkAttributes parkingPreparer = new AddAdditionalNetworkAttributes();
-        parkingPreparer.run(scenario, inputFolderPath + "/parkingShapes.shp");
+        parkingPreparer.run(scenario, "./input/parkingShapes.shp");
 
         log.info("Scenario successfully prepared...");
 
@@ -195,7 +194,7 @@ public class RunCalibration {
         controler.addOverridingModule( new AbstractModule() {
             @Override
             public void install() {
-                bind(RaptorIntermodalAccessEgress.class).to(org.matsim.run.StuttgartRaptorIntermodalAccessEgress.class);
+                bind(RaptorIntermodalAccessEgress.class).to(StuttgartRaptorIntermodalAccessEgress.class);
             }
         } );
 
@@ -218,8 +217,10 @@ public class RunCalibration {
         // use parking cost module
         controler.addOverridingModule(new ParkingCostModule());
 
+/*
         // use pt fares module
         controler.addOverridingModule(new PtFaresModule());
+*/
 
         log.info("Controler successfully prepared...");
 
@@ -259,6 +260,7 @@ public class RunCalibration {
         return configRaptor;
     }
 
+/*
 
     private static PtFaresConfigGroup setupPTFaresGroup() {
 
@@ -303,6 +305,7 @@ public class RunCalibration {
 
         return configFares;
     }
+*/
 
 
     private static SBBTransitConfigGroup setupSBBTransit() {
