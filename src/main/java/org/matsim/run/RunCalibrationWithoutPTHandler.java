@@ -44,8 +44,6 @@ import org.matsim.parkingCost.ParkingCostConfigGroup;
 import org.matsim.parkingCost.ParkingCostModule;
 import org.matsim.prepare.AddAdditionalNetworkAttributes;
 import org.matsim.prepare.PrepareTransitSchedule;
-import org.matsim.ptFares.PtFaresConfigGroup;
-import org.matsim.ptFares.PtFaresModule;
 
 import java.util.Arrays;
 import java.util.HashSet;
@@ -57,8 +55,8 @@ import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorith
  * @author dwedekind, gleich
  */
 
-public class RunCalibration_woPTHandler {
-    private static final Logger log = Logger.getLogger(RunCalibration_woPTHandler.class );
+public class RunCalibrationWithoutPTHandler {
+    private static final Logger log = Logger.getLogger(RunCalibrationWithoutPTHandler.class );
 
     public static void main(String[] args) {
 
@@ -151,13 +149,12 @@ public class RunCalibration_woPTHandler {
 
 
         // Add fareZones and VVSBikeAndRideStops
-        String inputFolderPath = config.controler().getOutputDirectory().replace("output", "input");
         PrepareTransitSchedule ptPreparer = new PrepareTransitSchedule();
-        ptPreparer.run(scenario, inputFolderPath + "/fareZones_sp.shp");
+        ptPreparer.run(scenario, "./input/fareZones_sp.shp");
 
         // Add parking costs to network
         AddAdditionalNetworkAttributes parkingPreparer = new AddAdditionalNetworkAttributes();
-        parkingPreparer.run(scenario, inputFolderPath + "/parkingShapes.shp");
+        parkingPreparer.run(scenario, "./input/parkingShapes.shp");
 
         log.info("Scenario successfully prepared...");
 
