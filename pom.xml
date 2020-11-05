@@ -63,6 +63,12 @@
             <groupId>com.github.matsim-scenarios</groupId>
             <artifactId>matsim-los-angeles</artifactId>
             <version>v1.1</version>
+            <exclusions>
+                <exclusion>
+                    <groupId>*</groupId>
+                    <artifactId>*</artifactId>
+                </exclusion>
+            </exclusions>
         </dependency>
 
         <dependency>

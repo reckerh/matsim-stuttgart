@@ -2,16 +2,19 @@ package org.matsim.prepare;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.population.*;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.population.io.PopulationReader;
 import org.matsim.core.population.io.PopulationWriter;
 import org.matsim.core.scenario.ScenarioUtils;
 
+import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class CleanPopulation {
 
+    private static final Logger log = Logger.getLogger(CleanPopulation.class);
     private static final String inputPopulation = "projects\\matsim-stuttgart\\stuttgart-v0.0-snz-original\\optimizedPopulation.xml.gz";
     private static final String outputPopulation = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\population-25pct-stuttgart.xml.gz";
 
@@ -20,9 +23,14 @@ public class CleanPopulation {
         var arguments = new InputArgs();
         JCommander.newBuilder().addObject(arguments).build().parse(args);
         var svn = Paths.get(arguments.sharedSvn);
+        clean(svn);
+    }
 
+    public static void clean(Path sharedSvn) {
         var scenario = ScenarioUtils.createMutableScenario(ConfigUtils.createConfig());
-        new PopulationReader(scenario).readFile(svn.resolve(inputPopulation).toString());
+
+        log.info("loading population");
+        new PopulationReader(scenario).readFile(sharedSvn.resolve(inputPopulation).toString());
 
         scenario.getPopulation().getPersons().values().parallelStream()
                 .forEach(person -> {
@@ -53,7 +61,7 @@ public class CleanPopulation {
 
         splitActivityTypesBasedOnDuration(scenario.getPopulation());
 
-        new PopulationWriter(scenario.getPopulation()).write(svn.resolve(outputPopulation).toString());
+        new PopulationWriter(scenario.getPopulation()).write(sharedSvn.resolve(outputPopulation).toString());
     }
 
     /**
