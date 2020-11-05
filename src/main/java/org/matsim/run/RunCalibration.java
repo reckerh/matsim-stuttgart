@@ -210,9 +210,7 @@ public class RunCalibration {
             // To use the deterministic pt simulation (Part 2 of 2):
         });
 
-        controler.configureQSimComponents(components -> {
-            SBBTransitEngineQSimModule.configure(components);
-        });
+        controler.configureQSimComponents(SBBTransitEngineQSimModule::configure);
 
 
         // use parking cost module
@@ -312,7 +310,7 @@ public class RunCalibration {
     private static SBBTransitConfigGroup setupSBBTransit() {
 
         SBBTransitConfigGroup sbbTransit = new SBBTransitConfigGroup();
-        Set<String> modes = new HashSet<>(Arrays.asList(new String[]{"train", "tram", "bus"}));
+        Set<String> modes = new HashSet<>(Arrays.asList("train", "tram", "bus"));
         sbbTransit.setDeterministicServiceModes(modes);
         sbbTransit.setCreateLinkEventsInterval(10);
 

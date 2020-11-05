@@ -30,8 +30,6 @@ public class AddAdditionalNetworkAttributes {
     // Specify path strings for network in- and output
     private static String inputNetwork = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/stuttgart-v1.0_fstRun01/input/optimizedNetwork.xml.gz";
     private static String outputNetwork = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/network-stuttgart-edited.xml.gz";
-    private static String shapeFile = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/01_prep/01_Parking/test.shp";
-    private static Collection<SimpleFeature> features = null;
 
 
     public static void main(String[] args) {
@@ -49,6 +47,7 @@ public class AddAdditionalNetworkAttributes {
         Network network = scenario.getNetwork();
         new MatsimNetworkReader(network).readFile(inputNetwork);
 
+        String shapeFile = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/01_prep/01_Parking/test.shp";
         extender.run(scenario, shapeFile);
 
         // Write Network Output
@@ -62,7 +61,7 @@ public class AddAdditionalNetworkAttributes {
 
         // Read-In shape File
 
-        features = ShapeFileReader.getAllFeatures(shapeFile);
+        Collection<SimpleFeature> features = ShapeFileReader.getAllFeatures(shapeFile);
 
         // Do join network with parking shapes
         mergeNetworkLinksWithParkingAttributes(network, features);
@@ -75,7 +74,7 @@ public class AddAdditionalNetworkAttributes {
     private void mergeNetworkLinksWithParkingAttributes(Network network, Collection<SimpleFeature> features){
 
 
-        network.getLinks().values().stream()
+        network.getLinks().values()
                 .forEach(link -> {
 
                     if (link.getAllowedModes().contains("pt")){
