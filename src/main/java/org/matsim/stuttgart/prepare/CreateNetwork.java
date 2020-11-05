@@ -28,11 +28,9 @@ public class CreateNetwork {
 
     public static void main(String[] args) {
 
-        var arguments = new InputArgs();
-        JCommander.newBuilder().addObject(arguments).build().parse(args);
-
-        var network = createNetwork(Paths.get(arguments.sharedSvn));
-        writeNetwork(network, Paths.get(arguments.sharedSvn));
+        var arguments = Utils.parseSharedSvn(args);
+        var network = createNetwork(Paths.get(arguments.getSharedSvn()));
+        writeNetwork(network, Paths.get(arguments.getSharedSvn()));
     }
 
     public static Network createNetwork(Path svnPath) {
@@ -76,11 +74,5 @@ public class CreateNetwork {
         new MatsimNetworkReader(senozonNetwork).readFile(sharedSvn.resolve(senozonNetworkPath).toString());
 
         return BoundingBox.fromNetwork(senozonNetwork).toGeometry();
-    }
-
-    private static class InputArgs {
-
-        @Parameter(names = {"-sharedSvn"}, required = true)
-        String sharedSvn = "https://svn.vsp.tu-berlin.de/repos/shared-svn/";
     }
 }

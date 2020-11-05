@@ -8,6 +8,7 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.population.io.PopulationReader;
 import org.matsim.core.population.io.PopulationWriter;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.stuttgart.Utils;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -20,10 +21,8 @@ public class CleanPopulation {
 
     public static void main(String[] args) {
 
-        var arguments = new InputArgs();
-        JCommander.newBuilder().addObject(arguments).build().parse(args);
-        var svn = Paths.get(arguments.sharedSvn);
-        clean(svn);
+        var arguments = Utils.parseSharedSvn(args);
+        clean(Paths.get(arguments.getSharedSvn()));
     }
 
     public static void clean(Path sharedSvn) {
@@ -117,11 +116,5 @@ public class CleanPopulation {
             }
         }  // skipping plans with just one activity
 
-    }
-
-    private static class InputArgs {
-
-        @Parameter(names = {"-sharedSvn"}, required = true)
-        String sharedSvn = "https://svn.vsp.tu-berlin.de/repos/shared-svn/";
     }
 }

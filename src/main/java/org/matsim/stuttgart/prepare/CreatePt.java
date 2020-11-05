@@ -23,10 +23,8 @@ public class CreatePt {
 
     public static void main(String[] args) {
 
-        var arguments = new InputArgs();
-        JCommander.newBuilder().addObject(arguments).build().parse(args);
-        create(Paths.get(arguments.sharedSvn));
-
+        var arguments = Utils.parseSharedSvn(args);
+        create(Paths.get(arguments.getSharedSvn()));
     }
 
     public static void create(Path sharedSvn) {
@@ -49,11 +47,5 @@ public class CreatePt {
 
         new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(svn.resolve(transitSchedule).toString());
         new MatsimVehicleWriter(scenario.getTransitVehicles()).writeFile(svn.resolve(transitVehicles).toString());
-    }
-
-    private static class InputArgs {
-
-        @Parameter(names = {"-sharedSvn"}, required = true)
-        String sharedSvn = "https://svn.vsp.tu-berlin.de/repos/shared-svn/";
     }
 }

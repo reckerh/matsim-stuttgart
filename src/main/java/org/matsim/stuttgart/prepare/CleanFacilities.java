@@ -31,6 +31,7 @@ import org.matsim.facilities.ActivityFacilitiesFactoryImpl;
 import org.matsim.facilities.ActivityFacility;
 import org.matsim.facilities.ActivityOption;
 import org.matsim.facilities.FacilitiesWriter;
+import org.matsim.stuttgart.Utils;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -47,9 +48,8 @@ public class CleanFacilities {
 
 	public static void main(String[] args) {
 
-		var arguments = new InputArgs();
-		JCommander.newBuilder().addObject(arguments).build().parse(args);
-		clean(Paths.get(arguments.sharedSvn));
+		var arguments = Utils.parseSharedSvn(args);
+		clean(Paths.get(arguments.getSharedSvn()));
 	}
 	
 	public static void clean(Path sharedSvn) {
@@ -78,11 +78,4 @@ public class CleanFacilities {
 		new FacilitiesWriter(facilities).write(sharedSvn.resolve(outputFacilities).toString());
 		log.info("Writing... Done.");
 	}
-
-	private static class InputArgs {
-
-		@Parameter(names = {"-sharedSvn"}, required = true)
-		String sharedSvn = "https://svn.vsp.tu-berlin.de/repos/shared-svn/";
-	}
-
 }

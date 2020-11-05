@@ -2,6 +2,7 @@ package org.matsim.stuttgart.prepare;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import org.matsim.stuttgart.Utils;
 
 import java.nio.file.Paths;
 
@@ -9,9 +10,8 @@ public class PrepareScenario {
 
     public static void main(String[] args) {
 
-        var arguments = new InputArgs();
-        JCommander.newBuilder().addObject(arguments).build().parse(args);
-        var svn = Paths.get(arguments.sharedSvn);
+        var arguments = Utils.parseSharedSvn(args);
+        var svn = Paths.get(arguments.getSharedSvn());
 
         // have this scope so that the network can be collected by GC if not enough memory
         {
@@ -30,11 +30,8 @@ public class PrepareScenario {
 
         // clean facilities from old network references and save it
         CleanFacilities.clean(svn);
-    }
 
-    private static class InputArgs {
-
-        @Parameter(names = {"-sharedSvn"}, required = true)
-        String sharedSvn = "https://svn.vsp.tu-berlin.de/repos/shared-svn/";
+        // create vehicles
+        CreateVehicleTypes.create(svn);
     }
 }
