@@ -235,7 +235,7 @@ public class RunCalibration {
         // -- Intermodal Routing --
 
         configRaptor.setUseIntermodalAccessEgress(true);
-
+/*
         // AcessEgressWalk
         SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetAEWalk = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
         paramSetAEWalk.setInitialSearchRadius(1000);
@@ -255,8 +255,12 @@ public class RunCalibration {
 
         configRaptor.addIntermodalAccessEgress(paramSetAEBike);
 
+ */
 
-        return configRaptor;
+        throw new RuntimeException("The above parameter have changed in the current snapshot version. Please review");
+
+
+        //return null;
     }
 
 

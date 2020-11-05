@@ -34,16 +34,15 @@ import org.matsim.facilities.FacilitiesWriter;
 * @author ikaddoura
 */
 
-public class RemoveNetworkInfoFromFacilities {
+public class CleanFacilities {
 	
-	private static final Logger log = Logger.getLogger(RemoveNetworkInfoFromFacilities.class);
-	
-	private static String inputFacilities = "../shared-svn/projects/matsim-stuttgart/stuttgart-v0.0-snz-original/optimizedFacilities.xml.gz";
-	private static String outputFacilities = "../shared-svn/projects/matsim-stuttgart/stuttgart-v1.0/input/optimizedFacilities_withoutNetworkInfo.xml.gz";
-	
+	private static final Logger log = Logger.getLogger(CleanFacilities.class);
+
 	public static void main(String[] args) {
 		
-		RemoveNetworkInfoFromFacilities filter = new RemoveNetworkInfoFromFacilities();
+		CleanFacilities filter = new CleanFacilities();
+		String inputFacilities = "projects\\matsim-stuttgart\\stuttgart-v0.0-snz-original\\optimizedFacilities.xml.gz\"";
+		String outputFacilities = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\facilities-stuttgart.xml.gz";
 		filter.run(inputFacilities, outputFacilities);
 	}
 	
