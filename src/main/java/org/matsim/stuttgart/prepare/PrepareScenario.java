@@ -26,6 +26,7 @@ public class PrepareScenario {
         }
 
         // clean population from old network references and save it
+        // downscaled populations are created via 'ReducePopulation'
         CleanPopulation.clean(svn);
 
         // clean facilities from old network references and save it
