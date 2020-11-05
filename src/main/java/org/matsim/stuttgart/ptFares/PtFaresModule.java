@@ -17,7 +17,7 @@
  *                                                                         *
  * *********************************************************************** */
 
-package org.matsim.ptFares;
+package org.matsim.stuttgart.ptFares;
 
 import org.matsim.core.controler.AbstractModule;
 

@@ -1,4 +1,4 @@
-package org.matsim.prepare;
+package org.matsim.stuttgart.prepare;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
@@ -30,7 +30,6 @@ public class PrepareScenario {
 
         // clean facilities from old network references and save it
         CleanFacilities.clean(svn);
-
     }
 
     private static class InputArgs {

@@ -1,4 +1,4 @@
-package org.matsim.ptFares;
+package org.matsim.stuttgart.ptFares;
 
 import org.junit.Test;
 import org.matsim.core.config.Config;
@@ -8,6 +8,7 @@ import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
 import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.config.groups.VspExperimentalConfigGroup;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
+import org.matsim.stuttgart.ptFares.PtFaresConfigGroup_v2;
 
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
 

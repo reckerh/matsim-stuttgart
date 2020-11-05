@@ -1,6 +1,5 @@
-package org.matsim.ptFares;
+package org.matsim.stuttgart.ptFares;
 import org.geotools.geometry.jts.JTSFactoryFinder;
-import org.junit.Ignore;
 import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
@@ -11,8 +10,8 @@ import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.prepare.AddAdditionalNetworkAttributes;
-import org.matsim.prepare.PrepareTransitSchedule;
+import org.matsim.stuttgart.prepare.AddAdditionalNetworkAttributes;
+import org.matsim.stuttgart.prepare.PrepareTransitSchedule;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.pt.transitSchedule.api.TransitScheduleReader;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;

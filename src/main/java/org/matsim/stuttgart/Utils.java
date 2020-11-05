@@ -1,4 +1,4 @@
-package org.matsim;
+package org.matsim.stuttgart;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
