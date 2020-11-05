@@ -1,5 +1,6 @@
 package org.matsim.ptFares;
 import org.geotools.geometry.jts.JTSFactoryFinder;
+import org.junit.Ignore;
 import org.junit.Test;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
