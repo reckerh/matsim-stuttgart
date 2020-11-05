@@ -19,7 +19,7 @@ public class PrepareScenario {
             var network = CreateNetwork.createNetwork(svn);
 
             // write pt schedule files and at pt routes to the network
-            CreatePt.create(svn);
+            CreatePt.create(svn, network);
 
             // write the network with pt
             CreateNetwork.writeNetwork(network, svn);
