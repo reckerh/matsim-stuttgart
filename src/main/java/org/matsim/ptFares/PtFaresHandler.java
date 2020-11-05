@@ -2,7 +2,6 @@ package org.matsim.ptFares;
 
 
 import com.google.inject.Inject;
-import lombok.extern.log4j.Log4j2;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -24,7 +23,6 @@ import java.util.*;
  */
 
 
-@Log4j2
 final class PtFaresHandler implements TransitDriverStartsEventHandler, PersonEntersVehicleEventHandler, PersonLeavesVehicleEventHandler, VehicleArrivesAtFacilityEventHandler, ActivityEndEventHandler, AfterMobsimListener {
 
     private static final Logger log = Logger.getLogger(PtFaresHandler.class );
