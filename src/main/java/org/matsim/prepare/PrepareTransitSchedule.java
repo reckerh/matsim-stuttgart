@@ -1,5 +1,7 @@
 package org.matsim.prepare;
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
 import org.apache.log4j.Logger;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
@@ -28,40 +30,36 @@ public class PrepareTransitSchedule {
 
     private static final Logger log = Logger.getLogger(PrepareTransitSchedule.class);
 
-    private static String inputSchedule = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v0.0-snz-original/optimizedSchedule.xml.gz";
-    private static String outputSchedule = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/optimizedSchedule-edd.xml.gz";
-    private static String fareZoneShapeFile = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/01_prep/03_FareZones/fareZones_sp.shp";
-
 
     public static void main(String[] args) {
 
-        if (args.length > 0) {
-            inputSchedule = args[0];
-            outputSchedule = args[1];
-            fareZoneShapeFile = args[2];
+        PrepareTransitSchedule.Input input = new PrepareTransitSchedule.Input();
+        JCommander.newBuilder().addObject(input).build().parse(args);
+        log.info("Input transit schedule file: " + input.scheduleFile);
+        log.info("Input shape file: " + input.shapeFile);
+        log.info("Output transit schedule file: " + input.outputFile);
 
-            log.info("input plans: " + inputSchedule);
-            log.info("output plans: " + outputSchedule);
-            log.info("fare zone shape file: " + fareZoneShapeFile);
-        }
-
-        // Parse Transit Schedule and put into scenario
+        // Parse Transit Schedule
         PrepareTransitSchedule preparer = new PrepareTransitSchedule();
         Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
-        new TransitScheduleReader(scenario).readFile(inputSchedule);
+        new TransitScheduleReader(scenario).readFile(input.scheduleFile);
 
-        preparer.run(scenario, fareZoneShapeFile);
+        // Do manipulations
+        preparer.run(scenario, input.shapeFile);
 
-        new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(outputSchedule);
+        // Write network output
+        new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(input.outputFile);
 
 
     }
+
 
     public void run(Scenario scenario, String shapeFile) {
 
         TransitSchedule schedule = scenario.getTransitSchedule();
         Collection<SimpleFeature> fareZoneFeatures = ShapeFileReader.getAllFeatures(shapeFile);
 
+        log.info("Start manipulating transit facility attributes ...");
         // Create map with all bikeAndRideAssignments in vvs area
         Set<Id<TransitStopFacility>> bikeAndRideAssignment = tagBikeAndRide(schedule);
 
@@ -83,6 +81,8 @@ public class PrepareTransitSchedule {
             }
 
         }
+
+        log.info("Fare zones manipulated successfully!");
 
     }
 
@@ -125,6 +125,20 @@ public class PrepareTransitSchedule {
                         .collect(Collectors.toSet());
 
         return bikeAndRide;
+
+    }
+
+
+    private static class Input {
+
+        @Parameter(names = "-scheduleFile")
+        private String scheduleFile;
+
+        @Parameter(names = "-shapeFile")
+        private String shapeFile;
+
+        @Parameter(names = "-output")
+        private String outputFile;
 
     }
 

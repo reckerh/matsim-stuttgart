@@ -1,6 +1,8 @@
 package org.matsim.prepare;
 
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
 import org.apache.log4j.Logger;
 
 import org.locationtech.jts.geom.Geometry;
@@ -27,31 +29,25 @@ public class AddAdditionalNetworkAttributes {
 
     private static final Logger log = Logger.getLogger(AddAdditionalNetworkAttributes.class);
 
-    // Specify path strings for network in- and output
-    private static String inputNetwork = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/stuttgart-v1.0_fstRun01/input/optimizedNetwork.xml.gz";
-    private static String outputNetwork = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/network-stuttgart-edited.xml.gz";
-
-
     public static void main(String[] args) {
 
-        if (args.length > 0) {
-            inputNetwork = args[0];
-            outputNetwork = args[1];
-            log.info("input plans: " + inputNetwork);
-            log.info("output plans: " + outputNetwork);
-        }
+        AddAdditionalNetworkAttributes.Input input = new AddAdditionalNetworkAttributes.Input();
+        JCommander.newBuilder().addObject(input).build().parse(args);
+        log.info("Input network file: " + input.networkFile);
+        log.info("Input shape file: " + input.shapeFile);
+        log.info("Output network file: " + input.outputFile);
 
-        // read-in network
+        // Read-in network
         AddAdditionalNetworkAttributes extender = new AddAdditionalNetworkAttributes();
         Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
         Network network = scenario.getNetwork();
-        new MatsimNetworkReader(network).readFile(inputNetwork);
+        new MatsimNetworkReader(network).readFile(input.networkFile);
 
-        String shapeFile = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/01_prep/01_Parking/test.shp";
-        extender.run(scenario, shapeFile);
+        // Do manipulations
+        extender.run(scenario, input.shapeFile);
 
-        // Write Network Output
-        new NetworkWriter(scenario.getNetwork()).write(outputNetwork);
+        // Write network output
+        new NetworkWriter(scenario.getNetwork()).write(input.outputFile);
     }
 
 
@@ -60,9 +56,9 @@ public class AddAdditionalNetworkAttributes {
         Network network = scenario.getNetwork();
         Collection<SimpleFeature> features = ShapeFileReader.getAllFeatures(shapeFile);
 
+        log.info("Start merging parking zones to network links...");
         mergeNetworkLinksWithParkingAttributes(network, features);
-
-        log.info("Parking merge successful!");
+        log.info("Parking zone merge successful!");
 
     }
 
@@ -142,6 +138,20 @@ public class AddAdditionalNetworkAttributes {
 
 
         }
+
+    }
+
+
+    private static class Input {
+
+        @Parameter(names = "-networkFile")
+        private String networkFile;
+
+        @Parameter(names = "-shapeFile")
+        private String shapeFile;
+
+        @Parameter(names = "-output")
+        private String outputFile;
 
     }
 
