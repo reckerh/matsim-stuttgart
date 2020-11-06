@@ -6,6 +6,7 @@ import org.locationtech.jts.geom.Point;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.geotools.MGC;
@@ -14,10 +15,11 @@ import org.matsim.pt.transitSchedule.api.*;
 import org.opengis.feature.simple.SimpleFeature;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 
 /**
- * Adds fare zones to the stop facilities in the transit schedule file
+ * Adds fare zone and bike-and-ride attribute to transit stop facilities
  *
  * @author davidwedekind
  */
@@ -61,29 +63,26 @@ public class PrepareTransitSchedule {
         Collection<SimpleFeature> fareZoneFeatures = ShapeFileReader.getAllFeatures(shapeFile);
 
         // Create map with all bikeAndRideAssignments in vvs area
-        List<Id<TransitStopFacility>> bikeAndRideAssignment = tagBikeAndRide(schedule);
+        Set<Id<TransitStopFacility>> bikeAndRideAssignment = tagBikeAndRide(schedule);
 
+        for (var transitStopFacility: schedule.getFacilities().values()){
 
-        schedule.getFacilities().values()
-                .forEach(transitStopFacility -> {
+            String fareZone = findFareZone(transitStopFacility, fareZoneFeatures);
+            transitStopFacility.getAttributes().putAttribute("ptFareZone", fareZone);
 
-                    String fareZone = findFareZone(transitStopFacility, fareZoneFeatures);
-                    transitStopFacility.getAttributes().putAttribute("ptFareZone", fareZone);
+            // Facilities in vvs zone are considered only
+            if (fareZone.equals("out")){
+                transitStopFacility.getAttributes().putAttribute("VVSBikeAndRide", false);
 
-                    // Facilities in vvs zone are considered only
-                    if (fareZone.equals("out")){
-                        transitStopFacility.getAttributes().putAttribute("VVSBikeAndRide", false);
+                if (bikeAndRideAssignment.contains(transitStopFacility.getId())){
+                    transitStopFacility.getAttributes().putAttribute("VVSBikeAndRide", true);
+                }else{
+                    transitStopFacility.getAttributes().putAttribute("VVSBikeAndRide", false);
+                }
 
-                        if (bikeAndRideAssignment.contains(transitStopFacility.getId())){
-                            transitStopFacility.getAttributes().putAttribute("VVSBikeAndRide", true);
-                        }else{
-                            transitStopFacility.getAttributes().putAttribute("VVSBikeAndRide", false);
-                        }
+            }
 
-                    }
-
-
-                });
+        }
 
     }
 
@@ -100,7 +99,7 @@ public class PrepareTransitSchedule {
 
             Geometry geometry = (Geometry) feature.getDefaultGeometry();
 
-            if (geometry.contains(point)) {
+            if (geometry.covers(point)) {
                 fareZone = feature.getAttribute("FareZone").toString();
             }
 
@@ -111,22 +110,19 @@ public class PrepareTransitSchedule {
     }
 
 
-    private List<Id<TransitStopFacility>> tagBikeAndRide(TransitSchedule schedule) {
+    private Set<Id<TransitStopFacility>> tagBikeAndRide(TransitSchedule schedule) {
 
         // This method writes all stops in a list that have departures of mode "tram" or "train"
         // It is assumed that at tram or train stations Bike-and-Ride is possible
 
-        List<Id<TransitStopFacility>> bikeAndRide = new ArrayList<>();
-        List<String> modes = Arrays.asList("tram", "train");
+        var modes = Set.of(TransportMode.train, "tram");
 
-        schedule.getTransitLines().values().forEach(transitLine -> transitLine.getRoutes().values().forEach(transitRoute -> {
-
-            if (modes.contains(transitRoute.getTransportMode())){
-
-                transitRoute.getStops().forEach(transitRouteStop -> bikeAndRide.add(transitRouteStop.getStopFacility().getId()));
-            }
-
-        }));
+        var bikeAndRide = schedule.getTransitLines().values().stream()
+                .flatMap(line -> line.getRoutes().values().stream())
+                .filter(route -> modes.contains(route.getTransportMode()))
+                        .flatMap(route -> route.getStops().stream())
+                        .map(stop -> stop.getStopFacility().getId())
+                        .collect(Collectors.toSet());
 
         return bikeAndRide;
 
