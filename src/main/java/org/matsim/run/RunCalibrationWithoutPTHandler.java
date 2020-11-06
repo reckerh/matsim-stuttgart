@@ -46,7 +46,6 @@ import org.matsim.prepare.AddAdditionalNetworkAttributes;
 import org.matsim.prepare.PrepareTransitSchedule;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;

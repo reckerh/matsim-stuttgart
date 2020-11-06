@@ -118,9 +118,7 @@ public class PtFaresHandlerTest {
             // To use the deterministic pt simulation (Part 2 of 2):
         });
 
-        controler.configureQSimComponents(components -> {
-            SBBTransitEngineQSimModule.configure(components);
-        });
+        controler.configureQSimComponents(SBBTransitEngineQSimModule::configure);
 
         // use pt fares module
         controler.addOverridingModule(new PtFaresModule());
