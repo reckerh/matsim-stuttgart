@@ -32,6 +32,7 @@ public class PrepTest {
 
 
     @Test
+    @Ignore
     public final void main() throws IOException {
 
         new TransitScheduleReader(scenario).readFile(inputSchedule);

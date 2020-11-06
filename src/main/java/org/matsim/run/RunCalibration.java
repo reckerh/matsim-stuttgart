@@ -19,7 +19,6 @@
 package org.matsim.run;
 
 import java.util.Arrays;
-import java.util.HashSet;
 import java.util.Set;
 import ch.sbb.matsim.config.SBBTransitConfigGroup;
 import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
@@ -233,7 +232,7 @@ public class RunCalibration {
         // -- Intermodal Routing --
 
         configRaptor.setUseIntermodalAccessEgress(true);
-/*
+
         // AcessEgressWalk
         SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetAEWalk = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
         paramSetAEWalk.setInitialSearchRadius(1000);
@@ -253,12 +252,7 @@ public class RunCalibration {
 
         configRaptor.addIntermodalAccessEgress(paramSetAEBike);
 
- */
-
-        throw new RuntimeException("The above parameter have changed in the current snapshot version. Please review");
-
-
-        //return null;
+        return configRaptor;
     }
 
 
@@ -268,40 +262,33 @@ public class RunCalibration {
 
         // For values, see https://www.vvs.de/tickets/zeittickets-abo-polygo/jahresticket-jedermann/
 
-        PtFaresConfigGroup.ZonePricesParameterSet paramSetZone1 = new PtFaresConfigGroup.ZonePricesParameterSet();
-        paramSetZone1.setNumberZones(1);
-        paramSetZone1.setTicketPrice(1.89);
-        configFares.addZonePriceSettings(paramSetZone1);
+        PtFaresConfigGroup.FaresGroup faresGroup = new PtFaresConfigGroup.FaresGroup();
+        faresGroup.setOutOfZoneTag("out");
+        faresGroup.setOutOfZonePrice(10.);
+        faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(1, 1.89));
+        faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(2, 2.42));
+        faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(3, 3.23));
+        faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(4, 4.));
+        faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(5, 4.68));
+        faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(6, 5.51));
+        faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(7, 6.22));
+        configFares.setFaresGroup(faresGroup);
 
-        PtFaresConfigGroup.ZonePricesParameterSet paramSetZone2 = new PtFaresConfigGroup.ZonePricesParameterSet();
-        paramSetZone1.setNumberZones(2);
-        paramSetZone1.setTicketPrice(2.42);
-        configFares.addZonePriceSettings(paramSetZone2);
-
-        PtFaresConfigGroup.ZonePricesParameterSet paramSetZone3 = new PtFaresConfigGroup.ZonePricesParameterSet();
-        paramSetZone1.setNumberZones(3);
-        paramSetZone1.setTicketPrice(3.23);
-        configFares.addZonePriceSettings(paramSetZone3);
-
-        PtFaresConfigGroup.ZonePricesParameterSet paramSetZone4 = new PtFaresConfigGroup.ZonePricesParameterSet();
-        paramSetZone1.setNumberZones(4);
-        paramSetZone1.setTicketPrice(4.);
-        configFares.addZonePriceSettings(paramSetZone4);
-
-        PtFaresConfigGroup.ZonePricesParameterSet paramSetZone5 = new PtFaresConfigGroup.ZonePricesParameterSet();
-        paramSetZone1.setNumberZones(5);
-        paramSetZone1.setTicketPrice(4.68);
-        configFares.addZonePriceSettings(paramSetZone5);
-
-        PtFaresConfigGroup.ZonePricesParameterSet paramSetZone6 = new PtFaresConfigGroup.ZonePricesParameterSet();
-        paramSetZone1.setNumberZones(6);
-        paramSetZone1.setTicketPrice(5.51);
-        configFares.addZonePriceSettings(paramSetZone6);
-
-        PtFaresConfigGroup.ZonePricesParameterSet paramSetZone7 = new PtFaresConfigGroup.ZonePricesParameterSet();
-        paramSetZone1.setNumberZones(7);
-        paramSetZone1.setTicketPrice(6.22);
-        configFares.addZonePriceSettings(paramSetZone7);
+        PtFaresConfigGroup.ZonesGroup zonesGroup = new PtFaresConfigGroup.ZonesGroup();
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("1", false));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("1/2", true, Set.of("1", "2")));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("2", false));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("2/3", true, Set.of("2", "3")));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("3", false));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("3/4", true, Set.of("3", "4")));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("4", false));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("4/5", true, Set.of("4", "5")));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("5", false));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("5/6", true, Set.of("5", "6")));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("6", false));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("6/7", true, Set.of("6", "7")));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("7", false));
+        configFares.setZonesGroup(zonesGroup);
 
         return configFares;
     }
@@ -310,7 +297,7 @@ public class RunCalibration {
     private static SBBTransitConfigGroup setupSBBTransit() {
 
         SBBTransitConfigGroup sbbTransit = new SBBTransitConfigGroup();
-        Set<String> modes = new HashSet<>(Arrays.asList("train", "tram", "bus"));
+        var modes = Set.of(TransportMode.train, "bus", "tram");
         sbbTransit.setDeterministicServiceModes(modes);
         sbbTransit.setCreateLinkEventsInterval(10);
 

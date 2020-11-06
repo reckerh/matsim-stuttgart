@@ -28,18 +28,18 @@ final class PtFaresHandler implements TransitDriverStartsEventHandler, PersonEnt
     private static final Logger log = Logger.getLogger(PtFaresHandler.class );
 
     // tracks onboard persons of each vehicle
-    private Map<Id<Vehicle>, List<Id<Person>>> vehicle2PersonList = new HashMap<>();
+    private final Map<Id<Vehicle>, List<Id<Person>>> vehicle2PersonList = new HashMap<>();
     // tracks list of stop sequences traveled per person for each trip
-    private Map<Id<Person>, List<List<Id<TransitStopFacility>>>> person2ListOfStopLists = new HashMap<>();
+    private final Map<Id<Person>, List<List<Id<TransitStopFacility>>>> person2ListOfStopLists = new HashMap<>();
     // tracks stop sequence for the ongoing trip of each person
-    private Map<Id<Person>, List<Id<TransitStopFacility>>> person2StopList = new HashMap<>();
+    private final Map<Id<Person>, List<Id<TransitStopFacility>>> person2StopList = new HashMap<>();
     // tracks last vehicle stop position for all transit vehicles
-    private Map<Id<Vehicle>, Id<TransitStopFacility>> vehicle2StopFacility = new HashMap<>();
+    private final Map<Id<Vehicle>, Id<TransitStopFacility>> vehicle2StopFacility = new HashMap<>();
     // tracks whether a person is onboard pt or not
-    private Map<Id<Person>, Boolean> person2Boolean = new HashMap<>();
-    private Set<Id<Person>> ptDrivers = new HashSet<>();
+    private final Map<Id<Person>, Boolean> person2Boolean = new HashMap<>();
+    private final Set<Id<Person>> ptDrivers = new HashSet<>();
     private double compensationTime = Double.NaN;
-    Map<String, List<String>> string2stringList = new HashMap<>();
+    Map<String, Set<String>> string2stringList = new HashMap<>();
 
 
     @Inject
@@ -72,7 +72,7 @@ final class PtFaresHandler implements TransitDriverStartsEventHandler, PersonEnt
     public void handleEvent(VehicleArrivesAtFacilityEvent event) {
 
         // Consider transit vehicles only
-        if (scenario.getTransitVehicles().getVehicles().keySet().contains(event.getVehicleId())) {
+        if (scenario.getTransitVehicles().getVehicles().containsKey(event.getVehicleId())) {
 
             // Update transitStop in vehicle2StopFacility
             // vehicle2StopFacility tracks the last arrived stop facility for each vehicle
@@ -114,7 +114,7 @@ final class PtFaresHandler implements TransitDriverStartsEventHandler, PersonEnt
         }else{
 
             // Track only transit vehicle unboardings
-            if (scenario.getTransitVehicles().getVehicles().keySet().contains(event.getVehicleId())){
+            if (scenario.getTransitVehicles().getVehicles().containsKey(event.getVehicleId())){
 
                 // Update list of persons onboard vehicle
                 // Remove person that has unboarded from the vehicle tracker vehicle2PersonList
@@ -141,7 +141,7 @@ final class PtFaresHandler implements TransitDriverStartsEventHandler, PersonEnt
         }else{
 
             // Transit vehicles only important
-            if (scenario.getTransitVehicles().getVehicles().keySet().contains(event.getVehicleId())){
+            if (scenario.getTransitVehicles().getVehicles().containsKey(event.getVehicleId())){
 
                 // Update list of persons onboard vehicle
                 // Add person that has boarded to the vehicle tracker vehicle2PersonList
@@ -214,8 +214,7 @@ final class PtFaresHandler implements TransitDriverStartsEventHandler, PersonEnt
 
         // -- CLOSE LAST TRIP OF EACH PERSON
 
-        person2StopList.entrySet().stream().forEach(entry ->{
-
+        for (var entry: person2StopList.entrySet()){
             // Sometimes agents do not reach their final activity
             // Then the last activity performed is ended
             // Which means that for this person an empty new stop list had been created ...
@@ -223,37 +222,36 @@ final class PtFaresHandler implements TransitDriverStartsEventHandler, PersonEnt
                 // ... do not consider this empty list
                 finishTrip(entry.getKey());
             }
-        });
+        }
 
 
         // -- DETERMINE FARE ZONES
         log.info("Start calculating transit fares...");
 
         Map<Id<Person>,List<String>> person2ListOfFareZones = new HashMap<>();
-        person2ListOfStopLists.entrySet().parallelStream().forEach(personEntry -> {
-            person2ListOfFareZones.put(personEntry.getKey(), determineFareZones(personEntry.getValue())) ;
-        });
+        for (var entry: person2ListOfStopLists.entrySet()){
+            person2ListOfFareZones.put(entry.getKey(), determineFareZones(entry.getValue())) ;
+        }
 
 
         // -- PAY OUT
-        string2stringList.put("1,2", Arrays.asList("1", "2"));
-        Map<Integer, Double> allFares = ptFaresConfigGroup.getAllFares();
-        String outOfTariff = "out";
+        string2stringList = ptFaresConfigGroup.getZonesGroup().getAllHybridZones();
+        Map<Integer, Double> allFares = ptFaresConfigGroup.getFaresGroup().getAllFares();
+        String outOfTariff = ptFaresConfigGroup.getFaresGroup().getOutOfZoneTag();
 
         Map<Id<Person>, Integer> person2Integer = new HashMap<>();
-        person2ListOfFareZones.entrySet().parallelStream().forEach(personEntry -> {
 
+        for(var personEntry: person2ListOfFareZones.entrySet()){
             Double tariff;
             if (personEntry.getValue().contains(outOfTariff)){
                 // Pay outOfTariff pt price
-                tariff = 300.;
+                tariff = ptFaresConfigGroup.getFaresGroup().getOutOfZonePrice();
             } else {
                 tariff = allFares.get(findMinimalZoneRange(personEntry.getValue()));
             }
 
             events.processEvent(new PersonMoneyEvent(getOrCalcCompensationTime(), personEntry.getKey(), -tariff, "ptFare", "ptOperator"));
-
-        });
+        }
 
     }
 
@@ -264,13 +262,11 @@ final class PtFaresHandler implements TransitDriverStartsEventHandler, PersonEnt
         List<List<String>> zoneCombinations = generateCombinations(rawZones, 0);
 
         Map<List<String>, Integer> combination2ZoneRange = new HashMap<>();
-        zoneCombinations.stream().forEach(combination ->{
-
-            List<String> sortedCombination = new ArrayList<>(combination);
+        for (var combination: zoneCombinations){
             Collections.sort(combination);
             Integer range = Integer.parseInt(combination.get(combination.size()-1)) - Integer.parseInt(combination.get(0)) + 1;
             combination2ZoneRange.put(combination, range);
-        });
+        }
 
         return Collections.min(combination2ZoneRange.values());
 
@@ -280,21 +276,16 @@ final class PtFaresHandler implements TransitDriverStartsEventHandler, PersonEnt
     private List<List<String>> splitIntoRawZones(List<String> fareZones) {
 
         List<List<String>> rawFareZones = new ArrayList<>();
-        fareZones.stream().forEach(hybridZone -> {
-
+        for(var hybridZone: fareZones){
             List<String> rawZone = new ArrayList<>();
-            if (string2stringList.keySet().contains(hybridZone)){
-
-                for (String zone : string2stringList.get(hybridZone)){
-                    rawZone.add(zone);
-                }
-
+            if (string2stringList.containsKey(hybridZone)){
+                rawZone.addAll(string2stringList.get(hybridZone));
             }else{
                 rawZone.add(hybridZone);
             }
 
             rawFareZones.add(rawZone);
-        });
+        }
 
         return rawFareZones;
     }
@@ -305,29 +296,27 @@ final class PtFaresHandler implements TransitDriverStartsEventHandler, PersonEnt
         // stop condition
         if(i == input.size()) {
             // return a list with an empty list
-            List<List<String>> result = new ArrayList<List<String>>();
-            result.add(new ArrayList<String>());
+            List<List<String>> result = new ArrayList<>();
+            result.add(new ArrayList<>());
             return result;
         }
 
-        List<List<String>> result = new ArrayList<List<String>>();
+        List<List<String>> result = new ArrayList<>();
         List<List<String>> recursive = generateCombinations(input, i+1); // recursive call
 
         // for each element of the first list of input
         for(int j = 0; j < input.get(i).size(); j++) {
             // add the element to all combinations obtained for the rest of the lists
-            for(int k = 0; k < recursive.size(); k++) {
+            for (List<String> strings : recursive) {
                 // copy a combination from recursive
-                List<String> newList = new ArrayList<String>();
-                for(String string : recursive.get(k)) {
-                    newList.add(string);
-                }
+                List<String> newList = new ArrayList<>(strings);
                 // add element of the first list
                 newList.add(input.get(i).get(j));
                 // add new combination to result
                 result.add(newList);
             }
         }
+
         return result;
     }
 
@@ -342,26 +331,14 @@ final class PtFaresHandler implements TransitDriverStartsEventHandler, PersonEnt
         String fareZoneAttributeName = ptFaresConfigGroup.getPtFareZoneAttributeName();
 
         List<String> fareZones = new ArrayList<>();
-        listOfStopLists.stream().forEach(stopList -> {
-
-
-            stopList.stream().forEach(stop ->{
-
+        for(var stopList: listOfStopLists){
+            for(var stop: stopList){
                 String currentFareZone = (String) scenario.getTransitSchedule().getFacilities().get(stop).getAttributes().getAttribute(fareZoneAttributeName);
+                fareZones.add(currentFareZone);
+            }
+        }
 
-                if (fareZones.contains(currentFareZone)){
-                    // Do nothing when fareZone is in list already
-                }else{
-                    // When fareZone is not in list, add ...
-                    fareZones.add(currentFareZone);
-                }
-
-            });
-
-        });
-        
         return fareZones;
-
     }
 
 
@@ -369,15 +346,11 @@ final class PtFaresHandler implements TransitDriverStartsEventHandler, PersonEnt
 
         List<List<Id<TransitStopFacility>>> listOfStopLists;
         if (person2ListOfStopLists.containsKey(personId)){
-
             // add stop sequence to list of stop sequences
             listOfStopLists = person2ListOfStopLists.get(personId);
-
         }else{
-
             // initialize new list of stop sequences and then add first stop sequence
             listOfStopLists = new ArrayList<>();
-
         }
 
         List<Id<TransitStopFacility>> stopList = person2StopList.get(personId);

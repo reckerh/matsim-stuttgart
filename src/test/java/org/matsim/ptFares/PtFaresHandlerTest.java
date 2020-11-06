@@ -41,9 +41,9 @@ public class PtFaresHandlerTest {
     Map<Id<Person>, Double> transitFare = new HashMap<>();
 
     @Test
-    public final void testPtFaresHandlerTest_v2() {
+    public final void testPtFaresHandlerTest() {
 
-        String configPath = "./test/input/ptFares/config.xml";
+        String configPath = "test/input/ptFares/config.xml";
 
         // Prepare config
         Config config = prepareConfig(configPath);
@@ -198,17 +198,19 @@ public class PtFaresHandlerTest {
 
         PtFaresConfigGroup configFares = new PtFaresConfigGroup();
 
-        // For values, see https://www.vvs.de/tickets/zeittickets-abo-polygo/jahresticket-jedermann/
+        PtFaresConfigGroup.FaresGroup faresGroup = new PtFaresConfigGroup.FaresGroup();
+        faresGroup.setOutOfZoneTag("out");
+        faresGroup.setOutOfZonePrice(300.);
+        faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(1,100.));
+        faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(2,200.));
 
-        PtFaresConfigGroup.ZonePricesParameterSet paramSetZone1 = new PtFaresConfigGroup.ZonePricesParameterSet();
-        paramSetZone1.setNumberZones(1);
-        paramSetZone1.setTicketPrice(100.);
-        configFares.addZonePriceSettings(paramSetZone1);
+        configFares.setFaresGroup(faresGroup);
 
-        PtFaresConfigGroup.ZonePricesParameterSet paramSetZone2 = new PtFaresConfigGroup.ZonePricesParameterSet();
-        paramSetZone2.setNumberZones(2);
-        paramSetZone2.setTicketPrice(200.);
-        configFares.addZonePriceSettings(paramSetZone2);
+        PtFaresConfigGroup.ZonesGroup zonesGroup = new PtFaresConfigGroup.ZonesGroup();
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("1", false));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("2", false));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("1/2", true, Set.of("1", "2")));
+        configFares.setZonesGroup(zonesGroup);
 
         return configFares;
     }
