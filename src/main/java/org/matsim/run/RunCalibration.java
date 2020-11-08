@@ -146,7 +146,7 @@ public class RunCalibration {
 
         Scenario scenario = ScenarioUtils.loadScenario(config);
 
-
+        // ToDo: Adjust to files at svn
         // Add fareZones and VVSBikeAndRideStops
         String inputFolderPath = config.controler().getOutputDirectory().replace("output", "input");
         PrepareTransitSchedule ptPreparer = new PrepareTransitSchedule();
