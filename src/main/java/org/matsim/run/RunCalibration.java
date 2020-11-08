@@ -263,7 +263,6 @@ public class RunCalibration {
         // For values, see https://www.vvs.de/tickets/zeittickets-abo-polygo/jahresticket-jedermann/
 
         PtFaresConfigGroup.FaresGroup faresGroup = new PtFaresConfigGroup.FaresGroup();
-        faresGroup.setOutOfZoneTag("out");
         faresGroup.setOutOfZonePrice(10.);
         faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(1, 1.89));
         faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(2, 2.42));
@@ -275,6 +274,7 @@ public class RunCalibration {
         configFares.setFaresGroup(faresGroup);
 
         PtFaresConfigGroup.ZonesGroup zonesGroup = new PtFaresConfigGroup.ZonesGroup();
+        zonesGroup.setOutOfZoneTag("out");
         zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("1", false));
         zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("1/2", true, Set.of("1", "2")));
         zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("2", false));

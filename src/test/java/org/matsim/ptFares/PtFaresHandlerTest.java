@@ -7,6 +7,7 @@ import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
 import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
 import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
+import com.vividsolutions.jts.util.Assert;
 import org.apache.log4j.Logger;
 import org.junit.Test;
 import org.matsim.api.core.v01.Id;
@@ -37,7 +38,7 @@ import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorith
 public class PtFaresHandlerTest {
     private static final Logger log = Logger.getLogger(PtFaresHandlerTest.class);
 
-    Map<Id<Person>, String> tests = new HashMap<>();
+    Map<Id<Person>, Double> transitFares = new HashMap<>();
 
     @Test
     public final void runPtFaresHandlerTest() {
@@ -57,18 +58,14 @@ public class PtFaresHandlerTest {
 
         controler.run();
 
-        for (var test: tests.values()){
-            System.out.println(test);
-        }
-
         // Check output param
-/*        Assert.equals(transitFare.get(Id.createPersonId("1")), -300.);
-        Assert.equals(transitFare.get(Id.createPersonId("2")), -200.);
-        Assert.equals(transitFare.get(Id.createPersonId("3")), -100.);
-        Assert.equals(transitFare.get(Id.createPersonId("4")), -100.);
-        Assert.equals(transitFare.get(Id.createPersonId("5")), -100.);
-        Assert.equals(transitFare.get(Id.createPersonId("6")), -200.);
-        Assert.isTrue(! transitFare.containsKey(Id.createPersonId("7")));*/
+        Assert.equals(transitFares.get(Id.createPersonId("1")), -300.);
+        Assert.equals(transitFares.get(Id.createPersonId("2")), -200.);
+        Assert.equals(transitFares.get(Id.createPersonId("3")), -100.);
+        Assert.equals(transitFares.get(Id.createPersonId("4")), -100.);
+        Assert.equals(transitFares.get(Id.createPersonId("5")), -100.);
+        Assert.equals(transitFares.get(Id.createPersonId("6")), -200.);
+        Assert.isTrue(! transitFares.containsKey(Id.createPersonId("7")));
 
     }
 
@@ -200,7 +197,6 @@ public class PtFaresHandlerTest {
         PtFaresConfigGroup configFares = new PtFaresConfigGroup();
 
         PtFaresConfigGroup.FaresGroup faresGroup = new PtFaresConfigGroup.FaresGroup();
-        faresGroup.setOutOfZoneTag("out");
         faresGroup.setOutOfZonePrice(300.);
         faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(1,100.));
         faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(2,200.));
@@ -208,9 +204,10 @@ public class PtFaresHandlerTest {
         configFares.setFaresGroup(faresGroup);
 
         PtFaresConfigGroup.ZonesGroup zonesGroup = new PtFaresConfigGroup.ZonesGroup();
+        zonesGroup.setOutOfZoneTag("out");
         zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("1", false));
         zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("2", false));
-        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("1/2", true, Set.of("1", "2")));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("1,2", true, Set.of("1", "2")));
         configFares.setZonesGroup(zonesGroup);
 
         return configFares;
@@ -228,7 +225,7 @@ public class PtFaresHandlerTest {
     private static SBBTransitConfigGroup setupSBBTransit() {
 
         SBBTransitConfigGroup sbbTransit = new SBBTransitConfigGroup();
-        Set<String> modes = new HashSet<>(Arrays.asList(new String[]{"train"}));
+        Set<String> modes = new HashSet<>(Arrays.asList("train"));
         sbbTransit.setDeterministicServiceModes(modes);
         sbbTransit.setCreateLinkEventsInterval(0);
 
@@ -239,7 +236,7 @@ public class PtFaresHandlerTest {
     private final class EventsTester implements PersonMoneyEventHandler {
         @Override
         public void handleEvent(PersonMoneyEvent event) {
-            tests.put(event.getPersonId(), event.getPurpose());
+            transitFares.put(event.getPersonId(), event.getAmount());
         }
     }
 

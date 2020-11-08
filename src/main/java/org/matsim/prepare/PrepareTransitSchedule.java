@@ -117,14 +117,12 @@ public class PrepareTransitSchedule {
 
         var modes = Set.of(TransportMode.train, "tram");
 
-        var bikeAndRide = schedule.getTransitLines().values().stream()
+        return schedule.getTransitLines().values().stream()
                 .flatMap(line -> line.getRoutes().values().stream())
                 .filter(route -> modes.contains(route.getTransportMode()))
                         .flatMap(route -> route.getStops().stream())
                         .map(stop -> stop.getStopFacility().getId())
                         .collect(Collectors.toSet());
-
-        return bikeAndRide;
 
     }
 
