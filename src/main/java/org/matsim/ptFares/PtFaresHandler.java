@@ -1,6 +1,5 @@
 package org.matsim.ptFares;
 
-
 import com.google.inject.Inject;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Id;
@@ -16,31 +15,17 @@ import org.matsim.core.controler.events.AfterMobsimEvent;
 import org.matsim.core.controler.listener.AfterMobsimListener;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 import org.matsim.vehicles.Vehicle;
+
 import java.util.*;
-
-/**
- * @author dwedekind
- */
+import java.util.stream.Collectors;
 
 
-final class PtFaresHandler implements TransitDriverStartsEventHandler, PersonEntersVehicleEventHandler, PersonLeavesVehicleEventHandler, VehicleArrivesAtFacilityEventHandler, ActivityEndEventHandler, AfterMobsimListener {
-
-    private static final Logger log = Logger.getLogger(PtFaresHandler.class );
-
-    // tracks onboard persons of each vehicle
-    private final Map<Id<Vehicle>, List<Id<Person>>> vehicle2PersonList = new HashMap<>();
-    // tracks list of stop sequences traveled per person for each trip
-    private final Map<Id<Person>, List<List<Id<TransitStopFacility>>>> person2ListOfStopLists = new HashMap<>();
-    // tracks stop sequence for the ongoing trip of each person
-    private final Map<Id<Person>, List<Id<TransitStopFacility>>> person2StopList = new HashMap<>();
-    // tracks last vehicle stop position for all transit vehicles
-    private final Map<Id<Vehicle>, Id<TransitStopFacility>> vehicle2StopFacility = new HashMap<>();
-    // tracks whether a person is onboard pt or not
-    private final Map<Id<Person>, Boolean> person2Boolean = new HashMap<>();
-    private final Set<Id<Person>> ptDrivers = new HashSet<>();
+public class PtFaresHandler implements TransitDriverStartsEventHandler, PersonDepartureEventHandler, PersonLeavesVehicleEventHandler, PersonArrivalEventHandler, VehicleArrivesAtFacilityEventHandler, PersonEntersVehicleEventHandler, AfterMobsimListener {
+    private static final Logger log = Logger.getLogger( PtFaresHandler.class );
     private double compensationTime = Double.NaN;
-    Map<String, Set<String>> string2stringList = new HashMap<>();
-
+    private Set<Id<Person>> ptDrivers = new HashSet<>();
+    private Map<Id<Vehicle>, TransitVehicle> transitVehicles = new HashMap<>();
+    private Map<Id<Person>, TransitRider> transitRiders = new HashMap<>();
 
     @Inject
     private EventsManager events;
@@ -55,9 +40,6 @@ final class PtFaresHandler implements TransitDriverStartsEventHandler, PersonEnt
     private PtFaresConfigGroup ptFaresConfigGroup;
 
 
-
-
-    // collect all transit drivers
     @Override
     public void handleEvent(TransitDriverStartsEvent event) {
 
@@ -65,301 +47,95 @@ final class PtFaresHandler implements TransitDriverStartsEventHandler, PersonEnt
     }
 
 
-    // Each time a vehicle arrives at a facility
-    // all persons with ongoing trips within the vehicle
-    // track this stop facility
+    @Override
+    public void handleEvent(PersonDepartureEvent event) {
+
+        if (! ptDrivers.contains(event.getPersonId())){
+            transitRiders.computeIfAbsent(event.getPersonId(), riderId -> new TransitRider(riderId));
+
+            if (event.getLegMode().equals("pt")){
+                transitRiders.get(event.getPersonId()).startTrip();
+            }
+        }
+    }
+
+
+    @Override
+    public void handleEvent(PersonArrivalEvent event) {
+
+        if (! ptDrivers.contains(event.getPersonId())){
+            if (transitRiders.get(event.getPersonId()).getOnTransit()){
+                transitRiders.get(event.getPersonId()).closeTrip();
+            }
+        }
+    }
+
+
     @Override
     public void handleEvent(VehicleArrivesAtFacilityEvent event) {
-
-        // Consider transit vehicles only
         if (scenario.getTransitVehicles().getVehicles().containsKey(event.getVehicleId())) {
 
-            // Update transitStop in vehicle2StopFacility
-            // vehicle2StopFacility tracks the last arrived stop facility for each vehicle
-            vehicle2StopFacility.put(event.getVehicleId(), event.getFacilityId());
+            // case: vehicles first arrival of the day
+            transitVehicles.computeIfAbsent(event.getVehicleId(), vehicleId ->
+                    new TransitVehicle(event.getVehicleId()));
 
-            if (vehicle2PersonList.containsKey(event.getVehicleId())) {
-                // Case: Persons in vehicle are already tracked in vehicle2PersonList
+            // update vehicle position
+            transitVehicles.get(event.getVehicleId()).
+                    updateLastTransitStopFacility(event.getFacilityId());
 
-                // Update person2ListOfStopLists for all persons in the current vehicle
-                for (Id<Person> person : vehicle2PersonList.get(event.getVehicleId())) {
-
-                    // Track for each person that it has passed the stop the vehicle just arrived
-                    List<Id<TransitStopFacility>> stopList = person2StopList.get(person);
-                    stopList.add(event.getFacilityId());
-                    person2StopList.put(person, stopList);
-
-                }
-
-            }else{
-                // Case: Persons in vehicle had not been started tracking yet
-                // (first arrival early in the morning)
-                // Vehicle gets map entry with empty person list initialized
-
-                List<Id<Person>> personList = new ArrayList<>();
-                vehicle2PersonList.put(event.getVehicleId(), personList);
+            // update persons trip stop sequence
+            for (var riderId:transitVehicles.get(event.getVehicleId()).getPersonsOnboard()){
+                    transitRiders.get(riderId).updateTrip(event.getFacilityId());
             }
-
         }
     }
 
 
-    // Once a person leaves a vehicle, stops of the vehicles are not considered in persons tracked stop sequences anymore
-    @Override
-    public void handleEvent(PersonLeavesVehicleEvent event) {
-
-        if (ptDrivers.contains(event.getPersonId())){
-            // Skip pt-drivers
-
-        }else{
-
-            // Track only transit vehicle unboardings
-            if (scenario.getTransitVehicles().getVehicles().containsKey(event.getVehicleId())){
-
-                // Update list of persons onboard vehicle
-                // Remove person that has unboarded from the vehicle tracker vehicle2PersonList
-                List<Id<Person>> personList = vehicle2PersonList.get(event.getVehicleId());
-                personList.remove(event.getPersonId());
-                vehicle2PersonList.put(event.getVehicleId(), personList);
-
-
-            }
-        }
-
-    }
-
-
-    // Once a person enters a vehicle, stops of the vehicles are considered in persons tracked stop sequences
     @Override
     public void handleEvent(PersonEntersVehicleEvent event) {
 
+        // transit riders only
+        if (! ptDrivers.contains(event.getPersonId()) &
+                scenario.getTransitVehicles().getVehicles().containsKey(event.getVehicleId())){
 
-        if (ptDrivers.contains(event.getPersonId())){
+            // update persons onboard vehicle and persons trip stop sequence
+            transitVehicles.get(event.getVehicleId()).personEntersVehicle(event.getPersonId());
+            transitRiders.get(event.getPersonId()).updateTrip(
+                    transitVehicles.get(event.getVehicleId()).getLastTransitStopFacility());
 
-            // Skip pt-drivers
-
-        }else{
-
-            // Transit vehicles only important
-            if (scenario.getTransitVehicles().getVehicles().containsKey(event.getVehicleId())){
-
-                // Update list of persons onboard vehicle
-                // Add person that has boarded to the vehicle tracker vehicle2PersonList
-                List<Id<Person>> personList = vehicle2PersonList.get(event.getVehicleId());
-                personList.add(event.getPersonId());
-                vehicle2PersonList.put(event.getVehicleId(), personList);
-
-                if (person2StopList.containsKey(event.getPersonId())){
-                    // Person is tracked in person2StopList
-                    // -> has already performed pt trips
-                }else{
-                    // Person is not tracked in person2StopList yet
-                    // -> has not performed pt trips yet
-                    // stop list needs to be initialized in person2StopList
-                    person2StopList.put(event.getPersonId(), new ArrayList<>());
-                }
-
-                // Usually stops are tracked within the vehicle arrival event
-                // The stop a person enters a vehicle is added to the tracker person2StopList here
-                // as the vehicle arrival event has already happened
-                // In case this is the first
-                List<Id<TransitStopFacility>> stopList = person2StopList.get(event.getPersonId());
-                stopList.add(vehicle2StopFacility.get(event.getVehicleId()));
-                person2StopList.put(event.getPersonId(), stopList);
-
-            }
         }
 
     }
 
 
-    // On activity end events (which are not pt interactions) a stop sequence is closed and considered as a completed trip
-    // as an activity follows after a completed trip
     @Override
-    public void handleEvent(ActivityEndEvent event) {
+    public void handleEvent(PersonLeavesVehicleEvent event) {
 
+        // transit riders only
+        if (! ptDrivers.contains(event.getPersonId()) &
+                scenario.getTransitVehicles().getVehicles().containsKey(event.getVehicleId())){
 
-        if (person2Boolean.containsKey(event.getPersonId())){
-            // Do nothing as person2Boolean is already initialized for this person
-        }else{
-            // Person has never boarded pt and thus it is not tracked yet within person2Boolean
-            person2Boolean.put(event.getPersonId(), false);
-        }
-
-
-        if (event.getActType().startsWith("pt interaction")){
-
-            // On pt interaction event mark within person2Boolean that a trip is ongoing
-            // person2Boolean will for a person will be set to false, once the stop sequence of the trip has been collected later
-            person2Boolean.put(event.getPersonId(), true);
-
-        }else{
-
-            // Prior to all other activities than pt interactions a trip has been ended
-
-            if (person2Boolean.get(event.getPersonId())){
-                // Only if there was a pt trip before the current activity
-                // (which is tracked via person2Boolean for each person)
-                // go through the finish trip = stop sequence collection process
-                finishTrip(event.getPersonId());
-            }
+            // update persons onboard vehicle
+            transitVehicles.get(event.getVehicleId()).personLeavesVehicle(event.getPersonId());
 
         }
+
     }
 
 
-    // After mobsim, pt Fares are calculated based on best price principle
     @Override
     public void notifyAfterMobsim(AfterMobsimEvent event) {
 
-        // -- CLOSE LAST TRIP OF EACH PERSON
+        for (var transitRider: transitRiders.values()){
+            events.processEvent(new PersonMoneyEvent(getOrCalcCompensationTime(),
+                    transitRider.getId(),
+                    0.,
+                    String.format("Person %s has travelled following trips: %s",
+                            transitRider.getId().toString(),
+                            transitRider.getAllTrips().toString()),
+                    "ptOperator"));
 
-        for (var entry: person2StopList.entrySet()){
-            // Sometimes agents do not reach their final activity
-            // Then the last activity performed is ended
-            // Which means that for this person an empty new stop list had been created ...
-            if (! person2StopList.get(entry.getKey()).isEmpty()){
-                // ... do not consider this empty list
-                finishTrip(entry.getKey());
-            }
         }
-
-
-        // -- DETERMINE FARE ZONES
-        log.info("Start calculating transit fares...");
-
-        Map<Id<Person>,List<String>> person2ListOfFareZones = new HashMap<>();
-        for (var entry: person2ListOfStopLists.entrySet()){
-            person2ListOfFareZones.put(entry.getKey(), determineFareZones(entry.getValue())) ;
-        }
-
-
-        // -- PAY OUT
-        string2stringList = ptFaresConfigGroup.getZonesGroup().getAllHybridZones();
-        Map<Integer, Double> allFares = ptFaresConfigGroup.getFaresGroup().getAllFares();
-        String outOfTariff = ptFaresConfigGroup.getFaresGroup().getOutOfZoneTag();
-
-        Map<Id<Person>, Integer> person2Integer = new HashMap<>();
-
-        for(var personEntry: person2ListOfFareZones.entrySet()){
-            Double tariff;
-            if (personEntry.getValue().contains(outOfTariff)){
-                // Pay outOfTariff pt price
-                tariff = ptFaresConfigGroup.getFaresGroup().getOutOfZonePrice();
-            } else {
-                tariff = allFares.get(findMinimalZoneRange(personEntry.getValue()));
-            }
-
-            events.processEvent(new PersonMoneyEvent(getOrCalcCompensationTime(), personEntry.getKey(), -tariff, "ptFare", "ptOperator"));
-        }
-
-    }
-
-
-    private Integer findMinimalZoneRange(List<String> fareZones) {
-
-        List<List<String>> rawZones = splitIntoRawZones(fareZones);
-        List<List<String>> zoneCombinations = generateCombinations(rawZones, 0);
-
-        Map<List<String>, Integer> combination2ZoneRange = new HashMap<>();
-        for (var combination: zoneCombinations){
-            Collections.sort(combination);
-            Integer range = Integer.parseInt(combination.get(combination.size()-1)) - Integer.parseInt(combination.get(0)) + 1;
-            combination2ZoneRange.put(combination, range);
-        }
-
-        return Collections.min(combination2ZoneRange.values());
-
-    }
-
-
-    private List<List<String>> splitIntoRawZones(List<String> fareZones) {
-
-        List<List<String>> rawFareZones = new ArrayList<>();
-        for(var hybridZone: fareZones){
-            List<String> rawZone = new ArrayList<>();
-            if (string2stringList.containsKey(hybridZone)){
-                rawZone.addAll(string2stringList.get(hybridZone));
-            }else{
-                rawZone.add(hybridZone);
-            }
-
-            rawFareZones.add(rawZone);
-        }
-
-        return rawFareZones;
-    }
-
-
-    private static List<List<String>> generateCombinations(List<List<String>> input, int i) {
-
-        // stop condition
-        if(i == input.size()) {
-            // return a list with an empty list
-            List<List<String>> result = new ArrayList<>();
-            result.add(new ArrayList<>());
-            return result;
-        }
-
-        List<List<String>> result = new ArrayList<>();
-        List<List<String>> recursive = generateCombinations(input, i+1); // recursive call
-
-        // for each element of the first list of input
-        for(int j = 0; j < input.get(i).size(); j++) {
-            // add the element to all combinations obtained for the rest of the lists
-            for (List<String> strings : recursive) {
-                // copy a combination from recursive
-                List<String> newList = new ArrayList<>(strings);
-                // add element of the first list
-                newList.add(input.get(i).get(j));
-                // add new combination to result
-                result.add(newList);
-            }
-        }
-
-        return result;
-    }
-
-
-    private List<String> determineFareZones(List<List<Id<TransitStopFacility>>> listOfStopLists) {
-
-        // -- DETERMINE FARE ZONES
-        // The body of this method can be easily replaced by another algorithm for determining fareZones from stop sequence input
-        // such as creating stop sequence line strings and the interaction of these with the fare zone shapes
-
-
-        String fareZoneAttributeName = ptFaresConfigGroup.getPtFareZoneAttributeName();
-
-        List<String> fareZones = new ArrayList<>();
-        for(var stopList: listOfStopLists){
-            for(var stop: stopList){
-                String currentFareZone = (String) scenario.getTransitSchedule().getFacilities().get(stop).getAttributes().getAttribute(fareZoneAttributeName);
-                fareZones.add(currentFareZone);
-            }
-        }
-
-        return fareZones;
-    }
-
-
-    private void finishTrip(Id<Person> personId) {
-
-        List<List<Id<TransitStopFacility>>> listOfStopLists;
-        if (person2ListOfStopLists.containsKey(personId)){
-            // add stop sequence to list of stop sequences
-            listOfStopLists = person2ListOfStopLists.get(personId);
-        }else{
-            // initialize new list of stop sequences and then add first stop sequence
-            listOfStopLists = new ArrayList<>();
-        }
-
-        List<Id<TransitStopFacility>> stopList = person2StopList.get(personId);
-        listOfStopLists.add(stopList);
-        person2ListOfStopLists.put(personId, listOfStopLists);
-
-        person2StopList.put(personId, new ArrayList<>());
-        person2Boolean.put(personId, false);
-
     }
 
 
@@ -372,9 +148,110 @@ final class PtFaresHandler implements TransitDriverStartsEventHandler, PersonEnt
 
         return this.compensationTime;
     }
+
+
+    class TransitVehicle{
+        private Id<Vehicle> vehicleId;
+        private Set<Id<Person>> personsOnboard = new HashSet<>();
+        private Id<TransitStopFacility> lastTransitStopFacility;
+
+        public TransitVehicle(Id<Vehicle> vehicleId){
+            this.setId(vehicleId);
+        }
+
+        public Id<Vehicle> getId() {
+            return vehicleId;
+        }
+
+        public void setId(Id<Vehicle> vehicleId) {
+            this.vehicleId = vehicleId;
+        }
+
+        public void personEntersVehicle(Id<Person> personId){
+            personsOnboard.add(personId);
+        }
+
+        public void personLeavesVehicle(Id<Person> personId){
+            personsOnboard.remove(personId);
+        }
+
+        public Set<Id<Person>> getPersonsOnboard(){
+            return personsOnboard;
+        }
+
+        public void updateLastTransitStopFacility(Id<TransitStopFacility> lastTransitStopFacility){
+            this.lastTransitStopFacility = lastTransitStopFacility;
+        }
+
+        public Id<TransitStopFacility> getLastTransitStopFacility(){
+            return lastTransitStopFacility;
+        }
+    }
+
+
+    class TransitRider{
+        private Id<Person> personId;
+        private List<TransitTrip> trips = new ArrayList<>();
+        private Boolean onTransit = false;
+
+        public TransitRider(Id<Person> personId){
+            setId(personId);
+        }
+
+        public Id<Person> getId() {
+            return personId;
+        }
+
+        public void setId(Id<Person> personId) {
+            this.personId = personId;
+        }
+
+        public void startTrip(){
+            onTransit = true;
+            trips.add(new TransitTrip());
+        }
+
+        public void closeTrip(){
+            trips.get(trips.size() - 1).markTripAsFinished();
+            onTransit = false;
+        }
+
+        public void updateTrip(Id<TransitStopFacility> currentFacility){
+            trips.get(trips.size() - 1).updateStopSequence(currentFacility);
+        }
+
+        public Boolean getOnTransit() {
+            return onTransit;
+        }
+
+        public List<String> getAllTrips(){
+            return trips.stream()
+                    .map(TransitTrip::getStopSequence)
+                    .map(stopSequence -> stopSequence.toString())
+                    .collect(Collectors.toList());
+        }
+
+
+        public class TransitTrip{
+            private List<Id<TransitStopFacility>> stopSequence = new ArrayList<>();
+            private Boolean tripClosed = false;
+
+            public void updateStopSequence(Id<TransitStopFacility> facilityId){
+                if (tripClosed){
+                    throw new AssertionError("Trip of a transit rider is to be updated although already finished.");
+                } else {
+                    stopSequence.add(facilityId);
+                }
+            }
+
+            public void markTripAsFinished(){
+                tripClosed = true;
+            }
+
+            public List<Id<TransitStopFacility>> getStopSequence(){
+                return stopSequence;
+            }
+
+        }
+    }
 }
-
-
-
-
-
