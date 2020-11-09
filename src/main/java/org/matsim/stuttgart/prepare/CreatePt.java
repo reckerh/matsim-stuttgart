@@ -5,6 +5,8 @@ import com.beust.jcommander.Parameter;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.io.MatsimNetworkReader;
+import org.matsim.core.network.io.NetworkWriter;
+import org.matsim.pt.utils.CreateVehiclesForSchedule;
 import org.matsim.stuttgart.Utils;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.contrib.gtfs.GtfsConverter;
@@ -29,7 +31,6 @@ public class CreatePt {
 
         var arguments = Utils.parseSharedSvn(args);
         var network = NetworkUtils.readNetwork(Paths.get(arguments.getSharedSvn()).resolve(outputNetwork).toString());
-
         create(Paths.get(arguments.getSharedSvn()), network);
     }
 
@@ -45,6 +46,10 @@ public class CreatePt {
                 .setFeed(sharedSvn.resolve(schedule))
                 .build()
                 .convert();
+
+        //Create simple transit vehicles with a pcu of 0
+        new CreateVehiclesForSchedule(scenario.getTransitSchedule(), scenario.getTransitVehicles()).run();
+        scenario.getTransitVehicles().getVehicleTypes().forEach((id, type) -> type.setPcuEquivalents(0));
 
         new CreatePseudoNetwork(scenario.getTransitSchedule(), scenario.getNetwork(), "pt_").createNetwork();
         writeScheduleAndVehicles(scenario, sharedSvn);
