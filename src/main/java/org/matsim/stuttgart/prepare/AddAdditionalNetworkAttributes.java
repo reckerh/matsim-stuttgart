@@ -2,7 +2,6 @@ package org.matsim.stuttgart.prepare;
 
 
 import org.apache.log4j.Logger;
-
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 import org.matsim.api.core.v01.Coord;
@@ -20,8 +19,8 @@ import java.util.Collection;
 
 
 /**
-* @author davidwedekind
-*/
+ * @author davidwedekind
+ */
 
 public class AddAdditionalNetworkAttributes {
 
@@ -30,7 +29,7 @@ public class AddAdditionalNetworkAttributes {
     // Specify path strings for network in- and output
     private static String inputNetwork = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/stuttgart-v1.0_fstRun01/input/optimizedNetwork.xml.gz";
     private static String outputNetwork = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/network-stuttgart-edited.xml.gz";
-    private static String shapeFile = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/01_prep/01_Parking/test.shp";
+    private static final String shapeFile = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/01_prep/01_Parking/test.shp";
     private static Collection<SimpleFeature> features = null;
 
 
@@ -56,7 +55,7 @@ public class AddAdditionalNetworkAttributes {
     }
 
 
-    public void run (Scenario scenario, String shapeFile){
+    public void run(Scenario scenario, String shapeFile) {
 
         Network network = scenario.getNetwork();
 
@@ -72,17 +71,17 @@ public class AddAdditionalNetworkAttributes {
     }
 
 
-    private void mergeNetworkLinksWithParkingAttributes(Network network, Collection<SimpleFeature> features){
+    private void mergeNetworkLinksWithParkingAttributes(Network network, Collection<SimpleFeature> features) {
 
 
         network.getLinks().values().stream()
                 .forEach(link -> {
 
-                    if (link.getAllowedModes().contains("pt")){
+                    if (link.getAllowedModes().contains("pt")) {
 
                         // pTLinks are not relevant for parking
 
-                    }else{
+                    } else {
 
                         // Which coord is returned? => start node, end node? center of the link?
                         Coord coord = link.getCoord();
@@ -99,41 +98,41 @@ public class AddAdditionalNetworkAttributes {
                         String zoneGroup = "";
 
 
-                        for (SimpleFeature feature : features ) {
+                        for (SimpleFeature feature : features) {
                             Geometry geometry = (Geometry) feature.getDefaultGeometry();
 
 
                             if (geometry.contains(point)) {
 
-                                if (feature.getAttribute("zone_name") != null){
+                                if (feature.getAttribute("zone_name") != null) {
                                     zoneName = (String) feature.getAttribute("zone_name");
                                 }
 
-                                if (feature.getAttribute("zone_group") != null){
+                                if (feature.getAttribute("zone_group") != null) {
                                     zoneGroup = (String) feature.getAttribute("zone_group");
                                 }
 
-                                if (feature.getAttribute("h_costs") != null){
+                                if (feature.getAttribute("h_costs") != null) {
                                     oneHourPCost = (Double) feature.getAttribute("h_costs");
                                 }
 
-                                if (feature.getAttribute("h_costs") != null){
+                                if (feature.getAttribute("h_costs") != null) {
                                     extraHourPCost = (Double) feature.getAttribute("h_costs");
                                 }
 
-                                if (feature.getAttribute("dmax_costs") != null){
+                                if (feature.getAttribute("dmax_costs") != null) {
                                     maxDailyPCost = (Double) feature.getAttribute("dmax_costs");
                                 }
 
-                                if (feature.getAttribute("max_time") != null){
+                                if (feature.getAttribute("max_time") != null) {
                                     maxParkingTime = (Integer) feature.getAttribute("max_time");
                                 }
 
-                                if (feature.getAttribute("penalty") != null){
+                                if (feature.getAttribute("penalty") != null) {
                                     pFine = (Double) feature.getAttribute("penalty");
                                 }
 
-                                if (feature.getAttribute("res_costs") != null){
+                                if (feature.getAttribute("res_costs") != null) {
                                     resPCosts = (Double) feature.getAttribute("res_costs");
                                 }
 

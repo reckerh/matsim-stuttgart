@@ -10,10 +10,16 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.gis.ShapeFileReader;
-import org.matsim.pt.transitSchedule.api.*;
+import org.matsim.pt.transitSchedule.api.TransitSchedule;
+import org.matsim.pt.transitSchedule.api.TransitScheduleReader;
+import org.matsim.pt.transitSchedule.api.TransitScheduleWriter;
+import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 import org.opengis.feature.simple.SimpleFeature;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
+import java.util.List;
 
 
 /**
@@ -74,19 +80,19 @@ public class PrepareTransitSchedule {
 
                     String fareZone = findFareZone(transitStopFacility, fareZoneFeatures);
 
-                    if (fareZone.isEmpty()){
+                    if (fareZone.isEmpty()) {
                         transitStopFacility.getAttributes().putAttribute("ptFareZone", "out");
-                    }else{
+                    } else {
                         transitStopFacility.getAttributes().putAttribute("ptFareZone", fareZone);
                     }
 
 
                     Boolean bikeAndRide = false;
 
-                    if (fareZone!=""){
+                    if (fareZone != "") {
                         // This means it is assigned a fareZone and thus located in vvs area
 
-                        if (bikeAndRideAssignment.contains(transitStopFacility.getId())){
+                        if (bikeAndRideAssignment.contains(transitStopFacility.getId())) {
                             bikeAndRide = true;
                         }
 
@@ -109,7 +115,7 @@ public class PrepareTransitSchedule {
 
         // Automatic crs detection/ transformation might be needed to avoid errors.
 
-        for (SimpleFeature feature : features ) {
+        for (SimpleFeature feature : features) {
 
             Geometry geometry = (Geometry) feature.getDefaultGeometry();
 
@@ -121,7 +127,7 @@ public class PrepareTransitSchedule {
         }
 
 
-        if (! stopInShapes) {
+        if (!stopInShapes) {
 
             // There are several home locations outside the shape File boundaries
             // as for performance reasons the shape File was reduced to Stuttgart Metropolitan Area
@@ -143,19 +149,19 @@ public class PrepareTransitSchedule {
         // and allow Bike and Ride
 
         List<Id<TransitStopFacility>> bikeAndRide = new ArrayList<>();
-        List<String> modes = Arrays.asList(new String[]{"tram", "train"});
+        List<String> modes = Arrays.asList("tram", "train");
 
         schedule.getTransitLines().values().stream().forEach(transitLine -> {
 
             transitLine.getRoutes().values().stream().forEach(transitRoute -> {
 
-                if (modes.contains(transitRoute.getTransportMode())){
+                if (modes.contains(transitRoute.getTransportMode())) {
 
                     transitRoute.getStops().stream().forEach(transitRouteStop -> {
 
-                        if (bikeAndRide.contains(transitRouteStop.getStopFacility().getId())){
+                        if (bikeAndRide.contains(transitRouteStop.getStopFacility().getId())) {
                             // Already in list
-                        }else{
+                        } else {
                             bikeAndRide.add(transitRouteStop.getStopFacility().getId());
                         }
 

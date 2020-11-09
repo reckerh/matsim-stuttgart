@@ -1,7 +1,5 @@
 package org.matsim.stuttgart.prepare;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
@@ -44,7 +42,7 @@ public class CleanPopulation {
                     var newPlan = PopulationUtils.createPlan();
                     var trips = TripStructureUtils.getTrips(person.getSelectedPlan());
 
-                    var firstActivity = (Activity)person.getSelectedPlan().getPlanElements().get(0);
+                    var firstActivity = (Activity) person.getSelectedPlan().getPlanElements().get(0);
                     firstActivity.setLinkId(null);
                     newPlan.addActivity(firstActivity); // copy the first activity
 

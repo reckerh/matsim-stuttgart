@@ -19,63 +19,57 @@
 
 package org.matsim.stuttgart.prepare;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.facilities.ActivityFacilities;
-import org.matsim.facilities.ActivityFacilitiesFactoryImpl;
-import org.matsim.facilities.ActivityFacility;
-import org.matsim.facilities.ActivityOption;
-import org.matsim.facilities.FacilitiesWriter;
+import org.matsim.facilities.*;
 import org.matsim.stuttgart.Utils;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
 /**
-* @author ikaddoura
-*/
+ * @author ikaddoura
+ */
 
 public class CleanFacilities {
-	
-	private static final Logger log = Logger.getLogger(CleanFacilities.class);
-	private static final String inputFacilities = "projects\\matsim-stuttgart\\stuttgart-v0.0-snz-original\\optimizedFacilities.xml.gz";
-	private static final String outputFacilities = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\facilities-stuttgart.xml.gz";
 
-	public static void main(String[] args) {
+    private static final Logger log = Logger.getLogger(CleanFacilities.class);
+    private static final String inputFacilities = "projects\\matsim-stuttgart\\stuttgart-v0.0-snz-original\\optimizedFacilities.xml.gz";
+    private static final String outputFacilities = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\facilities-stuttgart.xml.gz";
 
-		var arguments = Utils.parseSharedSvn(args);
-		clean(Paths.get(arguments.getSharedSvn()));
-	}
-	
-	public static void clean(Path sharedSvn) {
+    public static void main(String[] args) {
 
-		
-		Config config = ConfigUtils.createConfig();
-		config.facilities().setInputFile(sharedSvn.resolve(inputFacilities).toString());
-		Scenario scInput = ScenarioUtils.loadScenario(config);
-		
-		var scOutput = ScenarioUtils.createScenario(ConfigUtils.createConfig());
-		ActivityFacilities facilities = scOutput.getActivityFacilities();
-		
-		ActivityFacilitiesFactoryImpl fact = new ActivityFacilitiesFactoryImpl();
-		
-		for (ActivityFacility fac : scInput.getActivityFacilities().getFacilities().values()) {
-			
-			ActivityFacility newFacility = fact.createActivityFacility(fac.getId(), fac.getCoord());
-			
-			for (ActivityOption option : fac.getActivityOptions().values()) {
-				newFacility.addActivityOption(option);
-			}		
-			facilities.addActivityFacility(newFacility);
-		}
-		
-		log.info("Writing...");
-		new FacilitiesWriter(facilities).write(sharedSvn.resolve(outputFacilities).toString());
-		log.info("Writing... Done.");
-	}
+        var arguments = Utils.parseSharedSvn(args);
+        clean(Paths.get(arguments.getSharedSvn()));
+    }
+
+    public static void clean(Path sharedSvn) {
+
+
+        Config config = ConfigUtils.createConfig();
+        config.facilities().setInputFile(sharedSvn.resolve(inputFacilities).toString());
+        Scenario scInput = ScenarioUtils.loadScenario(config);
+
+        var scOutput = ScenarioUtils.createScenario(ConfigUtils.createConfig());
+        ActivityFacilities facilities = scOutput.getActivityFacilities();
+
+        ActivityFacilitiesFactoryImpl fact = new ActivityFacilitiesFactoryImpl();
+
+        for (ActivityFacility fac : scInput.getActivityFacilities().getFacilities().values()) {
+
+            ActivityFacility newFacility = fact.createActivityFacility(fac.getId(), fac.getCoord());
+
+            for (ActivityOption option : fac.getActivityOptions().values()) {
+                newFacility.addActivityOption(option);
+            }
+            facilities.addActivityFacility(newFacility);
+        }
+
+        log.info("Writing...");
+        new FacilitiesWriter(facilities).write(sharedSvn.resolve(outputFacilities).toString());
+        log.info("Writing... Done.");
+    }
 }

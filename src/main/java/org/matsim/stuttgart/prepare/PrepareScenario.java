@@ -1,7 +1,5 @@
 package org.matsim.stuttgart.prepare;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
 import org.matsim.stuttgart.Utils;
 
 import java.nio.file.Paths;

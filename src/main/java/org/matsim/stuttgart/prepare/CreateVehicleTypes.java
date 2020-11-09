@@ -1,13 +1,11 @@
 package org.matsim.stuttgart.prepare;
 
-import com.beust.jcommander.JCommander;
 import org.matsim.stuttgart.Utils;
 import org.matsim.vehicles.MatsimVehicleWriter;
 import org.matsim.vehicles.VehicleUtils;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Set;
 
 public class CreateVehicleTypes {
 
