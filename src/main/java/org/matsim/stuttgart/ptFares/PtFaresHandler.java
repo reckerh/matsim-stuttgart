@@ -1,4 +1,4 @@
-package org.matsim.ptFares;
+package org.matsim.stuttgart.ptFares;
 
 
 import com.google.inject.Inject;

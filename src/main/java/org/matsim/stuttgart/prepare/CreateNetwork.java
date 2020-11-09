@@ -1,7 +1,5 @@
-package org.matsim.prepare;
+package org.matsim.stuttgart.prepare;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
 import org.apache.log4j.Logger;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
 import org.matsim.api.core.v01.TransportMode;
@@ -11,9 +9,8 @@ import org.matsim.contrib.osm.networkReader.SupersonicOsmNetworkReader;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.algorithms.MultimodalNetworkCleaner;
 import org.matsim.core.network.io.MatsimNetworkReader;
-import org.matsim.core.utils.geometry.CoordinateTransformation;
 import org.matsim.core.utils.geometry.geotools.MGC;
-import org.matsim.core.utils.geometry.transformations.TransformationFactory;
+import org.matsim.stuttgart.Utils;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -23,18 +20,15 @@ public class CreateNetwork {
 
     private static final Logger log = Logger.getLogger(CreateNetwork.class);
 
-    private static final CoordinateTransformation transformation = TransformationFactory.getCoordinateTransformation("EPSG:4326", "EPSG:25832");
     private static final String senozonNetworkPath = "projects\\matsim-stuttgart\\stuttgart-v0.0-snz-original\\optimizedNetwork.xml.gz";
     private static final String outputNetwork = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\network-stuttgart.xml.gz";
     private static final String osmFile = "projects\\mosaik-2\\raw-data\\osm\\germany-20200715.osm.pbf";
 
     public static void main(String[] args) {
 
-        var arguments = new InputArgs();
-        JCommander.newBuilder().addObject(arguments).build().parse(args);
-
-        var network = createNetwork(Paths.get(arguments.sharedSvn));
-        writeNetwork(network, Paths.get(arguments.sharedSvn));
+        var arguments = Utils.parseSharedSvn(args);
+        var network = createNetwork(Paths.get(arguments.getSharedSvn()));
+        writeNetwork(network, Paths.get(arguments.getSharedSvn()));
     }
 
     public static Network createNetwork(Path svnPath) {
@@ -46,7 +40,7 @@ public class CreateNetwork {
         var allowedModes = Set.of(TransportMode.car, TransportMode.ride); // maybe bike as well?
 
         var network = new SupersonicOsmNetworkReader.Builder()
-                .setCoordinateTransformation(transformation)
+                .setCoordinateTransformation(Utils.getTransformationWGS84ToUTM32())
                 .setIncludeLinkAtCoordWithHierarchy((coord, id) -> bbox.covers(MGC.coord2Point(coord)))
                 .setAfterLinkCreated((link, map, direction) -> link.setAllowedModes(allowedModes))
                 .build()
@@ -78,11 +72,5 @@ public class CreateNetwork {
         new MatsimNetworkReader(senozonNetwork).readFile(sharedSvn.resolve(senozonNetworkPath).toString());
 
         return BoundingBox.fromNetwork(senozonNetwork).toGeometry();
-    }
-
-    private static class InputArgs {
-
-        @Parameter(names = {"-sharedSvn"}, required = true)
-        String sharedSvn = "https://svn.vsp.tu-berlin.de/repos/shared-svn/";
     }
 }
