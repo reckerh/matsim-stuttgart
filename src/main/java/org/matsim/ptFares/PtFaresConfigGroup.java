@@ -156,7 +156,7 @@ public class PtFaresConfigGroup extends ReflectiveConfigGroup {
             }
 
             @StringGetter(IS_HYBRID)
-            public Boolean getIsHybrid(){
+            public boolean getIsHybrid(){
                 return isHybrid;
             }
 
@@ -253,7 +253,7 @@ public class PtFaresConfigGroup extends ReflectiveConfigGroup {
             }
 
             @StringSetter(NUMBER_ZONES)
-            public void setNumberZones(Integer numberZones){
+            public void setNumberZones(int numberZones){
                 this.numberZones = numberZones;
             }
 
@@ -263,7 +263,7 @@ public class PtFaresConfigGroup extends ReflectiveConfigGroup {
             }
 
             @StringSetter(TICKET_PRICE)
-            public void setTicketPrice(Double ticketPrice){
+            public void setTicketPrice(double ticketPrice){
                 this.ticketPrice = ticketPrice;
             }
 

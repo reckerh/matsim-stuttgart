@@ -25,9 +25,10 @@ import java.util.stream.Collectors;
 public class PtFaresHandler implements TransitDriverStartsEventHandler, PersonLeavesVehicleEventHandler, VehicleArrivesAtFacilityEventHandler, PersonEntersVehicleEventHandler, AfterMobsimListener, ActivityStartEventHandler {
     private static final Logger log = Logger.getLogger( PtFaresHandler.class );
     private double compensationTime = Double.NaN;
-    private Set<Id<Person>> ptDrivers = new HashSet<>();
-    private Map<Id<Vehicle>, TransitVehicle> transitVehicles = new HashMap<>();
-    private Map<Id<Person>, TransitRider> transitRiders = new HashMap<>();
+    private final Set<Id<Person>> ptDrivers = new HashSet<>();
+    private final Map<Id<Vehicle>, TransitVehicle> transitVehicles = new HashMap<>();
+    private final Map<Id<Person>, TransitRider> transitRiders = new HashMap<>();
+
 
     @Inject
     private EventsManager events;
@@ -40,6 +41,9 @@ public class PtFaresHandler implements TransitDriverStartsEventHandler, PersonLe
 
     @Inject
     private PtFaresConfigGroup ptFaresConfigGroup;
+
+    @Inject
+    private FareZoneCalculator fareZoneCalculator;
 
 
     @Override
@@ -139,7 +143,6 @@ public class PtFaresHandler implements TransitDriverStartsEventHandler, PersonLe
     public void notifyAfterMobsim(AfterMobsimEvent event) {
         log.info("Start collecting transit fares...");
 
-        FareZoneCalculator fareZoneCalculator = new FareZoneCalculator(scenario, ptFaresConfigGroup);
         Map<Id<Person>, List<TransitRider.TransitTrip>> riders2TransitTrips = transitRiders.entrySet().parallelStream()
                 .collect(Collectors.toMap(Map.Entry::getKey, map -> map.getValue().getAllTrips()));
 

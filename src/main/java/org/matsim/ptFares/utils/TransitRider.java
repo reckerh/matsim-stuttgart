@@ -9,8 +9,8 @@ import java.util.List;
 
 public class TransitRider{
     private Id<Person> personId;
-    private List<TransitTrip> trips = new ArrayList<>();
-    private Boolean onTransit = false;
+    private final List<TransitTrip> trips = new ArrayList<>();
+    private boolean onTransit = false;
 
     public TransitRider(Id<Person> personId){
         setId(personId);
@@ -39,7 +39,7 @@ public class TransitRider{
         trips.get(trips.size() - 1).updateStopSequence(currentFacility);
     }
 
-    public Boolean isOnTransit() {
+    public boolean isOnTransit() {
         return onTransit;
     }
 
@@ -48,9 +48,9 @@ public class TransitRider{
     }
 
 
-    public class TransitTrip{
-        private List<Id<TransitStopFacility>> stopSequence = new ArrayList<>();
-        private Boolean tripClosed = false;
+    public static class TransitTrip{
+        private final List<Id<TransitStopFacility>> stopSequence = new ArrayList<>();
+        private boolean tripClosed = false;
 
         public void updateStopSequence(Id<TransitStopFacility> facilityId){
             if (tripClosed){

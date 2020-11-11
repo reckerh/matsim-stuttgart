@@ -10,7 +10,7 @@ import java.util.Set;
 
 public class TransitVehicle{
     private Id<Vehicle> vehicleId;
-    private Set<Id<Person>> personsOnboard = new HashSet<>();
+    private final Set<Id<Person>> personsOnboard = new HashSet<>();
     private Id<TransitStopFacility> lastTransitStopFacility;
 
     public TransitVehicle(Id<Vehicle> vehicleId){

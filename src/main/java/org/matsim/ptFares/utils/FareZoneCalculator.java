@@ -1,4 +1,5 @@
 package org.matsim.ptFares.utils;
+import com.google.inject.Inject;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
@@ -16,6 +17,7 @@ public class FareZoneCalculator {
     Set<String> baseZones;
     String outOfZoneTag;
 
+    @Inject
     public FareZoneCalculator(Scenario scenario, PtFaresConfigGroup ptFaresConfigGroup){
         this.scenario = scenario;
         this.ptFaresConfigGroup = ptFaresConfigGroup;
