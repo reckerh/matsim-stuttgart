@@ -5,7 +5,10 @@ import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.events.*;
-import org.matsim.api.core.v01.events.handler.*;
+import org.matsim.api.core.v01.events.handler.ActivityStartEventHandler;
+import org.matsim.api.core.v01.events.handler.PersonEntersVehicleEventHandler;
+import org.matsim.api.core.v01.events.handler.PersonLeavesVehicleEventHandler;
+import org.matsim.api.core.v01.events.handler.TransitDriverStartsEventHandler;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.api.experimental.events.EventsManager;
 import org.matsim.core.api.experimental.events.VehicleArrivesAtFacilityEvent;
@@ -13,9 +16,9 @@ import org.matsim.core.api.experimental.events.handler.VehicleArrivesAtFacilityE
 import org.matsim.core.config.groups.QSimConfigGroup;
 import org.matsim.core.controler.events.AfterMobsimEvent;
 import org.matsim.core.controler.listener.AfterMobsimListener;
-import org.matsim.ptFares.utils.FareZoneCalculator;
-import org.matsim.ptFares.utils.TransitRider;
-import org.matsim.ptFares.utils.TransitVehicle;
+import org.matsim.stuttgart.ptFares.utils.FareZoneCalculator;
+import org.matsim.stuttgart.ptFares.utils.TransitRider;
+import org.matsim.stuttgart.ptFares.utils.TransitVehicle;
 import org.matsim.vehicles.Vehicle;
 
 import java.util.*;

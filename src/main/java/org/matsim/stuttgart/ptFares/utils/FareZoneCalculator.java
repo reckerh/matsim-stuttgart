@@ -1,9 +1,9 @@
-package org.matsim.ptFares.utils;
+package org.matsim.stuttgart.ptFares.utils;
 import com.google.inject.Inject;
 import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
-import org.matsim.ptFares.PtFaresConfigGroup;
+import org.matsim.stuttgart.ptFares.PtFaresConfigGroup;
 
 import java.util.*;
 import java.util.stream.Collectors;

@@ -1,4 +1,4 @@
-package org.matsim.ptFares.utils;
+package org.matsim.stuttgart.ptFares.utils;
 
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.Person;
