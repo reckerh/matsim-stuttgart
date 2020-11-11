@@ -16,7 +16,7 @@
  *   See also COPYING, LICENSE and WARRANTY file                           *
  *                                                                         *
  * *********************************************************************** */
-package org.matsim.run;
+package org.matsim.stuttgart.run;
 
 import ch.sbb.matsim.config.SBBTransitConfigGroup;
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
@@ -25,7 +25,7 @@ import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
 import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import org.apache.log4j.Logger;
-import org.matsim.Utils;
+import org.matsim.stuttgart.Utils;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.core.config.Config;
@@ -42,8 +42,8 @@ import org.matsim.core.gbl.Gbl;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.parkingCost.ParkingCostConfigGroup;
 import org.matsim.parkingCost.ParkingCostModule;
-import org.matsim.prepare.AddAdditionalNetworkAttributes;
-import org.matsim.prepare.PrepareTransitSchedule;
+import org.matsim.stuttgart.prepare.AddAdditionalNetworkAttributes;
+import org.matsim.stuttgart.prepare.PrepareTransitSchedule;
 
 import java.util.Arrays;
 import java.util.Set;

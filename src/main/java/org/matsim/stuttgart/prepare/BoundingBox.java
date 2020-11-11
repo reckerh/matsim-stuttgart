@@ -1,4 +1,4 @@
-package org.matsim.prepare;
+package org.matsim.stuttgart.prepare;
 
 import org.apache.log4j.Logger;
 import org.locationtech.jts.geom.Coordinate;
@@ -11,28 +11,12 @@ import org.matsim.api.core.v01.network.Network;
 
 public class BoundingBox {
 
-    private static Logger log = Logger.getLogger(BoundingBox.class);
+    private static final Logger log = Logger.getLogger(BoundingBox.class);
 
     private double minX = Double.POSITIVE_INFINITY;
     private double minY = Double.POSITIVE_INFINITY;
     private double maxX = Double.NEGATIVE_INFINITY;
     private double maxY = Double.NEGATIVE_INFINITY;
-
-    public double getMinX() {
-        return minX;
-    }
-
-    public double getMinY() {
-        return minY;
-    }
-
-    public double getMaxX() {
-        return maxX;
-    }
-
-    public double getMaxY() {
-        return maxY;
-    }
 
     static BoundingBox fromNetwork(Network network) {
         log.info("Calculating bounding box of car network");
@@ -50,6 +34,22 @@ public class BoundingBox {
         log.info("Bbox is: " + bbox.toString());
 
         return bbox;
+    }
+
+    public double getMinX() {
+        return minX;
+    }
+
+    public double getMinY() {
+        return minY;
+    }
+
+    public double getMaxX() {
+        return maxX;
+    }
+
+    public double getMaxY() {
+        return maxY;
     }
 
     public synchronized void adjust(Coord coord) {

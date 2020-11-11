@@ -1,10 +1,9 @@
-package org.matsim.prepare;
+package org.matsim.stuttgart.prepare;
 
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import org.apache.log4j.Logger;
-
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 import org.matsim.api.core.v01.Coord;
@@ -22,8 +21,8 @@ import java.util.Collection;
 
 
 /**
-* @author davidwedekind
-*/
+ * @author davidwedekind
+ */
 
 public class AddAdditionalNetworkAttributes {
 
@@ -51,7 +50,7 @@ public class AddAdditionalNetworkAttributes {
     }
 
 
-    public void run (Scenario scenario, String shapeFile){
+    public void run(Scenario scenario, String shapeFile) {
 
         Network network = scenario.getNetwork();
         Collection<SimpleFeature> features = ShapeFileReader.getAllFeatures(shapeFile);

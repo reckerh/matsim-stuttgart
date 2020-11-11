@@ -1,4 +1,6 @@
-package org.matsim.ptFares;
+package org.matsim.stuttgart.ptFares;
+
+import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ReflectiveConfigGroup;
 import org.matsim.core.utils.collections.CollectionUtils;
 

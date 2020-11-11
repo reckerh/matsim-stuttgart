@@ -16,7 +16,7 @@
  *   See also COPYING, LICENSE and WARRANTY file                           *
  *                                                                         *
  * *********************************************************************** */
-package org.matsim.run;
+package org.matsim.stuttgart.run;
 
 import java.util.Arrays;
 import java.util.Set;
@@ -24,7 +24,7 @@ import ch.sbb.matsim.config.SBBTransitConfigGroup;
 import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
 import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
 import org.apache.log4j.Logger;
-import org.matsim.Utils;
+import org.matsim.stuttgart.Utils;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.core.config.Config;
@@ -44,10 +44,10 @@ import org.matsim.parkingCost.ParkingCostModule;
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
-import org.matsim.prepare.AddAdditionalNetworkAttributes;
-import org.matsim.prepare.PrepareTransitSchedule;
-import org.matsim.ptFares.PtFaresConfigGroup;
-import org.matsim.ptFares.PtFaresModule;
+import org.matsim.stuttgart.prepare.AddAdditionalNetworkAttributes;
+import org.matsim.stuttgart.prepare.PrepareTransitSchedule;
+import org.matsim.stuttgart.ptFares.PtFaresConfigGroup;
+import org.matsim.stuttgart.ptFares.PtFaresModule;
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
 
 /**
@@ -194,7 +194,7 @@ public class RunCalibration {
         controler.addOverridingModule( new AbstractModule() {
             @Override
             public void install() {
-                bind(RaptorIntermodalAccessEgress.class).to(org.matsim.run.StuttgartRaptorIntermodalAccessEgress.class);
+                bind(RaptorIntermodalAccessEgress.class).to(StuttgartRaptorIntermodalAccessEgress.class);
             }
         } );
 
