@@ -18,6 +18,7 @@
  * *********************************************************************** */
 package org.matsim.stuttgart.run;
 
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Set;
 import ch.sbb.matsim.config.SBBTransitConfigGroup;
@@ -54,8 +55,8 @@ import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorith
  * @author dwedekind, gleich
  */
 
-public class RunCalibration {
-    private static final Logger log = Logger.getLogger(RunCalibration.class );
+public class RunStuttgartWithAdditionalModules {
+    private static final Logger log = Logger.getLogger(RunStuttgartWithAdditionalModules.class );
 
     public static void main(String[] args) {
 
@@ -146,15 +147,15 @@ public class RunCalibration {
 
         Scenario scenario = ScenarioUtils.loadScenario(config);
 
-        // ToDo: Adjust to files at svn
         // Add fareZones and VVSBikeAndRideStops
-        String inputFolderPath = config.controler().getOutputDirectory().replace("output", "input");
+        String schedulePath = config.transit().getTransitScheduleFileURL(config.getContext()).getPath();
         PrepareTransitSchedule ptPreparer = new PrepareTransitSchedule();
-        ptPreparer.run(scenario, inputFolderPath + "/fareZones_sp.shp");
+        ptPreparer.run(scenario, schedulePath.substring(0, schedulePath.lastIndexOf('/')) + "/fareZones_sp.shp");
 
         // Add parking costs to network
+        String networkPath = config.network().getInputFileURL(config.getContext()).getPath();
         AddAdditionalNetworkAttributes parkingPreparer = new AddAdditionalNetworkAttributes();
-        parkingPreparer.run(scenario, inputFolderPath + "/parkingShapes.shp");
+        parkingPreparer.run(scenario, networkPath.substring(0, networkPath.lastIndexOf('/')) + "/parkingShapes.shp");
 
         log.info("Scenario successfully prepared...");
 
@@ -271,6 +272,7 @@ public class RunCalibration {
         faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(5, 4.68));
         faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(6, 5.51));
         faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(7, 6.22));
+        faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(8, 6.22));
         configFares.setFaresGroup(faresGroup);
 
         PtFaresConfigGroup.ZonesGroup zonesGroup = new PtFaresConfigGroup.ZonesGroup();
@@ -288,6 +290,8 @@ public class RunCalibration {
         zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("6", false));
         zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("6/7", true, Set.of("6", "7")));
         zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("7", false));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("7/8", true, Set.of("7", "8")));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("8", false));
         configFares.setZonesGroup(zonesGroup);
 
         return configFares;

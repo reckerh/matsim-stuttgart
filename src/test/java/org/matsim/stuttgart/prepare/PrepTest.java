@@ -1,4 +1,4 @@
-package org.matsim.stuttgart.ptFares;
+package org.matsim.stuttgart.prepare;
 
 import org.geotools.geometry.jts.JTSFactoryFinder;
 import org.junit.Ignore;
