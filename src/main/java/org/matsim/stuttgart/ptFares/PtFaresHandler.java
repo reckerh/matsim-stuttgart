@@ -161,7 +161,7 @@ public class PtFaresHandler implements TransitDriverStartsEventHandler, PersonLe
                             fare,
                             "ptFares",
                             "ptAuthority"
-                            ));
+                    ));
                 });
 
         // Trips at least partly out of tariff zone
