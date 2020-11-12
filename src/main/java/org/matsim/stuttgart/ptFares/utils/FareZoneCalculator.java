@@ -116,6 +116,7 @@ public class FareZoneCalculator {
                     zoneCombinations.get(i).set(id, zoneAssignments.get(0));
                     zoneCombinations.get(i + (combinations/2)).set(id, zoneAssignments.get(1));
                 }
+                combinations *= 2;
             }
 
             // determine zoneRange for each combination
