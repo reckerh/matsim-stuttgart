@@ -18,12 +18,12 @@
  * *********************************************************************** */
 package org.matsim.stuttgart.run;
 
+import java.net.URL;
+import java.util.Arrays;
+import java.util.Set;
 import ch.sbb.matsim.config.SBBTransitConfigGroup;
-import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
 import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
-import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
-import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import org.apache.log4j.Logger;
 import org.matsim.stuttgart.Utils;
 import org.matsim.api.core.v01.Scenario;
@@ -42,21 +42,21 @@ import org.matsim.core.gbl.Gbl;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.parkingCost.ParkingCostConfigGroup;
 import org.matsim.parkingCost.ParkingCostModule;
+import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
+import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
+import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import org.matsim.stuttgart.prepare.AddAdditionalNetworkAttributes;
 import org.matsim.stuttgart.prepare.PrepareTransitSchedule;
-
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
-
+import org.matsim.stuttgart.ptFares.PtFaresConfigGroup;
+import org.matsim.stuttgart.ptFares.PtFaresModule;
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
 
 /**
  * @author dwedekind, gleich
  */
 
-public class RunCalibrationWithoutPTHandler {
-    private static final Logger log = Logger.getLogger(RunCalibrationWithoutPTHandler.class );
+public class RunStuttgartWithAdditionalModules {
+    private static final Logger log = Logger.getLogger(RunStuttgartWithAdditionalModules.class );
 
     public static void main(String[] args) {
 
@@ -78,7 +78,7 @@ public class RunCalibrationWithoutPTHandler {
         // -- PREPARE CUSTOM MODULES
         String[] typedArgs = Arrays.copyOfRange( args, 1, args.length );
 
-        ConfigGroup[] customModulesToAdd = new ConfigGroup[]{ setupRaptorConfigGroup() /*, setupPTFaresGroup()*/, setupSBBTransit(), setupParkingCostConfigGroup()};
+        ConfigGroup[] customModulesToAdd = new ConfigGroup[]{ setupRaptorConfigGroup(), setupPTFaresGroup(), setupSBBTransit(), setupParkingCostConfigGroup()};
         ConfigGroup[] customModulesAll = new ConfigGroup[customModules.length + customModulesToAdd.length];
 
         int counter = 0;
@@ -147,14 +147,15 @@ public class RunCalibrationWithoutPTHandler {
 
         Scenario scenario = ScenarioUtils.loadScenario(config);
 
-
         // Add fareZones and VVSBikeAndRideStops
+        String schedulePath = config.transit().getTransitScheduleFileURL(config.getContext()).getPath();
         PrepareTransitSchedule ptPreparer = new PrepareTransitSchedule();
-        ptPreparer.run(scenario, "./input/fareZones_sp.shp");
+        ptPreparer.run(scenario, schedulePath.substring(0, schedulePath.lastIndexOf('/')) + "/fareZones_sp.shp");
 
         // Add parking costs to network
+        String networkPath = config.network().getInputFileURL(config.getContext()).getPath();
         AddAdditionalNetworkAttributes parkingPreparer = new AddAdditionalNetworkAttributes();
-        parkingPreparer.run(scenario, "./input/parkingShapes.shp");
+        parkingPreparer.run(scenario, networkPath.substring(0, networkPath.lastIndexOf('/')) + "/parkingShapes.shp");
 
         log.info("Scenario successfully prepared...");
 
@@ -209,18 +210,14 @@ public class RunCalibrationWithoutPTHandler {
             // To use the deterministic pt simulation (Part 2 of 2):
         });
 
-        controler.configureQSimComponents(components -> {
-            SBBTransitEngineQSimModule.configure(components);
-        });
+        controler.configureQSimComponents(SBBTransitEngineQSimModule::configure);
 
 
         // use parking cost module
         controler.addOverridingModule(new ParkingCostModule());
 
-/*
         // use pt fares module
         controler.addOverridingModule(new PtFaresModule());
-*/
 
         log.info("Controler successfully prepared...");
 
@@ -236,7 +233,7 @@ public class RunCalibrationWithoutPTHandler {
         // -- Intermodal Routing --
 
         configRaptor.setUseIntermodalAccessEgress(true);
-/*
+
         // AcessEgressWalk
         SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetAEWalk = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
         paramSetAEWalk.setInitialSearchRadius(1000);
@@ -256,14 +253,9 @@ public class RunCalibrationWithoutPTHandler {
 
         configRaptor.addIntermodalAccessEgress(paramSetAEBike);
 
-
         return configRaptor;
-
- */
-        throw new RuntimeException("The above parameter have changed in the current snapshot version. Please review");
     }
 
-/*
 
     private static PtFaresConfigGroup setupPTFaresGroup() {
 
@@ -271,50 +263,45 @@ public class RunCalibrationWithoutPTHandler {
 
         // For values, see https://www.vvs.de/tickets/zeittickets-abo-polygo/jahresticket-jedermann/
 
-        PtFaresConfigGroup.ZonePricesParameterSet paramSetZone1 = new PtFaresConfigGroup.ZonePricesParameterSet();
-        paramSetZone1.setNumberZones(1);
-        paramSetZone1.setTicketPrice(1.89);
-        configFares.addZonePriceSettings(paramSetZone1);
+        PtFaresConfigGroup.FaresGroup faresGroup = new PtFaresConfigGroup.FaresGroup();
+        faresGroup.setOutOfZonePrice(10.);
+        faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(1, 1.89));
+        faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(2, 2.42));
+        faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(3, 3.23));
+        faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(4, 4.));
+        faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(5, 4.68));
+        faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(6, 5.51));
+        faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(7, 6.22));
+        faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(8, 6.22));
+        configFares.setFaresGroup(faresGroup);
 
-        PtFaresConfigGroup.ZonePricesParameterSet paramSetZone2 = new PtFaresConfigGroup.ZonePricesParameterSet();
-        paramSetZone1.setNumberZones(2);
-        paramSetZone1.setTicketPrice(2.42);
-        configFares.addZonePriceSettings(paramSetZone2);
-
-        PtFaresConfigGroup.ZonePricesParameterSet paramSetZone3 = new PtFaresConfigGroup.ZonePricesParameterSet();
-        paramSetZone1.setNumberZones(3);
-        paramSetZone1.setTicketPrice(3.23);
-        configFares.addZonePriceSettings(paramSetZone3);
-
-        PtFaresConfigGroup.ZonePricesParameterSet paramSetZone4 = new PtFaresConfigGroup.ZonePricesParameterSet();
-        paramSetZone1.setNumberZones(4);
-        paramSetZone1.setTicketPrice(4.);
-        configFares.addZonePriceSettings(paramSetZone4);
-
-        PtFaresConfigGroup.ZonePricesParameterSet paramSetZone5 = new PtFaresConfigGroup.ZonePricesParameterSet();
-        paramSetZone1.setNumberZones(5);
-        paramSetZone1.setTicketPrice(4.68);
-        configFares.addZonePriceSettings(paramSetZone5);
-
-        PtFaresConfigGroup.ZonePricesParameterSet paramSetZone6 = new PtFaresConfigGroup.ZonePricesParameterSet();
-        paramSetZone1.setNumberZones(6);
-        paramSetZone1.setTicketPrice(5.51);
-        configFares.addZonePriceSettings(paramSetZone6);
-
-        PtFaresConfigGroup.ZonePricesParameterSet paramSetZone7 = new PtFaresConfigGroup.ZonePricesParameterSet();
-        paramSetZone1.setNumberZones(7);
-        paramSetZone1.setTicketPrice(6.22);
-        configFares.addZonePriceSettings(paramSetZone7);
+        PtFaresConfigGroup.ZonesGroup zonesGroup = new PtFaresConfigGroup.ZonesGroup();
+        zonesGroup.setOutOfZoneTag("out");
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("1", false));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("1/2", true, Set.of("1", "2")));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("2", false));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("2/3", true, Set.of("2", "3")));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("3", false));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("3/4", true, Set.of("3", "4")));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("4", false));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("4/5", true, Set.of("4", "5")));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("5", false));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("5/6", true, Set.of("5", "6")));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("6", false));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("6/7", true, Set.of("6", "7")));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("7", false));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("7/8", true, Set.of("7", "8")));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("8", false));
+        configFares.setZonesGroup(zonesGroup);
 
         return configFares;
     }
-*/
 
 
     private static SBBTransitConfigGroup setupSBBTransit() {
 
         SBBTransitConfigGroup sbbTransit = new SBBTransitConfigGroup();
-        Set<String> modes = new HashSet<>(Arrays.asList(new String[]{"train", "tram", "bus"}));
+        var modes = Set.of(TransportMode.train, "bus", "tram");
         sbbTransit.setDeterministicServiceModes(modes);
         sbbTransit.setCreateLinkEventsInterval(10);
 

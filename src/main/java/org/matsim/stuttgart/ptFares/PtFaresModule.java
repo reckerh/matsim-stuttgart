@@ -20,6 +20,7 @@
 package org.matsim.stuttgart.ptFares;
 
 import org.matsim.core.controler.AbstractModule;
+import org.matsim.stuttgart.ptFares.utils.FareZoneCalculator;
 
 /**
  * @author dwedekind, gleich
@@ -30,10 +31,14 @@ public class PtFaresModule extends AbstractModule {
     @Override
     public void install() {
 
+        // Specifically bind to this one instance
+        // as pt fares handler is events handler and controler listener at the same time
         PtFaresHandler ptHandler = new PtFaresHandler();
 
         addEventHandlerBinding().toInstance(ptHandler);
         addControlerListenerBinding().toInstance(ptHandler);
+        this.bind(FareZoneCalculator.class);
+
 
     }
 }

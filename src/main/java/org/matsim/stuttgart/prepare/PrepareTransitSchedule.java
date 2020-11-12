@@ -1,11 +1,14 @@
 package org.matsim.stuttgart.prepare;
 
+import com.beust.jcommander.JCommander;
+import com.beust.jcommander.Parameter;
 import org.apache.log4j.Logger;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.geotools.MGC;
@@ -16,14 +19,12 @@ import org.matsim.pt.transitSchedule.api.TransitScheduleWriter;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
 import org.opengis.feature.simple.SimpleFeature;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 
 
 /**
- * Adds fare zones to the stop facilities in the transit schedule file
+ * Adds fare zone and bike-and-ride attribute to transit stop facilities
  *
  * @author davidwedekind
  */
@@ -32,110 +33,79 @@ public class PrepareTransitSchedule {
 
     private static final Logger log = Logger.getLogger(PrepareTransitSchedule.class);
 
-    private static String inputSchedule = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v0.0-snz-original/optimizedSchedule.xml.gz";
-    private static String outputSchedule = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/optimizedSchedule-edd.xml.gz";
-    private static String fareZoneShapeFile = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/01_prep/03_FareZones/fareZones_sp.shp";
-
 
     public static void main(String[] args) {
 
-        if (args.length > 0) {
-            inputSchedule = args[0];
-            outputSchedule = args[1];
-            fareZoneShapeFile = args[2];
+        PrepareTransitSchedule.Input input = new PrepareTransitSchedule.Input();
+        JCommander.newBuilder().addObject(input).build().parse(args);
+        log.info("Input transit schedule file: " + input.scheduleFile);
+        log.info("Input shape file: " + input.shapeFile);
+        log.info("Output transit schedule file: " + input.outputFile);
 
-            log.info("input plans: " + inputSchedule);
-            log.info("output plans: " + outputSchedule);
-            log.info("fare zone shape file: " + fareZoneShapeFile);
-        }
-
-        // Parse Transit Schedule and put into scenario
+        // Parse Transit Schedule
         PrepareTransitSchedule preparer = new PrepareTransitSchedule();
         Scenario scenario = ScenarioUtils.createScenario(ConfigUtils.createConfig());
-        new TransitScheduleReader(scenario).readFile(inputSchedule);
+        new TransitScheduleReader(scenario).readFile(input.scheduleFile);
 
-        preparer.run(scenario, fareZoneShapeFile);
+        // Do manipulations
+        preparer.run(scenario, input.shapeFile);
 
-        new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(outputSchedule);
+        // Write network output
+        new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(input.outputFile);
 
 
     }
 
+
     public void run(Scenario scenario, String shapeFile) {
 
-        //Parse the transit schedule
-
         TransitSchedule schedule = scenario.getTransitSchedule();
-
-
-        // Read-In Shape Files which provide tag inputs
         Collection<SimpleFeature> fareZoneFeatures = ShapeFileReader.getAllFeatures(shapeFile);
 
+        log.info("Start manipulating transit facility attributes ...");
         // Create map with all bikeAndRideAssignments in vvs area
-        List<Id<TransitStopFacility>> bikeAndRideAssignment = tagBikeAndRide(schedule);
+        Set<Id<TransitStopFacility>> bikeAndRideAssignment = tagBikeAndRide(schedule);
 
+        for (var transitStopFacility: schedule.getFacilities().values()){
 
-        schedule.getFacilities().values().stream()
-                .forEach(transitStopFacility -> {
+            String fareZone = findFareZone(transitStopFacility, fareZoneFeatures);
+            transitStopFacility.getAttributes().putAttribute("ptFareZone", fareZone);
 
-                    String fareZone = findFareZone(transitStopFacility, fareZoneFeatures);
+            // Facilities in vvs zone are considered only
+            if (fareZone.equals("out")){
+                transitStopFacility.getAttributes().putAttribute("VVSBikeAndRide", false);
 
-                    if (fareZone.isEmpty()) {
-                        transitStopFacility.getAttributes().putAttribute("ptFareZone", "out");
-                    } else {
-                        transitStopFacility.getAttributes().putAttribute("ptFareZone", fareZone);
-                    }
+                if (bikeAndRideAssignment.contains(transitStopFacility.getId())){
+                    transitStopFacility.getAttributes().putAttribute("VVSBikeAndRide", true);
+                }else{
+                    transitStopFacility.getAttributes().putAttribute("VVSBikeAndRide", false);
+                }
 
+            }
 
-                    Boolean bikeAndRide = false;
+        }
 
-                    if (fareZone != "") {
-                        // This means it is assigned a fareZone and thus located in vvs area
-
-                        if (bikeAndRideAssignment.contains(transitStopFacility.getId())) {
-                            bikeAndRide = true;
-                        }
-
-                    }
-
-                    transitStopFacility.getAttributes().putAttribute("VVSBikeAndRide", bikeAndRide);
-
-                });
+        log.info("Fare zones manipulated successfully!");
 
     }
 
 
     private String findFareZone(TransitStopFacility transitStopFacility, Collection<SimpleFeature> features) {
 
-        String fareZone = "";
-        Boolean stopInShapes = false;
+        // Facilities which are not whithin the fare zone shapes are located outside of vvs area and thus marked accordingly
+        String fareZone = "out";
 
         Coord homeCoord = transitStopFacility.getCoord();
         Point point = MGC.coord2Point(homeCoord);
 
-        // Automatic crs detection/ transformation might be needed to avoid errors.
-
-        for (SimpleFeature feature : features) {
+        for (SimpleFeature feature : features ) {
 
             Geometry geometry = (Geometry) feature.getDefaultGeometry();
 
-            if (geometry.contains(point)) {
+            if (geometry.covers(point)) {
                 fareZone = feature.getAttribute("FareZone").toString();
-                stopInShapes = true;
             }
 
-        }
-
-
-        if (!stopInShapes) {
-
-            // There are several home locations outside the shape File boundaries
-            // as for performance reasons the shape File was reduced to Stuttgart Metropolitan Area
-
-            // How to deal with the people that do not live in Stuttgart Metropolitan Area?
-            // Will we need more detailed information on their home locations as well?
-
-            //log.info("No fareZone found for transit stop facility with id: " + transitStopFacility.getId());
         }
 
         return fareZone;
@@ -143,36 +113,33 @@ public class PrepareTransitSchedule {
     }
 
 
-    private List<Id<TransitStopFacility>> tagBikeAndRide(TransitSchedule schedule) {
+    private Set<Id<TransitStopFacility>> tagBikeAndRide(TransitSchedule schedule) {
 
-        // The idea is that all stops with departures of tram and train within vvs area have BikeAndRideFacilities
-        // and allow Bike and Ride
+        // This method writes all stops in a list that have departures of mode "tram" or "train"
+        // It is assumed that at tram or train stations Bike-and-Ride is possible
 
-        List<Id<TransitStopFacility>> bikeAndRide = new ArrayList<>();
-        List<String> modes = Arrays.asList("tram", "train");
+        var modes = Set.of(TransportMode.train, "tram");
 
-        schedule.getTransitLines().values().stream().forEach(transitLine -> {
+        return schedule.getTransitLines().values().stream()
+                .flatMap(line -> line.getRoutes().values().stream())
+                .filter(route -> modes.contains(route.getTransportMode()))
+                        .flatMap(route -> route.getStops().stream())
+                        .map(stop -> stop.getStopFacility().getId())
+                        .collect(Collectors.toSet());
 
-            transitLine.getRoutes().values().stream().forEach(transitRoute -> {
+    }
 
-                if (modes.contains(transitRoute.getTransportMode())) {
 
-                    transitRoute.getStops().stream().forEach(transitRouteStop -> {
+    private static class Input {
 
-                        if (bikeAndRide.contains(transitRouteStop.getStopFacility().getId())) {
-                            // Already in list
-                        } else {
-                            bikeAndRide.add(transitRouteStop.getStopFacility().getId());
-                        }
+        @Parameter(names = "-scheduleFile")
+        private String scheduleFile;
 
-                    });
-                }
+        @Parameter(names = "-shapeFile")
+        private String shapeFile;
 
-            });
-
-        });
-
-        return bikeAndRide;
+        @Parameter(names = "-output")
+        private String outputFile;
 
     }
 

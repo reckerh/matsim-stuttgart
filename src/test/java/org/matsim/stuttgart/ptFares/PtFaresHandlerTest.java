@@ -7,9 +7,9 @@ import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
 import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
 import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
+import com.vividsolutions.jts.util.Assert;
 import org.apache.log4j.Logger;
 import org.junit.Test;
-import org.locationtech.jts.util.Assert;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
@@ -39,12 +39,12 @@ import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorith
 public class PtFaresHandlerTest {
     private static final Logger log = Logger.getLogger(PtFaresHandlerTest.class);
 
-    Map<Id<Person>, Double> transitFare = new HashMap<>();
+    Map<Id<Person>, Double> transitFares = new HashMap<>();
 
     @Test
-    public final void testPtFaresHandlerTest_v2() {
+    public final void runPtFaresHandlerTest() {
 
-        String configPath = "./test/input/ptFares/config.xml";
+        String configPath = "test/input/ptFares/config.xml";
 
         // Prepare config
         Config config = prepareConfig(configPath);
@@ -60,13 +60,13 @@ public class PtFaresHandlerTest {
         controler.run();
 
         // Check output param
-        Assert.equals(transitFare.get(Id.createPersonId("1")), -300.);
-        Assert.equals(transitFare.get(Id.createPersonId("2")), -200.);
-        Assert.equals(transitFare.get(Id.createPersonId("3")), -100.);
-        Assert.equals(transitFare.get(Id.createPersonId("4")), -100.);
-        Assert.equals(transitFare.get(Id.createPersonId("5")), -100.);
-        Assert.equals(transitFare.get(Id.createPersonId("6")), -200.);
-        Assert.isTrue(! transitFare.containsKey(Id.createPersonId("7")));
+        Assert.equals(transitFares.get(Id.createPersonId("1")), -300.);
+        Assert.equals(transitFares.get(Id.createPersonId("2")), -200.);
+        Assert.equals(transitFares.get(Id.createPersonId("3")), -100.);
+        Assert.equals(transitFares.get(Id.createPersonId("4")), -100.);
+        Assert.equals(transitFares.get(Id.createPersonId("5")), -100.);
+        Assert.equals(transitFares.get(Id.createPersonId("6")), -200.);
+        Assert.isTrue(! transitFares.containsKey(Id.createPersonId("7")));
 
     }
 
@@ -119,9 +119,7 @@ public class PtFaresHandlerTest {
             // To use the deterministic pt simulation (Part 2 of 2):
         });
 
-        controler.configureQSimComponents(components -> {
-            SBBTransitEngineQSimModule.configure(components);
-        });
+        controler.configureQSimComponents(SBBTransitEngineQSimModule::configure);
 
         // use pt fares module
         controler.addOverridingModule(new PtFaresModule());
@@ -199,17 +197,19 @@ public class PtFaresHandlerTest {
 
         PtFaresConfigGroup configFares = new PtFaresConfigGroup();
 
-        // For values, see https://www.vvs.de/tickets/zeittickets-abo-polygo/jahresticket-jedermann/
+        PtFaresConfigGroup.FaresGroup faresGroup = new PtFaresConfigGroup.FaresGroup();
+        faresGroup.setOutOfZonePrice(300.);
+        faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(1,100.));
+        faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(2,200.));
 
-        PtFaresConfigGroup.ZonePricesParameterSet paramSetZone1 = new PtFaresConfigGroup.ZonePricesParameterSet();
-        paramSetZone1.setNumberZones(1);
-        paramSetZone1.setTicketPrice(100.);
-        configFares.addZonePriceSettings(paramSetZone1);
+        configFares.setFaresGroup(faresGroup);
 
-        PtFaresConfigGroup.ZonePricesParameterSet paramSetZone2 = new PtFaresConfigGroup.ZonePricesParameterSet();
-        paramSetZone2.setNumberZones(2);
-        paramSetZone2.setTicketPrice(200.);
-        configFares.addZonePriceSettings(paramSetZone2);
+        PtFaresConfigGroup.ZonesGroup zonesGroup = new PtFaresConfigGroup.ZonesGroup();
+        zonesGroup.setOutOfZoneTag("out");
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("1", false));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("2", false));
+        zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("1,2", true, Set.of("1", "2")));
+        configFares.setZonesGroup(zonesGroup);
 
         return configFares;
     }
@@ -226,7 +226,7 @@ public class PtFaresHandlerTest {
     private static SBBTransitConfigGroup setupSBBTransit() {
 
         SBBTransitConfigGroup sbbTransit = new SBBTransitConfigGroup();
-        Set<String> modes = new HashSet<>(Arrays.asList(new String[]{"train"}));
+        Set<String> modes = new HashSet<>(Arrays.asList("train"));
         sbbTransit.setDeterministicServiceModes(modes);
         sbbTransit.setCreateLinkEventsInterval(0);
 
@@ -237,7 +237,7 @@ public class PtFaresHandlerTest {
     private final class EventsTester implements PersonMoneyEventHandler {
         @Override
         public void handleEvent(PersonMoneyEvent event) {
-            transitFare.put(event.getPersonId(), event.getAmount());
+            transitFares.put(event.getPersonId(), event.getAmount());
         }
     }
 
