@@ -52,6 +52,11 @@
             <artifactId>osm</artifactId>
             <version>${matsim.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.matsim.contrib</groupId>
+            <artifactId>vsp</artifactId>
+            <version>${matsim.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>ch.sbb</groupId>
@@ -59,6 +64,7 @@
             <version>12.11</version>
         </dependency>
 
+<!--
         <dependency>
             <groupId>com.github.matsim-scenarios</groupId>
             <artifactId>matsim-los-angeles</artifactId>
@@ -70,6 +76,7 @@
                 </exclusion>
             </exclusions>
         </dependency>
+-->
 
         <dependency>
             <groupId>com.github.matsim-org</groupId>
