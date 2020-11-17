@@ -52,6 +52,11 @@
             <artifactId>osm</artifactId>
             <version>${matsim.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.matsim.contrib</groupId>
+            <artifactId>bicycle</artifactId>
+            <version>${matsim.version}</version>
+        </dependency>
 
         <dependency>
             <groupId>ch.sbb</groupId>

@@ -5,15 +5,20 @@ import org.locationtech.jts.geom.prep.PreparedGeometry;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.NetworkWriter;
-import org.matsim.contrib.osm.networkReader.SupersonicOsmNetworkReader;
+import org.matsim.api.core.v01.network.Node;
+import org.matsim.contrib.bicycle.network.ElevationDataParser;
+import org.matsim.contrib.osm.networkReader.LinkProperties;
+import org.matsim.contrib.osm.networkReader.OsmBicycleReader;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.algorithms.MultimodalNetworkCleaner;
 import org.matsim.core.network.io.MatsimNetworkReader;
+import org.matsim.core.utils.geometry.CoordUtils;
 import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.stuttgart.Utils;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.HashSet;
 import java.util.Set;
 
 public class CreateNetwork {
@@ -23,6 +28,7 @@ public class CreateNetwork {
     private static final String senozonNetworkPath = "projects\\matsim-stuttgart\\stuttgart-v0.0-snz-original\\optimizedNetwork.xml.gz";
     private static final String outputNetwork = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\network-stuttgart.xml.gz";
     private static final String osmFile = "projects\\mosaik-2\\raw-data\\osm\\germany-20200715.osm.pbf";
+    private static final String inputTiffFile = "path/to/your/elevation/tiff-file.tif";
 
     public static void main(String[] args) {
 
@@ -34,15 +40,29 @@ public class CreateNetwork {
     public static Network createNetwork(Path svnPath) {
 
         var bbox = getBBox(svnPath);
+        var elevationParser = new ElevationDataParser(inputTiffFile, "EPSG:25832");
 
         log.info("Starting to parse osm network. This will not output anything for a while until it reaches the interesting part of the osm file.");
 
-        var allowedModes = Set.of(TransportMode.car, TransportMode.ride); // maybe bike as well?
-
-        var network = new SupersonicOsmNetworkReader.Builder()
+        var network = new OsmBicycleReader.Builder()
                 .setCoordinateTransformation(Utils.getTransformationWGS84ToUTM32())
-                .setIncludeLinkAtCoordWithHierarchy((coord, id) -> bbox.covers(MGC.coord2Point(coord)))
-                .setAfterLinkCreated((link, map, direction) -> link.setAllowedModes(allowedModes))
+                .setIncludeLinkAtCoordWithHierarchy((coord, hierarchy) ->
+                        // only include living streets or bigger, and within bbox
+                        hierarchy <= LinkProperties.LEVEL_LIVING_STREET && bbox.covers(MGC.coord2Point(coord))
+                )
+                .setAfterLinkCreated((link, map, direction) -> {
+
+                    // add ride mode on all streets which allow car
+                    if (link.getAllowedModes().contains(TransportMode.car)) {
+                        var allowedModes = new HashSet<>(link.getAllowedModes());
+                        allowedModes.add(TransportMode.ride);
+                        link.setAllowedModes(allowedModes);
+                    }
+
+                    addElevationIfNecessary(link.getFromNode(), elevationParser);
+                    addElevationIfNecessary(link.getToNode(), elevationParser);
+
+                })
                 .build()
                 .read(svnPath.resolve(osmFile));
 
@@ -52,6 +72,7 @@ public class CreateNetwork {
         var cleaner = new MultimodalNetworkCleaner(network);
         cleaner.run(Set.of(TransportMode.car));
         cleaner.run(Set.of(TransportMode.ride));
+        cleaner.run(Set.of(TransportMode.bike));
 
         log.info("Finished network cleaner");
         return network;
@@ -72,5 +93,16 @@ public class CreateNetwork {
         new MatsimNetworkReader(senozonNetwork).readFile(sharedSvn.resolve(senozonNetworkPath).toString());
 
         return BoundingBox.fromNetwork(senozonNetwork).toGeometry();
+    }
+
+    private static synchronized void addElevationIfNecessary(Node node, ElevationDataParser elevationParser) {
+
+        if (!node.getCoord().hasZ()) {
+            var elevation = elevationParser.getElevation(node.getCoord());
+            var newCoord = CoordUtils.createCoord(node.getCoord().getX(), node.getCoord().getY(), elevation);
+            // I think it should work to replace the coord on the node reference, since the network only stores references
+            // to the node and the internal quad tree only references the x,y-values and the node. janek 4.2020
+            node.setCoord(newCoord);
+        }
     }
 }
