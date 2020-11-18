@@ -19,7 +19,6 @@ def cli():
 @click.option('--db_parameter', type=str, default='', help='Directory of where db parameter are stored')
 @click.pass_context
 def import_home_loc(ctx, plans, db_parameter):
-
     # -- CMD INSTRUCTIONS --
     # python initial_import import-home-loc --plans [plan file path] -- db_parameter [path of db parameter json]
 
@@ -72,20 +71,21 @@ def import_home_loc(ctx, plans, db_parameter):
 
 
 # ------------------------------------------
-# VG 250
+# Gemeindegebiete mit RegioSta Zuordnung
 @cli.command()
-@click.option('--gem', type=str, default='', help='vg250 path')
-@click.option('--db_parameter', type=str, default='', help='Directory of where db parameter are stored')
+@click.option('--gem', type=str, default='', help='path to vg250 data [.shp]')
+@click.option('--regiosta', type=str, default='', help='path to regioSta data [.xlsx]')
+@click.option('--db_parameter', type=str, default='', help='path to db_parameter [.json]')
 @click.pass_context
-def import_gem(ctx, gem, db_parameter):
+def import_gem(ctx, gem, regiosta, db_parameter):
 
     # -- CMD INSTRUCTIONS --
     # python initial_import import-vg-250-gem --vg250 [shape file path] -- db_parameter [path of db parameter json]
 
     # -- PRE-CALCULATIONS --
+    # Step 1: vg250
     logging.info("Read-in shape file...")
     gdf_gemeinden = gpd.read_file(gem)
-
     logging.info("Clean-up data...")
     gdf_gemeinden['geometry'] = gdf_gemeinden.apply(lambda x:
                                                   x['geometry'] if x['geometry'].type == 'MultiPolygon' else
@@ -93,14 +93,58 @@ def import_gem(ctx, gem, db_parameter):
                                                   axis=1)
     gdf_gemeinden = gdf_gemeinden.to_crs("epsg:25832")
 
+    # Step 2: regiosta
+    df_regiosta = pd.read_excel(regiosta, sheet_name='ReferenzGebietsstand2018')
+    df_regiosta['gem'] = df_regiosta.apply(lambda x: str(x['gem']).zfill(8), axis=1)
+    df_regiosta = df_regiosta[['gem', 'RegioStaR2', 'RegioStaR4', 'RegioStaR5', 'RegioStaR7']]
+    df_regiosta.rename(columns={'gem': 'AGS'}, inplace=True)
+
+    r2 = {1: 'Stadtregion',
+          2: 'Ländliche Region'}
+
+    r4 = {11: 'Metropolitane Stadtregion',
+          12: 'Regiopolitane Stadtregion',
+          21: 'Stadtregionsnahe ländliche Region',
+          22: 'Periphere ländliche Region',
+          }
+
+    r5 = {51: 'Stadtregion - Metropole',
+          52: 'Stadtregion - Regiopole und Großstadt',
+          53: 'Stadtregion - Umland',
+          54: 'Ländliche Region - Städte, städtischer Raum',
+          55: 'Ländliche Region - Kleinstädtischer, dörflicher Raum',
+          }
+
+    r7 = {71: 'Stadtregion - Metropole',
+          72: 'Stadtregion - Regiopole und Großstadt',
+          73: 'Stadtregion - Mittelstadt, städtischer Raum',
+          74: 'Stadtregion - Kleinstädtischer, dörflicher Raum',
+          75: 'Ländliche Region - Zentrale Stadt ',
+          76: 'Ländliche Region - Städtischer Raum',
+          77: 'Ländliche Region - Kleinstädtischer, dörflicher Raum',
+          }
+
+    df_regiosta['RegioStaR2_bez'] = df_regiosta['RegioStaR2'].replace(r2)
+    df_regiosta['RegioStaR4_bez'] = df_regiosta['RegioStaR4'].replace(r4)
+    df_regiosta['RegioStaR5_bez'] = df_regiosta['RegioStaR5'].replace(r5)
+    df_regiosta['RegioStaR7_bez'] = df_regiosta['RegioStaR7'].replace(r7)
+
+    df_regiosta['RegioStaR2'] = df_regiosta['RegioStaR2'].astype('str')
+    df_regiosta['RegioStaR4'] = df_regiosta['RegioStaR4'].astype('str')
+    df_regiosta['RegioStaR5'] = df_regiosta['RegioStaR5'].astype('str')
+    df_regiosta['RegioStaR7'] = df_regiosta['RegioStaR7'].astype('str')
+
+    gdf_gemeinden = gdf_gemeinden.merge(df_regiosta, how='left', on='AGS')
+    gdf_gemeinden.columns = gdf_gemeinden.columns.map(str.lower)
+
     # -- IMPORT --
-    table_name = 'vg250_gemeinden'
+    table_name = 'gemeinden'
     table_schema = 'general'
     db_parameter = load_db_parameters(db_parameter)
     drop_table_if_exists(db_parameter, table_name, table_schema)
 
     DATA_METADATA = {
-        'title': 'Vg 250 Gemeinden',
+        'title': 'Gemeinden (VG250) mit ReioSta Zuordnung',
         'description': 'Verwaltungsgebiete 1:250000 (Ebenen), Stand 01.01.',
         'source_name': 'Bundesamt für Kartographie und Geodäsie',
         'source_url': 'https://gdz.bkg.bund.de/index.php/default/verwaltungsgebiete-1-250-000-ebenen-stand-01-01-vg250-ebenen-01-01.html',
@@ -120,15 +164,6 @@ def import_gem(ctx, gem, db_parameter):
     logging.info("VG 250 Gemeinden import successful!")
 
 # ------------------------------------------
-
-
-@cli.command()
-@click.option('--regiostar', type=str, default='', help='regiostar path')
-@click.option('--db_parameter', type=str, default='', help='Directory of where db parameter are stored')
-@click.pass_context
-def import_regiostar(ctx, regiostar, db_parameter):
-    click.echo(regiostar)
-    click.echo(db_parameter)
 
 
 if __name__ == '__main__':
