@@ -20,7 +20,10 @@ DATA_METADATA_KEYS = [
 GEOM_DATA_TYPES = ['POINT', 'LINESTRING', 'POLYGON', 'MULTIPOLYGON', 'MULTILINESTRING']
 
 
-def load_df_to_database(df, db_parameter, schema, table_name, meta_data, geom_cols=None):
+def load_df_to_database(df, update_mode, db_parameter, schema, table_name, meta_data, geom_cols=None):
+    if update_mode not in ['replace', 'append']:
+        raise Exception("Update mode is: [" + update_mode + "] but can only be [replace] or [append]")
+
     df_import = df.copy()
     logging.info('Import data to database...')
     db_engine = "postgresql+psycopg2://" \
@@ -49,7 +52,7 @@ def load_df_to_database(df, db_parameter, schema, table_name, meta_data, geom_co
         if big_df_size(df_import):
             import_data_chunks(df_import, table_name, db_engine, schema, geom_data_types=geom_data_types)
         else:
-            df_import.to_sql(table_name, db_engine, schema=schema, index=False, if_exists='replace', method='multi',
+            df_import.to_sql(table_name, db_engine, schema=schema, index=False, if_exists=update_mode, method='multi',
                              dtype=geom_data_types)
 
     else:
@@ -57,10 +60,10 @@ def load_df_to_database(df, db_parameter, schema, table_name, meta_data, geom_co
         if big_df_size(df_import):
             import_data_chunks(df_import, table_name, db_engine, schema, geom_data_types=None)
         else:
-            df_import.to_sql(table_name, db_engine, schema=schema, index=False, if_exists='replace', method='multi')
+            df_import.to_sql(table_name, db_engine, schema=schema, index=False, if_exists=update_mode, method='multi')
 
     write_meta_data(db_parameter, meta_data, schema, table_name)
-    logging.info('Table import successful!')
+    logging.info('Table import done!')
 
 
 def big_df_size(df):

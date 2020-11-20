@@ -1,5 +1,6 @@
 import pandas as pd
 import geopandas as gpd
+import psycopg2 as pg
 import click
 import matsim
 import logging
@@ -13,7 +14,14 @@ def cli():
 
 
 # ------------------------------------------
+# ------------------------------------------
+# IMPORT FUNCTIONS
+# ------------------------------------------
+# ------------------------------------------
+
+# ------------------------------------------
 # HOME LOCATIONS
+# ------------------------------------------
 @cli.command()
 @click.option('--plans', type=str, default='', help='plans path')
 @click.option('--db_parameter', type=str, default='', help='Directory of where db parameter are stored')
@@ -59,6 +67,7 @@ def import_home_loc(ctx, plans, db_parameter):
     logging.info("Load data to database...")
     load_df_to_database(
         df=gdf_agents,
+        update_mode='replace',
         db_parameter=db_parameter,
         schema=table_schema,
         table_name=table_name,
@@ -67,18 +76,16 @@ def import_home_loc(ctx, plans, db_parameter):
 
     logging.info("Home location import successful!")
 
-# ------------------------------------------
-
 
 # ------------------------------------------
-# Gemeindegebiete mit RegioSta Zuordnung
+# GEMEINDEGEBIETE MIT REGIOSTA ZUORDNUNG
+# ------------------------------------------
 @cli.command()
 @click.option('--gem', type=str, default='', help='path to vg250 data [.shp]')
 @click.option('--regiosta', type=str, default='', help='path to regioSta data [.xlsx]')
 @click.option('--db_parameter', type=str, default='', help='path to db_parameter [.json]')
 @click.pass_context
 def import_gem(ctx, gem, regiosta, db_parameter):
-
     # -- CMD INSTRUCTIONS --
     # python initial_import import-vg-250-gem --vg250 [shape file path] -- db_parameter [path of db parameter json]
 
@@ -88,9 +95,9 @@ def import_gem(ctx, gem, regiosta, db_parameter):
     gdf_gemeinden = gpd.read_file(gem)
     logging.info("Clean-up data...")
     gdf_gemeinden['geometry'] = gdf_gemeinden.apply(lambda x:
-                                                  x['geometry'] if x['geometry'].type == 'MultiPolygon' else
-                                                  MultiPolygon([x['geometry']]),
-                                                  axis=1)
+                                                    x['geometry'] if x['geometry'].type == 'MultiPolygon' else
+                                                    MultiPolygon([x['geometry']]),
+                                                    axis=1)
     gdf_gemeinden = gdf_gemeinden.to_crs("epsg:25832")
 
     # Step 2: regiosta
@@ -155,6 +162,7 @@ def import_gem(ctx, gem, regiosta, db_parameter):
     logging.info("Load data to database...")
     load_df_to_database(
         df=gdf_gemeinden,
+        update_mode='replace',
         db_parameter=db_parameter,
         schema=table_schema,
         table_name=table_name,
@@ -163,7 +171,117 @@ def import_gem(ctx, gem, regiosta, db_parameter):
 
     logging.info("VG 250 Gemeinden import successful!")
 
+
 # ------------------------------------------
+# CALIBRATION DATA
+# ------------------------------------------
+@cli.command()
+@click.option('--calib', type=str, default='', help='path to calib data [.xlsx]')
+@click.option('--db_parameter', type=str, default='', help='path to db_parameter [.json]')
+@click.pass_context
+def import_calib(ctx, calib, db_parameter):
+    # -- CMD INSTRUCTIONS --
+    # python initial_import import-calib --calib [xlsx file path] -- db_parameter [path of db parameter json]
+
+    # -- PRE-CALCULATIONS --
+    logging.info("Read-in excel file...")
+    tables = dict()
+    tables['calib_distanzklassen'] = pd.read_excel(calib, sheet_name='01_Distanzklassen', skipfooter=10)
+    tables['calib_wege'] = pd.read_excel(calib, sheet_name='02_Wege', skipfooter=7)
+    tables['calib_modal_split'] = pd.read_excel(calib, sheet_name='03_ModalSplit', skipfooter=10)
+    tables['calib_nutzersegmente'] = pd.read_excel(calib, sheet_name='04_Nutzersegmente', skipfooter=7)
+    tables['calib_oev_segmente'] = pd.read_excel(calib, sheet_name='05_ÖVSegmente', skipfooter=8)
+
+    for df in tables.values():
+        df.columns = df.columns.map(str.lower)
+
+    # -- META DATA --
+    DATA_METADATA = {'calib_distanzklassen': {
+        'title': 'Distanzklassen',
+        'description': 'Tabelle A W12 Wegelänge - Stadt Stuttgart',
+        'source_name': 'Tabellarische Grundausertung Stadt Stuttgart. MID 2017',
+        'source_url': 'https://vm.baden-wuerttemberg.de/fileadmin/redaktion/m-mvi/intern/Dateien/PDF/MID2017_Stadt_Stuttgart.pdf',
+        'source_year': '2018',
+        'source_download_date': '2020-11-20'
+    }, 'calib_wege': {
+        'title': 'Wege',
+        'description': 'Allgemeine Kennwerte und Verkehrsaufkommen nach regionalstatistischem Raumtyp (RegioSta R7)',
+        'source_name': 'infas. MID 2017',
+        'source_url': 'http://gecms.region-stuttgart.org/Download.aspx?id=104816',
+        'source_year': '2019',
+        'source_download_date': '2020-11-20'
+    }, 'calib_modal_split': {
+        'title': 'Modal Split',
+        'description': 'Allgemeine Kennwerte und Verkehrsaufkommen nach regionalstatistischem Raumtyp (RegioSta R7)',
+        'source_name': 'infas. MID 2017',
+        'source_url': 'http://gecms.region-stuttgart.org/Download.aspx?id=104816',
+        'source_year': '2019',
+        'source_download_date': '2020-11-20'
+    }, 'calib_nutzersegmente': {
+        'title': 'Nutzersegmente',
+        'description': 'Allgemeine Kennwerte und Verkehrsaufkommen nach regionalstatistischem Raumtyp (RegioSta R7)',
+        'source_name': 'infas. MID 2017',
+        'source_url': 'http://gecms.region-stuttgart.org/Download.aspx?id=104816',
+        'source_year': '2019',
+        'source_download_date': '2020-11-20'
+    }, 'calib_oev_segmente': {
+        'title': 'Fahrtenanteile je Verkehrsmittel',
+        'description': 'Fahrtenanteile je Verkehrsmittel bis zum Ums',
+        'source_name': 'VVS',
+        'source_url': 'https://www.vvs.de/download/Zahlen-Daten-Fakten-2019.pdf',
+        'source_year': '2020',
+        'source_download_date': '2020-11-20'
+    }
+    }
+
+    # -- IMPORT --
+    db_parameter = load_db_parameters(db_parameter)
+
+    for key in tables:
+        table_schema = 'general'
+        drop_table_if_exists(db_parameter, key, table_schema)
+        logging.info("Load data to database: " + key)
+        load_df_to_database(
+            df=tables[key],
+            update_mode='replace',
+            db_parameter=db_parameter,
+            schema=table_schema,
+            table_name=key,
+            meta_data=DATA_METADATA[key])
+
+    logging.info("Import of calibration data successful!")
+
+
+# ------------------------------------------
+# ------------------------------------------
+# FURTHER UTIL FUNCTIONS
+# ------------------------------------------
+# ------------------------------------------
+
+
+@cli.command()
+@click.option('--db_parameter', type=str, default='', help='path to db_parameter [.json]')
+@click.pass_context
+def create_mview_h_loc(ctx, db_parameter):
+    # -- CMD INSTRUCTIONS --
+    # python create-mview-h-loc
+
+    logging.info("Create materialized view for agents home locations...")
+    db_parameter = load_db_parameters(db_parameter)
+    with pg.connect(**db_parameter) as con:
+        cursor = con.cursor()
+        sql = f'''
+                    CREATE MATERIALIZED VIEW matsim_input.agents_homes_with_raumdata AS
+                        SELECT
+	                        agent.person_id, agent.geometry,
+	                        gem.ags, gem.gen, gem.bez, gem.regiostar7
+                        FROM
+	                        matsim_input.agent_home_locations agent
+                        LEFT JOIN
+	                        general.gemeinden gem
+                        ON ST_WITHIN(agent.geometry, gem.geometry);'''
+        cursor.execute(sql)
+        con.commit()
 
 
 if __name__ == '__main__':
