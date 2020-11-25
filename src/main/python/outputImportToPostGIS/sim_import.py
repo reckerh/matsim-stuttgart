@@ -3,9 +3,11 @@ import click
 import pandas as pd
 import geopandas as gpd
 import logging
-from utils import load_df_to_database, load_db_parameters
+from utils import load_df_to_database, load_db_parameters, run_sql_script
+import xml.etree.ElementTree as ET
 from shapely.geometry.linestring import LineString
 import matsim
+import os
 
 
 @click.group()
@@ -27,10 +29,10 @@ def cli():
 @click.option('--run_dir', type=str, default='', help='run directory [dir]')
 @click.option('--db_parameter', type=str, default='', help='path to db_parameter [.json]')
 @click.pass_context
-def update_run_tables(ctx, mode, run_dir, db_parameter):
+def import_run_data(ctx, mode, run_dir, db_parameter):
     # -- CMD INSTRUCTIONS --
     # python sim_import update-run-tables
-    # --mode [run mode: [trips, events, all]]
+    # --mode [run mode: [trips, events, config_param, all]]
     # --run_dir [run output directory]
     # --db_parameter [path of db parameter json]
 
@@ -38,18 +40,23 @@ def update_run_tables(ctx, mode, run_dir, db_parameter):
     run_name = run_dir.rsplit("/", 1)[1].replace("output-", "")
     logging.info("Start import run: " + run_name)
 
-    if mode not in ['trips', 'events', 'all']:
+    if mode not in ['trips', 'events', 'config_param', 'all']:
         raise Exception("Unknown mode parameter. Use either one of these: 'trips', 'events', 'all'")
     else:
         if mode in ['trips', 'all']:
             trips = run_dir + "/" + run_name + ".output_trips.csv.gz"
             import_trips(trips, db_parameter, run_name)
+            create_trip_output_views(db_parameter, run_name)
 
         if mode in ['events', 'all']:
             events = run_dir + "/" + run_name + ".output_events.xml.gz"
             import_events(events, db_parameter, run_name)
 
-    logging.info("Import run successful: " + run_name )
+        if mode in ['config_param', 'all']:
+            config_param = run_dir + "/" + run_name + ".output_config.xml"
+            import_param(config_param, db_parameter, run_name)
+
+    logging.info("Import run successful: " + run_name)
 
 
 # ------------------------------------------
@@ -129,12 +136,66 @@ def import_events(events, db_parameter, run_name):
     logging.info("Event import successful!")
 
 
+def create_trip_output_views(db_parameter, run_name):
+    run_name = {'RUN_NAME': run_name}
+    queries = ['create_trip_stats.sql',
+               'create_mode_share.sql',
+               'create_mode_fragments.sql',
+               'create_distance_groups.sql']
+    for query in queries:
+        query = os.path.abspath(os.path.join('__file__', "../../../sql/", query))
+        run_sql_script(query, db_parameter, run_name)
+
+
+# ------------------------------------------
+# config param import
+# ------------------------------------------
+def import_param(config_param, db_parameter, run_name):
+    logging.info("Update config table...")
+    # -- PRE-CALCULATIONS --
+    tree = ET.parse(config_param)
+    root = tree.getroot()
+
+    df_modeParameters = list()
+    for modeParameters in root.findall("./module[@name='planCalcScore']/parameterset[@type='scoringParameters']/parameterset[@type='modeParams']"):
+        row = dict()
+        for node in modeParameters:
+            row[node.attrib.get("name")] = node.attrib.get("value")
+        df_modeParameters.append(row)
+    df_modeParameters = pd.DataFrame(df_modeParameters)
+    df_modeParameters['run_name'] = run_name
+
+    # -- IMPORT --
+    table_name = 'mode_param'
+    table_schema = 'matsim_input'
+    db_parameter = load_db_parameters(db_parameter)
+
+    DATA_METADATA = {
+        'title': 'Mode Parameter',
+        'description': 'Mode parameter table',
+        'source_name': 'Own Input',
+        'source_url': 'Nan',
+        'source_year': '2020',
+        'source_download_date': 'Nan',
+    }
+
+    logging.info("Load data to database...")
+    load_df_to_database(
+        df=df_modeParameters,
+        update_mode='append',
+        db_parameter=db_parameter,
+        schema=table_schema,
+        table_name=table_name,
+        meta_data=DATA_METADATA)
+
+    logging.info("Config param import successful!")
+
+
 # ------------------------------------------
 # ------------------------------------------
 # FURTHER UTIL FUNCTIONS
 # ------------------------------------------
 # ------------------------------------------
-
 def parse_trips_file(trips):
     logging.info("Parse trips file...")
     try:

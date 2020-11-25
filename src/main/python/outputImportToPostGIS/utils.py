@@ -134,3 +134,23 @@ def drop_table_if_exists(db_parameter, table_name, table_schema):
         cursor = con.cursor()
         cursor.execute(sql)
         con.commit()
+
+
+def run_sql_script(SQL_FILE_PATH, db_parameter, param=None):
+    logging.info("Run sql script: " + SQL_FILE_PATH)
+    sql_file = open(SQL_FILE_PATH, 'r')
+    sql = sql_file.read()
+
+    if not (param is None):
+        sql = sql.format(**param)
+
+    logging.info("Execute sql query...")
+    logging.info(sql)
+
+    db_parameter = load_db_parameters(db_parameter)
+    with pg.connect(**db_parameter) as con:
+        cursor = con.cursor()
+        cursor.execute(sql)
+        con.commit()
+
+    logging.info("Successfully finished running!")

@@ -1,10 +1,12 @@
+import os
+
 import pandas as pd
 import geopandas as gpd
 import psycopg2 as pg
 import click
 import matsim
 import logging
-from utils import load_df_to_database, load_db_parameters, drop_table_if_exists
+from utils import load_df_to_database, load_db_parameters, drop_table_if_exists, run_sql_script
 from shapely.geometry.multipolygon import MultiPolygon
 
 
@@ -252,6 +254,47 @@ def import_calib(ctx, calib, db_parameter):
     logging.info("Import of calibration data successful!")
 
 
+@cli.command()
+@click.option('--sim_area', type=str, default='', help='sim area shape file')
+@click.option('--db_parameter', type=str, default='', help='Directory of where db parameter are stored')
+@click.pass_context
+def import_sim_area(ctx, sim_area, db_parameter):
+    # -- CMD INSTRUCTIONS --
+    # python initial_import import-sim-area --sim_area [shp] -- db_parameter [path of db parameter json]
+
+    # -- PRE-CALCULATIONS --
+    logging.info("Read shape file...")
+    gdf_sim_area = gpd.read_file(sim_area)
+    gdf_sim_area = gdf_sim_area.set_crs(epsg=25832)
+
+    # -- IMPORT --
+    table_name = 'sim_area'
+    table_schema = 'general'
+    db_parameter = load_db_parameters(db_parameter)
+    drop_table_if_exists(db_parameter, table_name, table_schema)
+
+    DATA_METADATA = {
+        'title': 'Simulation area',
+        'description': 'Simulation area shape file',
+        'source_name': 'Senozon Input',
+        'source_url': 'Nan',
+        'source_year': '2020',
+        'source_download_date': 'Nan',
+    }
+
+    logging.info("Load data to database...")
+    load_df_to_database(
+        df=gdf_sim_area,
+        update_mode='replace',
+        db_parameter=db_parameter,
+        schema=table_schema,
+        table_name=table_name,
+        meta_data=DATA_METADATA,
+        geom_cols={'geometry': 'POLYGON'})
+
+    logging.info("Simulation area import successful!")
+
+
 # ------------------------------------------
 # ------------------------------------------
 # FURTHER UTIL FUNCTIONS
@@ -267,21 +310,8 @@ def create_mview_h_loc(ctx, db_parameter):
     # python create-mview-h-loc
 
     logging.info("Create materialized view for agents home locations...")
-    db_parameter = load_db_parameters(db_parameter)
-    with pg.connect(**db_parameter) as con:
-        cursor = con.cursor()
-        sql = f'''
-                    CREATE MATERIALIZED VIEW matsim_input.agents_homes_with_raumdata AS
-                        SELECT
-	                        agent.person_id, agent.geometry,
-	                        gem.ags, gem.gen, gem.bez, gem.regiostar7
-                        FROM
-	                        matsim_input.agent_home_locations agent
-                        LEFT JOIN
-	                        general.gemeinden gem
-                        ON ST_WITHIN(agent.geometry, gem.geometry);'''
-        cursor.execute(sql)
-        con.commit()
+    SQL_FILE_PATH = os.path.abspath(os.path.join('__file__', "../../../sql/create_mview_h_loc.sql"))
+    run_sql_script(SQL_FILE_PATH, db_parameter)
 
 
 if __name__ == '__main__':
