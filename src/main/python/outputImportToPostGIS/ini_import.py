@@ -1,8 +1,6 @@
 import os
-
 import pandas as pd
 import geopandas as gpd
-import psycopg2 as pg
 import click
 import matsim
 import logging
@@ -15,22 +13,23 @@ def cli():
     pass
 
 
-# ------------------------------------------
-# ------------------------------------------
-# IMPORT FUNCTIONS
-# ------------------------------------------
-# ------------------------------------------
-
-# ------------------------------------------
-# HOME LOCATIONS
-# ------------------------------------------
 @cli.command()
 @click.option('--plans', type=str, default='', help='plans path')
 @click.option('--db_parameter', type=str, default='', help='Directory of where db parameter are stored')
 @click.pass_context
 def import_home_loc(ctx, plans, db_parameter):
-    # -- CMD INSTRUCTIONS --
-    # python initial_import import-home-loc --plans [plan file path] -- db_parameter [path of db parameter json]
+    """
+    HOME LOCATIONS
+    This is the function which can be executed for extracting the agents home locations from the plans file.
+
+    ---------
+    Execution:
+    python initial_import import-home-loc
+    --plans [plan file path]
+    --db_parameter [path of db parameter json]
+    ---------
+
+    """
 
     # -- PRE-CALCULATIONS --
     logging.info("Read plans file...")
@@ -79,30 +78,37 @@ def import_home_loc(ctx, plans, db_parameter):
     logging.info("Home location import successful!")
 
 
-# ------------------------------------------
-# GEMEINDEGEBIETE MIT REGIOSTA ZUORDNUNG
-# ------------------------------------------
 @cli.command()
 @click.option('--gem', type=str, default='', help='path to vg250 data [.shp]')
 @click.option('--regiosta', type=str, default='', help='path to regioSta data [.xlsx]')
 @click.option('--db_parameter', type=str, default='', help='path to db_parameter [.json]')
 @click.pass_context
 def import_gem(ctx, gem, regiosta, db_parameter):
-    # -- CMD INSTRUCTIONS --
-    # python initial_import import-vg-250-gem --vg250 [shape file path] -- db_parameter [path of db parameter json]
+    """
+    COMMUNITY AREA WITH REGIOSTAR ASSIGNMENT
+    This is the function which can be executed for uploading community data/ shapes with regiostar assignments to db
+
+    ---------
+    Execution:
+    python initial_import import-vg-250-gem
+    --vg250 [shape file path]
+    -- db_parameter [path of db parameter json]
+    ---------
+
+    """
 
     # -- PRE-CALCULATIONS --
     # Step 1: vg250
-    logging.info("Read-in shape file...")
+    logging.info("Read-in community shape file...")
     gdf_gemeinden = gpd.read_file(gem)
-    logging.info("Clean-up data...")
     gdf_gemeinden['geometry'] = gdf_gemeinden.apply(lambda x:
                                                     x['geometry'] if x['geometry'].type == 'MultiPolygon' else
                                                     MultiPolygon([x['geometry']]),
                                                     axis=1)
     gdf_gemeinden = gdf_gemeinden.to_crs("epsg:25832")
 
-    # Step 2: regiosta
+    # Step 2: regiostar
+    logging.info("Read-in regiostart data...")
     df_regiosta = pd.read_excel(regiosta, sheet_name='ReferenzGebietsstand2018')
     df_regiosta['gem'] = df_regiosta.apply(lambda x: str(x['gem']).zfill(8), axis=1)
     df_regiosta = df_regiosta[['gem', 'RegioStaR2', 'RegioStaR4', 'RegioStaR5', 'RegioStaR7']]
@@ -143,6 +149,7 @@ def import_gem(ctx, gem, regiosta, db_parameter):
     df_regiosta['RegioStaR5'] = df_regiosta['RegioStaR5'].astype('str')
     df_regiosta['RegioStaR7'] = df_regiosta['RegioStaR7'].astype('str')
 
+    logging.info("Merge community and regiostar data...")
     gdf_gemeinden = gdf_gemeinden.merge(df_regiosta, how='left', on='AGS')
     gdf_gemeinden.columns = gdf_gemeinden.columns.map(str.lower)
 
@@ -171,26 +178,33 @@ def import_gem(ctx, gem, regiosta, db_parameter):
         meta_data=DATA_METADATA,
         geom_cols={'geometry': 'MULTIPOLYGON'})
 
-    logging.info("VG 250 Gemeinden import successful!")
+    logging.info("Import of community data successful!")
 
 
-# ------------------------------------------
-# CALIBRATION DATA
-# ------------------------------------------
 @cli.command()
 @click.option('--calib', type=str, default='', help='path to calib data [.xlsx]')
 @click.option('--db_parameter', type=str, default='', help='path to db_parameter [.json]')
 @click.pass_context
 def import_calib(ctx, calib, db_parameter):
-    # -- CMD INSTRUCTIONS --
-    # python initial_import import-calib --calib [xlsx file path] -- db_parameter [path of db parameter json]
+    """
+    CALIBRATION DATA
+    This is the function which can be executed for uploading community data/ shapes with regiostar assignments to db
+
+    ---------
+    Execution:
+    python initial_import import-calib
+    -- calib [xlsx file path]
+    -- db_parameter [path of db parameter json]
+    ---------
+
+    """
 
     # -- PRE-CALCULATIONS --
     logging.info("Read-in excel file...")
     tables = dict()
-    tables['calib_distanzklassen'] = pd.read_excel(calib, sheet_name='01_Distanzklassen', skipfooter=10)
-    tables['calib_wege'] = pd.read_excel(calib, sheet_name='02_Wege', skipfooter=7)
-    tables['calib_modal_split'] = pd.read_excel(calib, sheet_name='03_ModalSplit', skipfooter=10)
+    tables['calib_distanzklassen'] = pd.read_excel(calib, sheet_name='01_Distanzklassen_Tidy')
+    tables['calib_wege'] = pd.read_excel(calib, sheet_name='02_Wege_Tidy')
+    tables['calib_modal_split'] = pd.read_excel(calib, sheet_name='03_ModalSplit_Tidy')
     tables['calib_nutzersegmente'] = pd.read_excel(calib, sheet_name='04_Nutzersegmente', skipfooter=7)
     tables['calib_oev_segmente'] = pd.read_excel(calib, sheet_name='05_ÖVSegmente', skipfooter=8)
 
@@ -256,58 +270,75 @@ def import_calib(ctx, calib, db_parameter):
 
 @cli.command()
 @click.option('--sim_area', type=str, default='', help='sim area shape file')
+@click.option('--reg_stuttgart', type=str, default='', help='sim area shape file')
 @click.option('--db_parameter', type=str, default='', help='Directory of where db parameter are stored')
 @click.pass_context
-def import_sim_area(ctx, sim_area, db_parameter):
-    # -- CMD INSTRUCTIONS --
-    # python initial_import import-sim-area --sim_area [shp] -- db_parameter [path of db parameter json]
+def import_areas(ctx, sim_area, reg_stuttgart, db_parameter):
+    """
+    SIMULATION AREA
+    This is the function which can be executed for uploading the simulation area and region stuttgart shape file
+
+    ---------
+    Execution:
+    python initial_import import-sim-area
+    --sim_area [shp]
+    --reg_stuttgart [shp]
+    --db_parameter [path of db parameter json]
+    ---------
+
+    """
 
     # -- PRE-CALCULATIONS --
-    logging.info("Read shape file...")
+    logging.info("Read shape files...")
     gdf_sim_area = gpd.read_file(sim_area)
-    gdf_sim_area = gdf_sim_area.set_crs(epsg=25832)
+    gdf_sim_area['geometry'] = gdf_sim_area['geometry'].apply(lambda x: MultiPolygon([x]))
+    gdf_reg_stuttgart = gpd.read_file(reg_stuttgart)
+    gdf = gdf_sim_area.append(gdf_reg_stuttgart)
+    gdf = gdf.set_crs(epsg=25832)
 
     # -- IMPORT --
-    table_name = 'sim_area'
+    table_name = 'areas'
     table_schema = 'general'
     db_parameter = load_db_parameters(db_parameter)
     drop_table_if_exists(db_parameter, table_name, table_schema)
 
     DATA_METADATA = {
-        'title': 'Simulation area',
-        'description': 'Simulation area shape file',
-        'source_name': 'Senozon Input',
+        'title': 'Areas',
+        'description': 'Important areas',
+        'source_name': 'Nan',
         'source_url': 'Nan',
-        'source_year': '2020',
+        'source_year': 'Nan',
         'source_download_date': 'Nan',
     }
 
     logging.info("Load data to database...")
     load_df_to_database(
-        df=gdf_sim_area,
+        df=gdf,
         update_mode='replace',
         db_parameter=db_parameter,
         schema=table_schema,
         table_name=table_name,
         meta_data=DATA_METADATA,
-        geom_cols={'geometry': 'POLYGON'})
+        geom_cols={'geometry': 'MULTIPOLYGON'})
 
-    logging.info("Simulation area import successful!")
-
-
-# ------------------------------------------
-# ------------------------------------------
-# FURTHER UTIL FUNCTIONS
-# ------------------------------------------
-# ------------------------------------------
+    logging.info("Area import successful!")
 
 
 @cli.command()
 @click.option('--db_parameter', type=str, default='', help='path to db_parameter [.json]')
 @click.pass_context
 def create_mview_h_loc(ctx, db_parameter):
-    # -- CMD INSTRUCTIONS --
-    # python create-mview-h-loc
+    """
+    EXTENDED VIEW ON HOME LOCATIONS
+    This is the function which can be executed for creating the extended materialized view for home locations
+
+    ---------
+    Execution:
+    python create-mview-h-loc
+    -- db_parameter [path of db parameter json]
+    ---------
+
+    """
 
     logging.info("Create materialized view for agents home locations...")
     SQL_FILE_PATH = os.path.abspath(os.path.join('__file__', "../../../sql/create_mview_h_loc.sql"))

@@ -1,7 +1,7 @@
-WITH stuttgart_trips AS
-	(SELECT 
+WITH region_stuttgart_trips AS (
+	SELECT 
 	 	t.*,
-	 	h.regiostar7,
+	 	h.calib_group,
 	 	CASE WHEN main_mode = 'bike' THEN 1 ELSE 0 END As contains_bike,
 		CASE WHEN main_mode = 'pt' THEN 1 ELSE 0 END As contains_pt,
 		CASE WHEN main_mode = 'ride' THEN 1 ELSE 0 END As contains_ride,
@@ -10,25 +10,28 @@ WITH stuttgart_trips AS
 	FROM matsim_input.agents_homes_with_raumdata h
 	INNER JOIN matsim_output.trips t
 	ON h.person_id = t.person
-	WHERE h.subpop = 'stuttgart_umland'
-	AND t.run_name = $${RUN_NAME}$$),
+	WHERE h.subpop = 'region_stuttgart'
+),	
 
 mode_counts AS (
 	SELECT
-		regiostar7,
+		run_name,
+		calib_group,
 		person,	
 		SUM(contains_bike) as bike_s,
 		SUM(contains_pt) as pt_s,
 		SUM(contains_ride) as ride_s,
 		SUM(contains_car) as car_s,
 		SUM(contains_walk) as walk_s
-	FROM stuttgart_trips
-	GROUP BY regiostar7, person),
+	FROM region_stuttgart_trips
+	GROUP BY run_name, calib_group, person
+),
 	
 groups AS(
 
 	SELECT
-		regiostar7,
+		run_name,
+		calib_group,
 		'walk' as modes_used,
 		COUNT(person) as person
 	FROM mode_counts
@@ -37,12 +40,13 @@ groups AS(
 		pt_s = 0 AND
 		(ride_s = 0 OR car_s = 0) AND
 		walk_s > 0
-	GROUP BY regiostar7
+	GROUP BY run_name, calib_group
 
 	UNION
 
 	SELECT
-		regiostar7,
+		run_name,
+		calib_group,
 		'bike' as modes_used,
 		COUNT(person) as person
 	FROM mode_counts
@@ -51,12 +55,13 @@ groups AS(
 		pt_s = 0 AND
 		(ride_s = 0 OR car_s = 0) AND
 		walk_s = 0)
-	GROUP BY regiostar7
+	GROUP BY run_name, calib_group
 
 	UNION
 
 	SELECT
-		regiostar7,
+		run_name,
+		calib_group,
 		'pt' as modes_used,
 		COUNT(person) as person
 	FROM mode_counts
@@ -65,12 +70,13 @@ groups AS(
 		pt_s > 0 AND
 		(ride_s = 0 OR car_s = 0) AND
 		walk_s = 0)
-	GROUP BY regiostar7
+	GROUP BY run_name, calib_group
 
 	UNION
 
 	SELECT
-		regiostar7,
+		run_name,
+		calib_group,
 		'car' as modes_used,
 		COUNT(person) as person
 	FROM mode_counts
@@ -79,12 +85,13 @@ groups AS(
 		pt_s > 0 AND
 		(ride_s > 0 OR car_s > 0) AND
 		walk_s = 0)
-	GROUP BY regiostar7
+	GROUP BY run_name, calib_group
 
 	UNION
 
 	SELECT
-		regiostar7,
+		run_name,
+		calib_group,
 		'car_bike' as modes_used,
 		COUNT(person) as person
 	FROM mode_counts
@@ -93,12 +100,13 @@ groups AS(
 		pt_s = 0 AND
 		(ride_s > 0 OR car_s > 0) AND
 		walk_s = 0)
-	GROUP BY regiostar7
+	GROUP BY run_name, calib_group
 
 	UNION
 
 	SELECT
-		regiostar7,
+		run_name,
+		calib_group,
 		'car_pt' as modes_used,
 		COUNT(person) as person
 	FROM mode_counts
@@ -107,12 +115,13 @@ groups AS(
 		pt_s > 0 AND
 		(ride_s > 0 OR car_s > 0) AND
 		walk_s = 0)
-	GROUP BY regiostar7
+	GROUP BY run_name, calib_group
 
 	UNION
 
 	SELECT
-		regiostar7,
+		run_name,
+		calib_group,
 		'bike_pt' as modes_used,
 		COUNT(person) as person
 	FROM mode_counts
@@ -121,12 +130,13 @@ groups AS(
 		pt_s > 0 AND
 		(ride_s = 0 OR car_s = 0) AND
 		walk_s = 0)
-	GROUP BY regiostar7
+	GROUP BY run_name, calib_group
 
 	UNION
 
 	SELECT
-		regiostar7,
+		run_name,
+		calib_group,
 		'car_bike_pt' as modes_used,
 		COUNT(person) as person
 	FROM mode_counts
@@ -135,11 +145,10 @@ groups AS(
 		pt_s > 0 AND
 		(ride_s > 0 OR car_s > 0) AND
 		walk_s = 0)
-	GROUP BY regiostar7
+	GROUP BY run_name, calib_group	
+)
 	
-	)
 	
-	
-SELECT *, ROUND((person / SUM(person) OVER (partition by regiostar7))* 100, 1) AS mode_fragments
+SELECT *, ROUND((person / SUM(person) OVER (partition by run_name, calib_group))* 100, 1) AS mode_fragments
 FROM groups
-
+ORDER BY run_name, calib_group, modes_used
