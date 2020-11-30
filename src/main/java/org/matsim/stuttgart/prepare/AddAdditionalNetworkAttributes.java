@@ -72,12 +72,12 @@ public class AddAdditionalNetworkAttributes {
                 Coord coord = link.getCoord();
                 Point point = MGC.coord2Point(coord);
 
-                Double oneHourPCost = 0.;
-                Double extraHourPCost = 0.;
-                Double maxDailyPCost = 0.;
-                Integer maxParkingTime = 1800;
-                Double pFine = 0.;
-                Double resPCosts = 0.;
+                double oneHourPCost = 0.;
+                double extraHourPCost = 0.;
+                double maxDailyPCost = 0.;
+                double maxParkingTime = 30.;
+                double pFine = 0.;
+                double resPCosts = 0.;
                 String zoneName = "";
                 String zoneGroup = "";
 
@@ -108,7 +108,7 @@ public class AddAdditionalNetworkAttributes {
                         }
 
                         if (feature.getAttribute("max_time") != null){
-                            maxParkingTime = (Integer) feature.getAttribute("max_time");
+                            maxParkingTime = (Double) feature.getAttribute("max_time");
                         }
 
                         if (feature.getAttribute("penalty") != null){

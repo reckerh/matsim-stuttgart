@@ -18,7 +18,6 @@
  * *********************************************************************** */
 package org.matsim.stuttgart.run;
 
-import java.net.URL;
 import java.util.Arrays;
 import java.util.Set;
 import ch.sbb.matsim.config.SBBTransitConfigGroup;
@@ -40,8 +39,6 @@ import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.OutputDirectoryLogging;
 import org.matsim.core.gbl.Gbl;
 import org.matsim.core.scenario.ScenarioUtils;
-import org.matsim.parkingCost.ParkingCostConfigGroup;
-import org.matsim.parkingCost.ParkingCostModule;
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
@@ -49,6 +46,9 @@ import org.matsim.stuttgart.prepare.AddAdditionalNetworkAttributes;
 import org.matsim.stuttgart.prepare.PrepareTransitSchedule;
 import org.matsim.stuttgart.ptFares.PtFaresConfigGroup;
 import org.matsim.stuttgart.ptFares.PtFaresModule;
+import playground.vsp.simpleParkingCostHandler.ParkingCostConfigGroup;
+import playground.vsp.simpleParkingCostHandler.ParkingCostModule;
+
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
 
 /**
@@ -316,6 +316,9 @@ public class RunStuttgartWithAdditionalModules {
         parkingCostConfigGroup.setFirstHourParkingCostLinkAttributeName("oneHourPCost");
         parkingCostConfigGroup.setExtraHourParkingCostLinkAttributeName("extraHourPCost");
         parkingCostConfigGroup.setMaxDailyParkingCostLinkAttributeName("maxDailyPCost");
+        parkingCostConfigGroup.setMaxParkingDurationAttributeName("maxPTime");
+        parkingCostConfigGroup.setParkingPenaltyAttributeName("pFine");
+        parkingCostConfigGroup.setResidentialParkingFeeAttributeName("resPCosts");
 
         return parkingCostConfigGroup;
     }
