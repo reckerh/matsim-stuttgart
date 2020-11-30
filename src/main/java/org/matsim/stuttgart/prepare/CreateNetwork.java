@@ -6,20 +6,25 @@ import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.NetworkWriter;
 import org.matsim.api.core.v01.network.Node;
-import org.matsim.contrib.bicycle.network.ElevationDataParser;
 import org.matsim.contrib.osm.networkReader.LinkProperties;
 import org.matsim.contrib.osm.networkReader.OsmBicycleReader;
 import org.matsim.core.network.NetworkUtils;
 import org.matsim.core.network.algorithms.MultimodalNetworkCleaner;
 import org.matsim.core.network.io.MatsimNetworkReader;
 import org.matsim.core.utils.geometry.CoordUtils;
+import org.matsim.core.utils.geometry.CoordinateTransformation;
 import org.matsim.core.utils.geometry.geotools.MGC;
+import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 import org.matsim.stuttgart.Utils;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
+import java.util.concurrent.ConcurrentHashMap;
+import java.util.stream.Collectors;
 
 public class CreateNetwork {
 
@@ -28,7 +33,8 @@ public class CreateNetwork {
     private static final String senozonNetworkPath = "projects\\matsim-stuttgart\\stuttgart-v0.0-snz-original\\optimizedNetwork.xml.gz";
     private static final String outputNetwork = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\network-stuttgart.xml.gz";
     private static final String osmFile = "projects\\mosaik-2\\raw-data\\osm\\germany-20200715.osm.pbf";
-    private static final String inputTiffFile = "path/to/your/elevation/tiff-file.tif";
+    private static final Collection<String> elevationData = List.of("projects\\mosaik-2\\raw-data\\heightmaps\\srtm_38_03.tif", "projects\\mosaik-2\\raw-data\\heightmaps\\srtm_39_03.tif");
+    private static final CoordinateTransformation transformUTM32ToWGS84 = TransformationFactory.getCoordinateTransformation("EPSG:25832", "EPSG:4326");
 
     public static void main(String[] args) {
 
@@ -40,7 +46,12 @@ public class CreateNetwork {
     public static Network createNetwork(Path svnPath) {
 
         var bbox = getBBox(svnPath);
-        var elevationParser = new ElevationDataParser(inputTiffFile, "EPSG:25832");
+        var elevationDataPaths = elevationData.stream()
+                .map(svnPath::resolve)
+                .map(Path::toString)
+                .collect(Collectors.toList());
+
+        var elevationReader = new ElevationReader(elevationDataPaths);
 
         log.info("Starting to parse osm network. This will not output anything for a while until it reaches the interesting part of the osm file.");
 
@@ -59,10 +70,13 @@ public class CreateNetwork {
                         link.setAllowedModes(allowedModes);
                     }
 
-                    addElevationIfNecessary(link.getFromNode(), elevationParser);
-                    addElevationIfNecessary(link.getToNode(), elevationParser);
+                    addElevationIfNecessary(link.getFromNode(), elevationReader);
+                    addElevationIfNecessary(link.getToNode(), elevationReader);
 
                 })
+                // override the defaults of the bicycle parser with the defaults of the standard parser to reduce memory
+                // foot print. Otherwise too many ways are flagged to be included which we filter out later
+                .setLinkProperties(new ConcurrentHashMap<>(LinkProperties.createLinkProperties()))
                 .build()
                 .read(svnPath.resolve(osmFile));
 
@@ -95,14 +109,18 @@ public class CreateNetwork {
         return BoundingBox.fromNetwork(senozonNetwork).toGeometry();
     }
 
-    private static synchronized void addElevationIfNecessary(Node node, ElevationDataParser elevationParser) {
+    private static synchronized void addElevationIfNecessary(Node node, ElevationReader elevationReader) {
 
         if (!node.getCoord().hasZ()) {
-            var elevation = elevationParser.getElevation(node.getCoord());
-            var newCoord = CoordUtils.createCoord(node.getCoord().getX(), node.getCoord().getY(), elevation);
+
+            //the height map is in WGS-84 but the node was already transformed to UTM-32. Transform it the other way around now.
+            var transformed = transformUTM32ToWGS84.transform(node.getCoord());
+            var height = elevationReader.getElevationAt(transformed);
+            var coordWithElevation = CoordUtils.createCoord(node.getCoord().getX(), node.getCoord().getY(), height);
+
             // I think it should work to replace the coord on the node reference, since the network only stores references
             // to the node and the internal quad tree only references the x,y-values and the node. janek 4.2020
-            node.setCoord(newCoord);
+            node.setCoord(coordWithElevation);
         }
     }
 }
