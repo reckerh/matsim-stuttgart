@@ -24,6 +24,7 @@ import ch.sbb.matsim.config.SBBTransitConfigGroup;
 import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
 import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
 import org.apache.log4j.Logger;
+import org.matsim.core.router.AnalysisMainModeIdentifier;
 import org.matsim.stuttgart.Utils;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
@@ -133,6 +134,8 @@ public class RunStuttgartWithAdditionalModules {
         String outputDir = args[0].replace((args[0].substring(args[0].lastIndexOf("/") + 1)),"") + "output";
         config.controler().setOutputDirectory(outputDir);
 
+        // config.controler().setWriteTripsInterval(50);
+
         // -- SET PROPERTIES BY BASH SCRIPT (FOR CLUSTER USAGE ONLY)
         ConfigUtils.applyCommandline( config, typedArgs ) ;
 
@@ -198,6 +201,15 @@ public class RunStuttgartWithAdditionalModules {
                 bind(RaptorIntermodalAccessEgress.class).to(StuttgartRaptorIntermodalAccessEgress.class);
             }
         } );
+
+        controler.addOverridingModule( new AbstractModule() {
+            @Override
+            public void install() {
+                bind(AnalysisMainModeIdentifier.class).to(StuttgartAnalysisMainModeIdentifier.class);
+            }
+        } );
+
+
 
         // use deterministic transport simulation of SBB
         controler.addOverridingModule(new AbstractModule() {
