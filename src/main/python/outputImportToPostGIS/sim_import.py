@@ -131,9 +131,11 @@ def update_views(db_parameter):
     Function for executing sql scripts that create/ update trip output materialized views
     """
 
-    views = ['distanzklassen',
-               'modal_split',
-               'nutzersegmente']
+    db_parameter = load_db_parameters(db_parameter)
+    views = ['matsim_output.distanzklassen',
+             'matsim_output.modal_split',
+             'matsim_output.nutzersegmente']
+
     for view in views:
         query = f'''
         REFRESH MATERIALIZED VIEW {view};
