@@ -77,15 +77,16 @@ def import_data_chunks(df, table_name, db_engine, schema, geom_data_types=None):
     df = df.reset_index()
     chunks = np.array_split(list(df.index), 100)
     if_exists = 'replace'
-    if isinstance(df, pd.core.frame.DataFrame):
-        for chunk in chunks:
-            df.loc[chunk].to_sql(table_name, db_engine, schema=schema, index=False, if_exists=if_exists,
-                                 method='multi')
-            if_exists = 'append'
+
     if isinstance(df, gpd.geodataframe.GeoDataFrame):
         for chunk in chunks:
             df.loc[chunk].to_sql(table_name, db_engine, schema=schema, index=False, if_exists=if_exists,
                                  method='multi', dtype=geom_data_types)
+            if_exists = 'append'
+    else:
+        for chunk in chunks:
+            df.loc[chunk].to_sql(table_name, db_engine, schema=schema, index=False, if_exists=if_exists,
+                                 method='multi')
             if_exists = 'append'
 
 

@@ -23,7 +23,7 @@ def import_run_data(ctx, run_dir, db_parameter):
     This is the function which can be executed for importing all relevant data
     of one run output to a postgres database.
     >> Import trips output
-    >> Create or update materialized views for calibration
+    >> Update materialized analyzer views
 
     ---------
     Execution:
@@ -40,6 +40,10 @@ def import_run_data(ctx, run_dir, db_parameter):
 
     trips = run_dir + "/" + run_name + ".output_trips.csv.gz"
     import_trips(trips, db_parameter, run_name)
+
+    legs = run_dir + "/" + run_name + ".output_legs.csv.gz"
+    import_legs(legs, db_parameter, run_name)
+
     update_views(db_parameter)
 
     config_param = run_dir + "/" + run_name + ".output_config.xml"
@@ -108,7 +112,8 @@ def parse_trips_file(trips):
 
     # -- FURTHER DATA MANIPULATIONS --
     logging.info("Further data manipulations...")
-    gdf_trips['main_mode'] = gdf_trips['modes'].apply(identify_main_mode)
+    gdf_trips.rename(columns={'main_mode': 'matsim_main_mode'}, inplace=True)
+    gdf_trips['calib_main_mode'] = gdf_trips['matsim_main_mode'].apply(identify_calib_mode)
     gdf_trips['dep_time'] = gdf_trips['dep_time'].apply(convert_time)
     gdf_trips['trav_time'] = gdf_trips['trav_time'].apply(convert_time)
     gdf_trips['wait_time'] = gdf_trips['wait_time'].apply(convert_time)
@@ -126,6 +131,73 @@ def parse_trips_file(trips):
     return gdf_trips
 
 
+def import_legs(legs, db_parameter, run_name):
+    """
+    Legs import based off .output_legs.csv.gz
+    """
+
+    # -- PRE-CALCULATIONS --
+    gdf_legs = parse_legs_file(legs)
+    gdf_legs['run_name'] = run_name
+
+    # -- IMPORT --
+    table_name = 'legs'
+    table_schema = 'matsim_output'
+    db_parameter = load_db_parameters(db_parameter)
+
+    DATA_METADATA = {
+        'title': 'Legs',
+        'description': 'Leg table',
+        'source_name': 'Senozon Input',
+        'source_url': 'Nan',
+        'source_year': '2020',
+        'source_download_date': 'Nan',
+    }
+
+    load_df_to_database(
+        df=gdf_legs,
+        update_mode='append',
+        db_parameter=db_parameter,
+        schema=table_schema,
+        table_name=table_name,
+        meta_data=DATA_METADATA,
+        geom_cols={'geometry': 'LINESTRING'})
+
+
+def parse_legs_file(legs):
+    """
+    Function for parsing legs file and manipulating legs data
+    """
+
+    # -- PARSING --
+    logging.info("Parse legs file...")
+    try:
+        with gzip.open(legs) as f:
+            df_legs = pd.read_csv(f, sep=";")
+    except OSError as e:
+        raise Exception(e.strerror)
+
+    # -- BUILDING GEOMETRIES --
+    df_legs['geometry'] = df_legs.apply(
+        lambda x: LineString([(x['start_x'], x['start_y']), (x['end_x'], x['end_y'])]), axis=1)
+    gdf_legs = gpd.GeoDataFrame(df_legs.drop(columns=['geometry']), geometry=df_legs['geometry'])
+    gdf_legs = gdf_legs.set_crs(epsg=25832)
+
+    # -- FURTHER DATA MANIPULATIONS --
+    logging.info("Further data manipulations...")
+    gdf_legs['dep_time'] = gdf_legs['dep_time'].apply(convert_time)
+    gdf_legs['trav_time'] = gdf_legs['trav_time'].apply(convert_time)
+    gdf_legs['wait_time'] = gdf_legs['wait_time'].apply(convert_time)
+    gdf_legs['arr_time'] = gdf_legs['dep_time'] + gdf_legs['trav_time'] + gdf_legs['wait_time']
+    gdf_legs['leg_speed'] = gdf_legs.apply(lambda x:
+                                           calculate_speed(x['distance'], x['trav_time'] + x['wait_time']),
+                                           axis=1
+                                           )
+
+    logging.info("Legs table manipulation finished...")
+    return gdf_legs
+
+
 def update_views(db_parameter):
     """
     Function for executing sql scripts that create/ update trip output materialized views
@@ -134,7 +206,10 @@ def update_views(db_parameter):
     db_parameter = load_db_parameters(db_parameter)
     views = ['matsim_output.distanzklassen',
              'matsim_output.modal_split',
-             'matsim_output.nutzersegmente']
+             'matsim_output.nutzersegmente',
+             'matsim_output.kreis_relationen',
+             'matsim_output.gem_relationen'
+             ]
 
     for view in views:
         query = f'''
@@ -192,17 +267,11 @@ def import_config_param(config_param, db_parameter, run_name):
     logging.info("Mode param import successful!")
 
 
-def identify_main_mode(mode_string):
-    if 'pt' in mode_string:
+def identify_calib_mode(mode_string):
+    if 'pt_with_bike_used' in mode_string:
         return 'pt'
-    elif 'car' in mode_string:
-        return 'car'
-    elif 'ride' in mode_string:
-        return 'ride'
-    elif 'bike' in mode_string:
-        return 'bike'
     else:
-        return 'walk'
+        return mode_string
 
 
 def convert_time(time_string):
