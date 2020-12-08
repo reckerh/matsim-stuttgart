@@ -112,8 +112,8 @@ def parse_trips_file(trips):
 
     # -- FURTHER DATA MANIPULATIONS --
     logging.info("Further data manipulations...")
-    gdf_trips.rename(columns={'main_mode': 'matsim_main_mode'}, inplace=True)
-    gdf_trips['calib_main_mode'] = gdf_trips['matsim_main_mode'].apply(identify_calib_mode)
+    gdf_trips.rename(columns={'main_mode': 'm_main_mode'}, inplace=True)
+    gdf_trips['c_main_mode'] = gdf_trips['m_main_mode'].apply(identify_calib_mode)
     gdf_trips['dep_time'] = gdf_trips['dep_time'].apply(convert_time)
     gdf_trips['trav_time'] = gdf_trips['trav_time'].apply(convert_time)
     gdf_trips['wait_time'] = gdf_trips['wait_time'].apply(convert_time)
@@ -193,6 +193,8 @@ def parse_legs_file(legs):
                                            calculate_speed(x['distance'], x['trav_time'] + x['wait_time']),
                                            axis=1
                                            )
+    gdf_legs['pt_line'] = gdf_legs['transit_line'].apply(get_pt_line)
+    gdf_legs['pt_group'] = gdf_legs['pt_line'].apply(get_pt_group)
 
     logging.info("Legs table manipulation finished...")
     return gdf_legs
@@ -208,7 +210,11 @@ def update_views(db_parameter):
              'matsim_output.modal_split',
              'matsim_output.nutzersegmente',
              'matsim_output.kreis_relationen',
-             'matsim_output.gem_relationen'
+             'matsim_output.gem_relationen',
+             'matsim_output.wege_eigenschaften',
+             'matsim_output.b_r_auswertung',
+             'matsim_output."08115_08116_modal_split"',
+             'matsim_output.oev_segmente'
              ]
 
     for view in views:
@@ -285,6 +291,30 @@ def calculate_speed(distance, time):
         return 0
     else:
         return (distance/time)*3.6
+
+
+def get_pt_line(transit_line):
+    if isinstance(transit_line, float):
+        return transit_line
+    else:
+        if transit_line.startswith('addedFrom'):
+            return transit_line.split('_', 2)[1]
+        else:
+            return transit_line
+
+
+def get_pt_group(pt_line):
+    if isinstance(pt_line, float):
+        return pt_line
+    else:
+        if pt_line.startswith('Bus'):
+            return 'bus'
+        elif pt_line.startswith('STB'):
+            return 'stb'
+        elif pt_line.startswith('S '):
+            return 'sbahn'
+        else:
+            return 'dbregio'
 
 
 if __name__ == '__main__':

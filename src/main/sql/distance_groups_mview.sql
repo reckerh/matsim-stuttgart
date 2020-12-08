@@ -11,7 +11,7 @@ groups AS (
 		run_name,
 		'LH Stuttgart' as area,
 		COUNT(person) no_trips,
-		main_mode,
+		c_main_mode,
 		CASE
 			WHEN traveled_distance between 0 AND 499 then 'unter_500m'
 			WHEN traveled_distance between 500 AND 999 then '500m_bis_1km'
@@ -22,7 +22,7 @@ groups AS (
 			WHEN traveled_distance between 20000 AND 49999 then '20km_bis_50km'
 			WHEN traveled_distance between 50000 AND 99999 then '50km_bis_100km'
 			ELSE 'ueber_100km'
-		END AS distance_group;
+		END AS distance_group,
 		CASE
 			WHEN traveled_distance between 0 AND 499 then 1
 			WHEN traveled_distance between 500 AND 999 then 2
@@ -35,10 +35,10 @@ groups AS (
 			ELSE 9
 		END AS distance_group_no
 	FROM stuttgart_trips
-	GROUP BY run_name, main_mode, distance_group, distance_group_no
+	GROUP BY run_name, c_main_mode, distance_group, distance_group_no
 )
 		
 SELECT
-	*,  ROUND((no_trips / SUM(no_trips) OVER (partition by run_name, main_mode))* 100, 1) AS mode_share
+	*,  ROUND((no_trips / SUM(no_trips) OVER (partition by run_name, c_main_mode))* 100, 1) AS mode_share
 FROM groups
-ORDER BY run_name, main_mode, distance_group
+ORDER BY run_name, c_main_mode, distance_group;

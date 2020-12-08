@@ -2,11 +2,11 @@ WITH region_stuttgart_trips AS (
 	SELECT 
 	 	t.*,
 	 	h.calib_group,
-	 	CASE WHEN main_mode = 'bike' THEN 1 ELSE 0 END As contains_bike,
-		CASE WHEN main_mode = 'pt' THEN 1 ELSE 0 END As contains_pt,
-		CASE WHEN main_mode = 'ride' THEN 1 ELSE 0 END As contains_ride,
-		CASE WHEN main_mode = 'car' THEN 1 ELSE 0 END As contains_car,
-		CASE WHEN main_mode = 'walk' THEN 1 ELSE 0 END As contains_walk
+	 	CASE WHEN c_main_mode = 'bike' THEN 1 ELSE 0 END As contains_bike,
+		CASE WHEN c_main_mode = 'pt' THEN 1 ELSE 0 END As contains_pt,
+		CASE WHEN c_main_mode = 'ride' THEN 1 ELSE 0 END As contains_ride,
+		CASE WHEN c_main_mode = 'car' THEN 1 ELSE 0 END As contains_car,
+		CASE WHEN c_main_mode = 'walk' THEN 1 ELSE 0 END As contains_walk
 	FROM matsim_input.agents_homes_with_raumdata h
 	INNER JOIN matsim_output.trips t
 	ON h.person_id = t.person

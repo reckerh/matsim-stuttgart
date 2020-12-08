@@ -12,11 +12,11 @@ WITH trips as (
 	
 SELECT
 	run_name,
-	main_mode,
+	c_main_mode,
 	start_kreis,
 	end_kreis,
 	COUNT(trip_number) as no_trips,
 	round(((COUNT(trip_number)::numeric / SUM(COUNT(trip_number)) OVER (PARTITION BY run_name, start_kreis, end_kreis)) * (100)::numeric), 1) AS mode_share
 FROM trips
-GROUP BY run_name, main_mode, start_kreis, end_kreis
+GROUP BY run_name, c_main_mode, start_kreis, end_kreis
 	

@@ -331,9 +331,10 @@ def import_calib(ctx, calib, db_parameter):
 @cli.command()
 @click.option('--sim_area', type=str, default='', help='sim area shape file')
 @click.option('--reg_stuttgart', type=str, default='', help='sim area shape file')
+@click.option('--vvs_area', type=str, default='', help='vvs area shape file')
 @click.option('--db_parameter', type=str, default='', help='Directory of where db parameter are stored')
 @click.pass_context
-def import_areas(ctx, sim_area, reg_stuttgart, db_parameter):
+def import_areas(ctx, sim_area, reg_stuttgart, vvs_area, db_parameter):
     """
     SIMULATION AREA
     This is the function which can be executed for uploading the simulation area and region stuttgart shape file
@@ -352,8 +353,13 @@ def import_areas(ctx, sim_area, reg_stuttgart, db_parameter):
     logging.info("Read shape files...")
     gdf_sim_area = gpd.read_file(sim_area)
     gdf_sim_area['geometry'] = gdf_sim_area['geometry'].apply(lambda x: MultiPolygon([x]))
+
     gdf_reg_stuttgart = gpd.read_file(reg_stuttgart)
     gdf = gdf_sim_area.append(gdf_reg_stuttgart)
+
+    gdf_vvs_area = gpd.read_file(vvs_area)
+    gdf = gdf.append(gdf_vvs_area)
+
     gdf = gdf.set_crs(epsg=25832)
 
     # -- IMPORT --
@@ -401,7 +407,7 @@ def create_mview_h_loc(ctx, db_parameter):
     """
 
     logging.info("Create materialized view for agents home locations...")
-    SQL_FILE_PATH = os.path.abspath(os.path.join('__file__', "../../../sql/create_mview_h_loc.sql"))
+    SQL_FILE_PATH = os.path.abspath(os.path.join('__file__', "../../../sql/home_locations_mview.sql"))
     run_sql_script(SQL_FILE_PATH, db_parameter)
 
 
@@ -425,7 +431,7 @@ def create_h3_tables(ctx, shape, db_parameter):
 
     # -- PRE-CALCULATIONS --
     logging.info("Create h3 hexagon tables...")
-    resolutions = [7, 8, 9]
+    resolutions = [6, 7, 8]
 
     gdf_de = gpd.read_file(filename=shape)
     gdf_de = gdf_de.set_crs(epsg=4326)
@@ -458,19 +464,19 @@ def create_h3_tables(ctx, shape, db_parameter):
             schema=table_schema,
             table_name=table_name,
             meta_data=DATA_METADATA,
-            geom_cols={'geometry': 'POLYGON', 'center': 'POINT'})
+            geom_cols={'center': 'POINT', 'geometry': 'POLYGON'})
 
 
 def generate_hexagon_df(gdf_shape, res):
     gdf = gdf_shape.copy()
     logging.info("Spread out hexagons over geometries in shape file...")
-    gdf['h3_ids'] = gdf['geom_geojson'].apply(lambda x: fill_hex(x, res))
+    gdf['h3_id'] = gdf['geom_geojson'].apply(lambda x: fill_hex(x, res))
 
     logging.info("Collect hexagons and create geodataframe...")
-    gdf = pd.DataFrame(gdf['h3_ids'].explode().dropna())
+    gdf = pd.DataFrame(gdf['h3_id'].explode().dropna())
 
-    gdf['geometry'] = gdf['h3_ids'].apply(lambda x: Polygon(h3.h3_to_geo_boundary(h=x)))
-    gdf['center'] = gdf['h3_ids'].apply(lambda x: Point(h3.h3_to_geo(h=x)))
+    gdf['geometry'] = gdf['h3_id'].apply(lambda x: Polygon(h3.h3_to_geo_boundary(h=x)))
+    gdf['center'] = gdf['h3_id'].apply(lambda x: Point(h3.h3_to_geo(h=x)))
     gdf = gpd.GeoDataFrame(gdf.drop(columns=['geometry']),
                              geometry=gdf['geometry'])
     gdf = gdf.set_crs(epsg=4326)
