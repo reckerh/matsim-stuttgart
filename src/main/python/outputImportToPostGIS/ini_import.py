@@ -4,13 +4,19 @@ import geopandas as gpd
 import click
 import matsim
 import logging
-from utils import load_df_to_database, load_db_parameters, drop_table_if_exists, run_sql_script
+import h3
+import psycopg2 as pg
+from shapely import geometry
 from shapely.geometry.multipolygon import MultiPolygon
-
+from shapely.geometry.polygon import Polygon
+from shapely.geometry.point import Point
+from utils import load_df_to_database, load_db_parameters, drop_table_if_exists, run_sql_script
+from sim_import import update_views
 
 @click.group()
 def cli():
     pass
+
 
 
 @cli.command()
@@ -24,7 +30,7 @@ def import_home_loc(ctx, plans, db_parameter):
 
     ---------
     Execution:
-    python initial_import import-home-loc
+    python ini_import import-home-loc
     --plans [plan file path]
     --db_parameter [path of db parameter json]
     ---------
@@ -90,9 +96,9 @@ def import_gem(ctx, gem, regiosta, db_parameter):
 
     ---------
     Execution:
-    python initial_import import-vg-250-gem
+    python ini_import import-gem
     --vg250 [shape file path]
-    -- db_parameter [path of db parameter json]
+    --db_parameter [path of db parameter json]
     ---------
 
     """
@@ -182,6 +188,62 @@ def import_gem(ctx, gem, regiosta, db_parameter):
 
 
 @cli.command()
+@click.option('--kreise', type=str, default='', help='path to vg250 data [.shp]')
+@click.option('--db_parameter', type=str, default='', help='path to db_parameter [.json]')
+@click.pass_context
+def import_kreise(ctx, kreise, db_parameter):
+    """
+    COMMUNITY AREA WITH REGIOSTAR ASSIGNMENT
+    This is the function which can be executed for uploading county data/ shapes to db
+
+    ---------
+    Execution:
+    python ini_import import-kreise
+    --vg250 [shape file path]
+    --db_parameter [path of db parameter json]
+    ---------
+
+    """
+
+    # -- PRE-CALCULATIONS --
+    logging.info("Read-in county shape file...")
+    gdf_kreise = gpd.read_file(kreise)
+    gdf_kreise['geometry'] = gdf_kreise.apply(lambda x:
+                                              x['geometry'] if x['geometry'].type == 'MultiPolygon' else
+                                              MultiPolygon([x['geometry']]),
+                                              axis=1)
+    gdf_kreise = gdf_kreise.to_crs(epsg=25832)
+    gdf_kreise.columns = gdf_kreise.columns.map(str.lower)
+
+    # -- IMPORT --
+    table_name = 'kreise'
+    table_schema = 'general'
+    db_parameter = load_db_parameters(db_parameter)
+    drop_table_if_exists(db_parameter, table_name, table_schema)
+
+    DATA_METADATA = {
+        'title': 'Kreise (VG250)',
+        'description': 'Verwaltungsgebiete 1:250000 (Ebenen), Stand 01.01.',
+        'source_name': 'Bundesamt für Kartographie und Geodäsie',
+        'source_url': 'https://gdz.bkg.bund.de/index.php/default/verwaltungsgebiete-1-250-000-ebenen-stand-01-01-vg250-ebenen-01-01.html',
+        'source_year': '2020',
+        'source_download_date': '2020-11-17',
+    }
+
+    logging.info("Load data to database...")
+    load_df_to_database(
+        df=gdf_kreise,
+        update_mode='replace',
+        db_parameter=db_parameter,
+        schema=table_schema,
+        table_name=table_name,
+        meta_data=DATA_METADATA,
+        geom_cols={'geometry': 'MULTIPOLYGON'})
+
+    logging.info("Import of county data successful!")
+
+
+@cli.command()
 @click.option('--calib', type=str, default='', help='path to calib data [.xlsx]')
 @click.option('--db_parameter', type=str, default='', help='path to db_parameter [.json]')
 @click.pass_context
@@ -192,9 +254,9 @@ def import_calib(ctx, calib, db_parameter):
 
     ---------
     Execution:
-    python initial_import import-calib
-    -- calib [xlsx file path]
-    -- db_parameter [path of db parameter json]
+    python ini_import import-calib
+    --calib [xlsx file path]
+    --db_parameter [path of db parameter json]
     ---------
 
     """
@@ -271,16 +333,17 @@ def import_calib(ctx, calib, db_parameter):
 @cli.command()
 @click.option('--sim_area', type=str, default='', help='sim area shape file')
 @click.option('--reg_stuttgart', type=str, default='', help='sim area shape file')
+@click.option('--vvs_area', type=str, default='', help='vvs area shape file')
 @click.option('--db_parameter', type=str, default='', help='Directory of where db parameter are stored')
 @click.pass_context
-def import_areas(ctx, sim_area, reg_stuttgart, db_parameter):
+def import_areas(ctx, sim_area, reg_stuttgart, vvs_area, db_parameter):
     """
     SIMULATION AREA
     This is the function which can be executed for uploading the simulation area and region stuttgart shape file
 
     ---------
     Execution:
-    python initial_import import-sim-area
+    python ini_import import-sim-area
     --sim_area [shp]
     --reg_stuttgart [shp]
     --db_parameter [path of db parameter json]
@@ -292,8 +355,13 @@ def import_areas(ctx, sim_area, reg_stuttgart, db_parameter):
     logging.info("Read shape files...")
     gdf_sim_area = gpd.read_file(sim_area)
     gdf_sim_area['geometry'] = gdf_sim_area['geometry'].apply(lambda x: MultiPolygon([x]))
+
     gdf_reg_stuttgart = gpd.read_file(reg_stuttgart)
     gdf = gdf_sim_area.append(gdf_reg_stuttgart)
+
+    gdf_vvs_area = gpd.read_file(vvs_area)
+    gdf = gdf.append(gdf_vvs_area)
+
     gdf = gdf.set_crs(epsg=25832)
 
     # -- IMPORT --
@@ -325,24 +393,125 @@ def import_areas(ctx, sim_area, reg_stuttgart, db_parameter):
 
 
 @cli.command()
+@click.option('--shape', type=str, default='', help='path to Germany shapefile [.shp]')
 @click.option('--db_parameter', type=str, default='', help='path to db_parameter [.json]')
 @click.pass_context
-def create_mview_h_loc(ctx, db_parameter):
+def create_h3_tables(ctx, shape, db_parameter):
     """
-    EXTENDED VIEW ON HOME LOCATIONS
-    This is the function which can be executed for creating the extended materialized view for home locations
+    H§ HEXAGONS (DIFFERENT LEVELS)
+    This is the function which can be executed for creating tables of h3 hexagons spread over Germany
 
     ---------
     Execution:
-    python create-mview-h-loc
+    python create-h3-tables
+    -- de_shape [path to Germany shapefile shp]
     -- db_parameter [path of db parameter json]
     ---------
 
     """
 
-    logging.info("Create materialized view for agents home locations...")
-    SQL_FILE_PATH = os.path.abspath(os.path.join('__file__', "../../../sql/create_mview_h_loc.sql"))
-    run_sql_script(SQL_FILE_PATH, db_parameter)
+    # -- PRE-CALCULATIONS --
+    logging.info("Create h3 hexagon tables...")
+    resolutions = [6, 7, 8]
+
+    gdf_de = gpd.read_file(filename=shape)
+    gdf_de = gdf_de.set_crs(epsg=4326)
+    gdf_de["geom_geojson"] = gdf_de["geometry"].apply(lambda x: geometry.mapping(x))
+    db_parameter = load_db_parameters(db_parameter)
+
+    for res in resolutions:
+        logging.info("Create resolution " + str(res))
+        gdf_h3 = generate_hexagon_df(gdf_shape=gdf_de, res=res)
+
+        # -- IMPORT --
+        table_name = 'h3_res_' + str(res)
+        table_schema = 'general'
+        drop_table_if_exists(db_parameter, table_name, table_schema)
+
+        DATA_METADATA = {
+            'title': 'H3 Hexagons - Level ' + str(res),
+            'description': 'H3 Hexagons spread over Germany of level ' + str(res),
+            'source_name': 'Nan',
+            'source_url': 'Nan',
+            'source_year': 'Nan',
+            'source_download_date': 'Nan',
+        }
+
+        logging.info("Load data to database...")
+        load_df_to_database(
+            df=gdf_h3,
+            update_mode='replace',
+            db_parameter=db_parameter,
+            schema=table_schema,
+            table_name=table_name,
+            meta_data=DATA_METADATA,
+            geom_cols={'center': 'POINT', 'geometry': 'POLYGON'})
+
+
+@cli.command()
+@click.option('--db_parameter', type=str, default='', help='Directory of where db parameter are stored')
+@click.pass_context
+def create_mviews(ctx, db_parameter):
+    sql_dir = os.path.abspath(os.path.join('__file__', "../../../sql"))
+    logging.info('sql directory: ' + sql_dir)
+
+    db_parameter = load_db_parameters(db_parameter)
+
+    # -- 1st ORDER MVIEWS --
+    logging.info('Start with agent home locations mview:')
+    query = sql_dir + '/matsim_input/create_home_locations_mview.sql'
+    run_sql_script(SQL_FILE_PATH=query, db_parameter=db_parameter)
+
+    query = f'''
+            REFRESH MATERIALIZED VIEW matsim_input."agents_homes_with_raumdata";
+            '''
+    with pg.connect(**db_parameter) as con:
+        cursor = con.cursor()
+        cursor.execute(query)
+        con.commit()
+
+    # -- 2nd ORDER MVIEWS (dependend on home locations) --
+    logging.info('Create more mviews...')
+    sql_dir = sql_dir + '/matsim_output'
+    queries = os.listdir(sql_dir)
+    queries = [sql_dir + '/' + query for query in queries]
+
+    queries_2nd_order = [query for query in queries if not query.endswith('_3o.sql')]
+    queries_3rd_order = [query for query in queries if query.endswith('_3o.sql')]
+
+    for query in queries_2nd_order:
+        run_sql_script(SQL_FILE_PATH=query, db_parameter=db_parameter)
+
+    # -- 3rd ORDER MVIEWS (dependend on home locations and other 2nd order mviews) --
+    for query in queries_3rd_order:
+        run_sql_script(SQL_FILE_PATH=query, db_parameter=db_parameter)
+
+    logging.info('Update all mviews...')
+    update_views(db_parameter=db_parameter)
+
+
+def generate_hexagon_df(gdf_shape, res):
+    gdf = gdf_shape.copy()
+    logging.info("Spread out hexagons over geometries in shape file...")
+    gdf['h3_id'] = gdf['geom_geojson'].apply(lambda x: fill_hex(x, res))
+
+    logging.info("Collect hexagons and create geodataframe...")
+    gdf = pd.DataFrame(gdf['h3_id'].explode().dropna())
+
+    gdf['geometry'] = gdf['h3_id'].apply(lambda x: Polygon(h3.h3_to_geo_boundary(h=x)))
+    gdf['center'] = gdf['h3_id'].apply(lambda x: Point(h3.h3_to_geo(h=x)))
+    gdf = gpd.GeoDataFrame(gdf.drop(columns=['geometry']),
+                             geometry=gdf['geometry'])
+    gdf = gdf.set_crs(epsg=4326)
+    gdf = gdf.to_crs(epsg=25832)
+    return gdf
+
+
+def fill_hex(geom_geojson, res):
+    set_hexagons = h3.polyfill(geojson=geom_geojson,
+                               res=res,
+                               geo_json_conformant=False)
+    return list(set_hexagons)
 
 
 if __name__ == '__main__':

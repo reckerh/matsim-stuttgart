@@ -50,7 +50,7 @@ def load_df_to_database(df, update_mode, db_parameter, schema, table_name, meta_
                 geom_data_types = {geom_column: Geometry(dtype, srid=25832)}
         logging.info('Uploading to database')
         if big_df_size(df_import):
-            import_data_chunks(df_import, table_name, db_engine, schema, geom_data_types=geom_data_types)
+            import_data_chunks(df_import, update_mode, table_name, db_engine, schema, geom_data_types=geom_data_types)
         else:
             df_import.to_sql(table_name, db_engine, schema=schema, index=False, if_exists=update_mode, method='multi',
                              dtype=geom_data_types)
@@ -72,21 +72,21 @@ def big_df_size(df):
     return False
 
 
-def import_data_chunks(df, table_name, db_engine, schema, geom_data_types=None):
+def import_data_chunks(df, update_mode, table_name, db_engine, schema, geom_data_types=None):
     logging.info('Table size too big --> Importing chunks')
     df = df.reset_index()
     chunks = np.array_split(list(df.index), 100)
-    if_exists = 'replace'
-    if isinstance(df, pd.core.frame.DataFrame):
-        for chunk in chunks:
-            df.loc[chunk].to_sql(table_name, db_engine, schema=schema, index=False, if_exists=if_exists,
-                                 method='multi')
-            if_exists = 'append'
+
     if isinstance(df, gpd.geodataframe.GeoDataFrame):
         for chunk in chunks:
-            df.loc[chunk].to_sql(table_name, db_engine, schema=schema, index=False, if_exists=if_exists,
+            df.loc[chunk].to_sql(table_name, db_engine, schema=schema, index=False, if_exists=update_mode,
                                  method='multi', dtype=geom_data_types)
-            if_exists = 'append'
+            update_mode = 'append'
+    else:
+        for chunk in chunks:
+            df.loc[chunk].to_sql(table_name, db_engine, schema=schema, index=False, if_exists=update_mode,
+                                 method='multi')
+            update_mode = 'append'
 
 
 def check_meta_data(meta_data):
@@ -147,7 +147,6 @@ def run_sql_script(SQL_FILE_PATH, db_parameter, param=None):
     logging.info("Execute sql query...")
     logging.info(sql)
 
-    db_parameter = load_db_parameters(db_parameter)
     with pg.connect(**db_parameter) as con:
         cursor = con.cursor()
         cursor.execute(sql)
