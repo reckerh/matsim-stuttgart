@@ -1,4 +1,6 @@
 import gzip
+import os
+
 import click
 import pandas as pd
 import geopandas as gpd
@@ -15,41 +17,76 @@ def cli():
 
 
 @cli.command()
-@click.option('--run_dir', type=str, default='', help='run directory [dir]')
+@click.option('--parent_dir', type=str, default='', help='parent directory to run directory [dir]')
 @click.option('--db_parameter', type=str, default='', help='path to db_parameter [.json]')
+@click.option('--str_filter', type=str, default=None, help='string filter')
 @click.pass_context
-def import_run_data(ctx, run_dir, db_parameter):
+def import_run_data(ctx, parent_dir, db_parameter, str_filter):
     """
     This is the function which can be executed for importing all relevant data
-    of one run output to a postgres database.
+    of the output of all runs (all runs starting with a specific filter str)
+    >> For each run selected:
     >> Import trips output
+    >> Import legs output
+    >> Import mode config settings
     >> Update materialized analyzer views
 
     ---------
     Execution:
     python sim_import update-run-tables
-    --run_dir [run output directory]
+    --parent_dir [parent to output directory]
+    --filter [string filter]
     --db_parameter [path of db parameter json]
     ---------
 
+    """
+
+    logging.info('Search for folders in: ' + parent_dir)
+    if str_filter is not None:
+        logging.info('Filter - Folders start with string: ' + str_filter)
+
+    db_parameter = load_db_parameters(db_parameter)
+
+    dir_contents = os.listdir(parent_dir)
+    dir_contents = [run_dir.replace("output-", "") for run_dir in dir_contents]
+    if str_filter is not None:
+        dir_contents = [run_dir for run_dir in dir_contents if run_dir.startswith(str_filter)]
+
+    # -- DATA IMPORTS --
+    logging.info('The following run(s) will be imported: ' + '[' + ", ".join(dir_contents) + ']')
+
+    for run_dir in dir_contents:
+        import_run(parent_dir + "/output-" + run_dir, db_parameter)
+
+    # -- VIEW UPDATES --
+    update_views(db_parameter)
+
+
+def import_run(run_dir, db_parameter):
+    """
+    This is the function which can be executed for importing all relevant data
+    of one run output to a postgres database.
     """
 
     # -- PRE-CALCULATIONS --
     run_name = run_dir.rsplit("/", 1)[1].replace("output-", "")
     logging.info("Start importing run: " + run_name)
 
+    # -- TRIPS IMPORT --
     trips = run_dir + "/" + run_name + ".output_trips.csv.gz"
     import_trips(trips, db_parameter, run_name)
 
+    # -- LEGS IMPORT --
     legs = run_dir + "/" + run_name + ".output_legs.csv.gz"
     import_legs(legs, db_parameter, run_name)
 
-    update_views(db_parameter)
-
+    # -- CONFIG IMPORT --
     config_param = run_dir + "/" + run_name + ".output_config.xml"
     import_config_param(config_param, db_parameter, run_name)
 
     logging.info("All data successfully imported: " + run_name)
+    logging.info("-------------------------------------------")
+    logging.info("")
 
 
 def import_trips(trips, db_parameter, run_name):
@@ -57,7 +94,7 @@ def import_trips(trips, db_parameter, run_name):
     Trip import based off .output_trips.csv.gz
     """
 
-    logging.info("Create or update trips table with data of: " + run_name)
+    logging.info("Append to trips table: " + run_name)
 
     # -- PRE-CALCULATIONS --
     gdf_trips = parse_trips_file(trips)
@@ -66,7 +103,6 @@ def import_trips(trips, db_parameter, run_name):
     # -- IMPORT --
     table_name = 'trips'
     table_schema = 'matsim_output'
-    db_parameter = load_db_parameters(db_parameter)
 
     DATA_METADATA = {
         'title': 'Trips',
@@ -113,7 +149,7 @@ def parse_trips_file(trips):
     # -- FURTHER DATA MANIPULATIONS --
     logging.info("Further data manipulations...")
     gdf_trips.rename(columns={'main_mode': 'm_main_mode'}, inplace=True)
-    gdf_trips['c_main_mode'] = gdf_trips['m_main_mode'].apply(identify_calib_mode)
+    gdf_trips['c_main_mode'] = gdf_trips.apply(lambda x: identify_calib_mode(x['m_main_mode'], x['modes']), axis=1)
     gdf_trips['dep_time'] = gdf_trips['dep_time'].apply(convert_time)
     gdf_trips['trav_time'] = gdf_trips['trav_time'].apply(convert_time)
     gdf_trips['wait_time'] = gdf_trips['wait_time'].apply(convert_time)
@@ -136,6 +172,8 @@ def import_legs(legs, db_parameter, run_name):
     Legs import based off .output_legs.csv.gz
     """
 
+    logging.info("Append to legs table: " + run_name)
+
     # -- PRE-CALCULATIONS --
     gdf_legs = parse_legs_file(legs)
     gdf_legs['run_name'] = run_name
@@ -143,7 +181,6 @@ def import_legs(legs, db_parameter, run_name):
     # -- IMPORT --
     table_name = 'legs'
     table_schema = 'matsim_output'
-    db_parameter = load_db_parameters(db_parameter)
 
     DATA_METADATA = {
         'title': 'Legs',
@@ -205,19 +242,24 @@ def update_views(db_parameter):
     Function for executing sql scripts that create/ update trip output materialized views
     """
 
-    db_parameter = load_db_parameters(db_parameter)
     views = ['matsim_output.distanzklassen',
              'matsim_output.modal_split',
              'matsim_output.nutzersegmente',
              'matsim_output.kreis_relationen',
              'matsim_output.gem_relationen',
+             'matsim_output.h3_res_6_relationen',
+             'matsim_output.h3_res_7_relationen',
+             'matsim_output.h3_res_8_relationen',
              'matsim_output.wege_eigenschaften',
              'matsim_output.b_r_auswertung',
              'matsim_output."08115_08116_modal_split"',
              'matsim_output.oev_segmente'
              ]
 
+    logging.info("Update materialized views: " + str(len(views)))
+
     for view in views:
+        logging.info("Update view: " + view)
         query = f'''
         REFRESH MATERIALIZED VIEW {view};
         '''
@@ -232,7 +274,7 @@ def import_config_param(config_param, db_parameter, run_name):
     Function importing config parameter namely score parameters for modes
     """
 
-    logging.info("Update mode param table...")
+    logging.info("Append to mode param table: " + run_name)
 
     # -- PRE-CALCULATIONS --
     tree = ET.parse(config_param)
@@ -250,7 +292,6 @@ def import_config_param(config_param, db_parameter, run_name):
     # -- IMPORT --
     table_name = 'mode_param'
     table_schema = 'matsim_input'
-    db_parameter = load_db_parameters(db_parameter)
 
     DATA_METADATA = {
         'title': 'Mode Parameter',
@@ -273,11 +314,24 @@ def import_config_param(config_param, db_parameter, run_name):
     logging.info("Mode param import successful!")
 
 
-def identify_calib_mode(mode_string):
-    if 'pt_with_bike_used' in mode_string:
-        return 'pt'
+def identify_calib_mode(m_main_mode, modes):
+    if isinstance(m_main_mode, float):
+        if 'pt' in modes:
+            return 'pt'
+        elif 'car' in modes:
+            return 'car'
+        elif 'ride' in modes:
+            return 'ride'
+        elif 'bike' in modes:
+            return 'bike'
+        else:
+            return 'walk'
+
     else:
-        return mode_string
+        if 'pt_with_bike_used' in m_main_mode:
+            return 'pt'
+        else:
+            return m_main_mode
 
 
 def convert_time(time_string):

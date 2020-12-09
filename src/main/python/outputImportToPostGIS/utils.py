@@ -147,7 +147,6 @@ def run_sql_script(SQL_FILE_PATH, db_parameter, param=None):
     logging.info("Execute sql query...")
     logging.info(sql)
 
-    db_parameter = load_db_parameters(db_parameter)
     with pg.connect(**db_parameter) as con:
         cursor = con.cursor()
         cursor.execute(sql)
