@@ -18,13 +18,24 @@
  * *********************************************************************** */
 package org.matsim.stuttgart.run;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 import java.util.Set;
 import ch.sbb.matsim.config.SBBTransitConfigGroup;
 import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
 import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
 import org.apache.log4j.Logger;
+import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.router.AnalysisMainModeIdentifier;
+import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
+import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
+import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsModule;
+import org.matsim.extensions.pt.replanning.singleTripStrategies.ChangeSingleTripModeAndRoute;
+import org.matsim.extensions.pt.replanning.singleTripStrategies.RandomSingleTripReRoute;
+import org.matsim.extensions.pt.routing.EnhancedRaptorIntermodalAccessEgress;
+import org.matsim.extensions.pt.routing.ptRoutingModes.PtIntermodalRoutingModesConfigGroup;
+import org.matsim.extensions.pt.routing.ptRoutingModes.PtIntermodalRoutingModesModule;
 import org.matsim.stuttgart.Utils;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
@@ -53,7 +64,8 @@ import playground.vsp.simpleParkingCostHandler.ParkingCostModule;
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
 
 /**
- * @author dwedekind, gleich
+ * @author dwedekind
+ * @author gleich
  */
 
 public class RunStuttgartWithAdditionalModules {
@@ -79,7 +91,7 @@ public class RunStuttgartWithAdditionalModules {
         // -- PREPARE CUSTOM MODULES
         String[] typedArgs = Arrays.copyOfRange( args, 1, args.length );
 
-        ConfigGroup[] customModulesToAdd = new ConfigGroup[]{ setupRaptorConfigGroup(), setupPTFaresGroup(), setupSBBTransit(), setupParkingCostConfigGroup()};
+        ConfigGroup[] customModulesToAdd = new ConfigGroup[]{ setupRaptorConfigGroup(), setupCompensatorsConfigGroup(), setupPTRoutingModes(), setupPTFaresGroup(), setupSBBTransit(), setupParkingCostConfigGroup()};
         ConfigGroup[] customModulesAll = new ConfigGroup[customModules.length + customModulesToAdd.length];
 
         int counter = 0;
@@ -106,6 +118,11 @@ public class RunStuttgartWithAdditionalModules {
         config.plansCalcRoute().setAccessEgressType(PlansCalcRouteConfigGroup.AccessEgressType.accessEgressModeToLink); //setInsertingAccessEgressWalk( true );
         config.qsim().setUsingTravelTimeCheckInTeleportation( true );
         config.qsim().setTrafficDynamics( TrafficDynamics.kinematicWaves );
+
+
+        List<String> modes = new ArrayList<>(Arrays.asList(config.subtourModeChoice().getModes()));
+        modes.add("pt_w_bike_allowed");
+        config.subtourModeChoice().setModes(modes.toArray(new String[0]));
 
 
         // -- OTHER --
@@ -194,13 +211,22 @@ public class RunStuttgartWithAdditionalModules {
                 addTravelDisutilityFactoryBinding( TransportMode.ride ).to( carTravelDisutilityFactoryKey() ); }
         } );
 
+
         // use scoring parameters for intermodal PT routing
         controler.addOverridingModule( new AbstractModule() {
             @Override
             public void install() {
-                bind(RaptorIntermodalAccessEgress.class).to(StuttgartRaptorIntermodalAccessEgress.class);
+                addPlanStrategyBinding("RandomSingleTripReRoute").toProvider(RandomSingleTripReRoute.class);
+                addPlanStrategyBinding("ChangeSingleTripModeAndRoute").toProvider(ChangeSingleTripModeAndRoute.class);
+
+                bind(RaptorIntermodalAccessEgress.class).to(EnhancedRaptorIntermodalAccessEgress.class);
             }
         } );
+
+
+        controler.addOverridingModule(new IntermodalTripFareCompensatorsModule());
+        controler.addOverridingModule(new PtIntermodalRoutingModesModule());
+
 
         controler.addOverridingModule( new AbstractModule() {
             @Override
@@ -241,10 +267,18 @@ public class RunStuttgartWithAdditionalModules {
 
     private static SwissRailRaptorConfigGroup setupRaptorConfigGroup() {
         SwissRailRaptorConfigGroup configRaptor = new SwissRailRaptorConfigGroup();
-
-        // -- Intermodal Routing --
+        String personAttributeBike = "canUseBike";
+        String personAttributeBikeValue = "true";
 
         configRaptor.setUseIntermodalAccessEgress(true);
+
+        for (SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet accessEgressParams: configRaptor.getIntermodalAccessEgressParameterSets()) {
+            if (accessEgressParams.getMode().equals(TransportMode.bike)) {
+                accessEgressParams.setPersonFilterAttribute(personAttributeBike);
+                accessEgressParams.setPersonFilterValue(personAttributeBikeValue);
+            }
+        }
+
 
         // AcessEgressWalk
         SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetAEWalk = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
@@ -269,8 +303,42 @@ public class RunStuttgartWithAdditionalModules {
     }
 
 
-    private static PtFaresConfigGroup setupPTFaresGroup() {
+    private static IntermodalTripFareCompensatorsConfigGroup setupCompensatorsConfigGroup() {
+        IntermodalTripFareCompensatorsConfigGroup compensatorsCfg = new IntermodalTripFareCompensatorsConfigGroup();
 
+        IntermodalTripFareCompensatorConfigGroup compensatorCfg = new IntermodalTripFareCompensatorConfigGroup();
+        compensatorCfg.setCompensationCondition(IntermodalTripFareCompensatorConfigGroup.CompensationCondition.PtModeUsedInSameTrip);
+        compensatorCfg.setDrtModesAsString(TransportMode.bike);
+        compensatorCfg.setPtModesAsString("pt");
+
+        // Based on own calculations considering theft, vandalism at Bike and Ride facilities etc...
+        compensatorCfg.setCompensationMoneyPerTrip(-0.3);
+
+        compensatorsCfg.addParameterSet(compensatorCfg);
+
+        return compensatorsCfg;
+    }
+
+
+    private static PtIntermodalRoutingModesConfigGroup setupPTRoutingModes() {
+        PtIntermodalRoutingModesConfigGroup ptRoutingModes = new PtIntermodalRoutingModesConfigGroup();
+        String personAttributeBike = "canUseBike";
+        String personAttributeBikeValue = "true";
+
+        PtIntermodalRoutingModesConfigGroup.PtIntermodalRoutingModeParameterSet routingModeParamSet = new PtIntermodalRoutingModesConfigGroup.PtIntermodalRoutingModeParameterSet();
+        routingModeParamSet.setDelegateMode(TransportMode.pt);
+        routingModeParamSet.setRoutingMode("pt_w_bike_allowed");
+        PtIntermodalRoutingModesConfigGroup.PersonAttribute2ValuePair personAttributeValue = new PtIntermodalRoutingModesConfigGroup.PersonAttribute2ValuePair();
+        personAttributeValue.setPersonFilterAttribute(personAttributeBike);
+        personAttributeValue.setPersonFilterValue(personAttributeBikeValue);
+        routingModeParamSet.addPersonAttribute2ValuePair(personAttributeValue);
+        ptRoutingModes.addPtIntermodalRoutingModeParameterSet(routingModeParamSet);
+
+        return ptRoutingModes;
+    }
+
+
+    private static PtFaresConfigGroup setupPTFaresGroup() {
         PtFaresConfigGroup configFares = new PtFaresConfigGroup();
 
         // For values, see https://www.vvs.de/tickets/zeittickets-abo-polygo/jahresticket-jedermann/
@@ -311,7 +379,6 @@ public class RunStuttgartWithAdditionalModules {
 
 
     private static SBBTransitConfigGroup setupSBBTransit() {
-
         SBBTransitConfigGroup sbbTransit = new SBBTransitConfigGroup();
         var modes = Set.of(TransportMode.train, "bus", "tram");
         sbbTransit.setDeterministicServiceModes(modes);
@@ -322,7 +389,6 @@ public class RunStuttgartWithAdditionalModules {
 
 
     private static ParkingCostConfigGroup setupParkingCostConfigGroup() {
-
         ParkingCostConfigGroup parkingCostConfigGroup = new ParkingCostConfigGroup();
 
         parkingCostConfigGroup.setFirstHourParkingCostLinkAttributeName("oneHourPCost");
