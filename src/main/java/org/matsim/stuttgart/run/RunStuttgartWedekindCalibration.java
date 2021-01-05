@@ -68,8 +68,8 @@ import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorith
  * @author gleich
  */
 
-public class RunStuttgartWithAdditionalModules {
-    private static final Logger log = Logger.getLogger(RunStuttgartWithAdditionalModules.class );
+public class RunStuttgartWedekindCalibration {
+    private static final Logger log = Logger.getLogger(RunStuttgartWedekindCalibration.class );
 
     public static void main(String[] args) {
 
@@ -111,7 +111,8 @@ public class RunStuttgartWithAdditionalModules {
 
         // -- CONTROLER --
         config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-
+        config.controler().setWriteTripsInterval(50);
+        
 
         // -- VSP DEFAULTS --
         config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.ignore );
@@ -151,7 +152,6 @@ public class RunStuttgartWithAdditionalModules {
         String outputDir = args[0].replace((args[0].substring(args[0].lastIndexOf("/") + 1)),"") + "output";
         config.controler().setOutputDirectory(outputDir);
 
-        // config.controler().setWriteTripsInterval(50);
 
         // -- SET PROPERTIES BY BASH SCRIPT (FOR CLUSTER USAGE ONLY)
         ConfigUtils.applyCommandline( config, typedArgs ) ;
