@@ -57,45 +57,26 @@
             <artifactId>vsp</artifactId>
             <version>${matsim.version}</version>
         </dependency>
-
         <dependency>
             <groupId>ch.sbb</groupId>
             <artifactId>matsim-sbb-extensions</artifactId>
             <version>12.11</version>
         </dependency>
-
-<!--
-        <dependency>
-            <groupId>com.github.matsim-scenarios</groupId>
-            <artifactId>matsim-los-angeles</artifactId>
-            <version>v1.1</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
--->
-
         <dependency>
             <groupId>com.github.matsim-org</groupId>
             <artifactId>gtfs2matsim</artifactId>
             <version>12.2</version>
         </dependency>
-
         <dependency>
             <groupId>com.beust</groupId>
             <artifactId>jcommander</artifactId>
             <version>1.71</version>
         </dependency>
-
         <dependency>
             <groupId>com.github.matsim-vsp</groupId>
             <artifactId>pt-extensions</artifactId>
             <version>fac7381209</version>
         </dependency>
-
 
     </dependencies>
 
