@@ -67,8 +67,9 @@ import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorith
  * @author gleich
  */
 
-public class RunStuttgartWedekindCalibration {
-    private static final Logger log = Logger.getLogger(RunStuttgartWedekindCalibration.class );
+public class StuttgartMasterThesisRunner {
+    private static final Logger log = Logger.getLogger(StuttgartMasterThesisRunner.class );
+
 
     public static void main(String[] args) {
 
@@ -76,10 +77,7 @@ public class RunStuttgartWedekindCalibration {
             log.info( arg );
         }
 
-        double bikeTeleportedModeSpeed = 4.0579732;
-        double bikeIntermodalTransferCosts = -0.3;
-        String[] chainModes = {"car, bike"};
-        Config config = prepareConfig(bikeTeleportedModeSpeed, bikeIntermodalTransferCosts, chainModes, args) ;
+        Config config = prepareConfig(args) ;
 
         String fareZoneShapeFileName = "fareZones_sp.shp";
         String parkingZoneShapeFileName = "parkingShapes.shp";
@@ -90,7 +88,7 @@ public class RunStuttgartWedekindCalibration {
     }
 
 
-    public static Config prepareConfig(double bikeTeleportedModeSpeed, double bikeIntermodalTransferCosts, String[] chainModes, String [] args, ConfigGroup... customModules) {
+    public static Config prepareConfig(String [] args, ConfigGroup... customModules) {
         OutputDirectoryLogging.catchLogEntries();
 
 
@@ -98,7 +96,7 @@ public class RunStuttgartWedekindCalibration {
 
         String[] typedArgs = Arrays.copyOfRange( args, 1, args.length );
 
-        ConfigGroup[] customModulesToAdd = new ConfigGroup[]{ setupRaptorConfigGroup(), setupCompensatorsConfigGroup(bikeIntermodalTransferCosts), setupPTRoutingModes(), setupPTFaresGroup(), setupSBBTransit(), setupParkingCostConfigGroup()};
+        ConfigGroup[] customModulesToAdd = new ConfigGroup[]{ setupRaptorConfigGroup(), setupCompensatorsConfigGroup(), setupPTRoutingModes(), setupPTFaresGroup(), setupSBBTransit(), setupParkingCostConfigGroup()};
         ConfigGroup[] customModulesAll = new ConfigGroup[customModules.length + customModulesToAdd.length];
 
         int counter = 0;
@@ -133,7 +131,7 @@ public class RunStuttgartWedekindCalibration {
         config.subtourModeChoice().setModes(modes.toArray(new String[0]));
 
         // -- CALIBRATION/ BASE CASE SETTINGS --
-        config.subtourModeChoice().setChainBasedModes(chainModes);
+        config.subtourModeChoice().setChainBasedModes(new String[]{"car, bike"});
         config.subtourModeChoice().setProbaForRandomSingleTripMode(0.5);
 
         // Remove old mode routing params for bike
@@ -144,7 +142,7 @@ public class RunStuttgartWedekindCalibration {
         PlansCalcRouteConfigGroup.ModeRoutingParams pars = new PlansCalcRouteConfigGroup.ModeRoutingParams();
         pars.setMode(TransportMode.bike);
         pars.setBeelineDistanceFactor(bikeBeelineDistanceFactor);
-        pars.setTeleportedModeSpeed(bikeTeleportedModeSpeed);
+        pars.setTeleportedModeSpeed(4.0579732);
         config.plansCalcRoute().addModeRoutingParams(pars);
 
         // -- OTHER --
@@ -325,7 +323,7 @@ public class RunStuttgartWedekindCalibration {
     }
 
 
-    private static IntermodalTripFareCompensatorsConfigGroup setupCompensatorsConfigGroup(double bikeIntermodalTransferCosts) {
+    private static IntermodalTripFareCompensatorsConfigGroup setupCompensatorsConfigGroup() {
         IntermodalTripFareCompensatorsConfigGroup compensatorsCfg = new IntermodalTripFareCompensatorsConfigGroup();
 
         IntermodalTripFareCompensatorConfigGroup compensatorCfg = new IntermodalTripFareCompensatorConfigGroup();
@@ -334,7 +332,7 @@ public class RunStuttgartWedekindCalibration {
         compensatorCfg.setPtModesAsString("pt");
 
         // Based on own calculations considering theft, vandalism at Bike and Ride facilities etc...
-        compensatorCfg.setCompensationMoneyPerTrip(bikeIntermodalTransferCosts);
+        compensatorCfg.setCompensationMoneyPerTrip(-0.3);
 
         compensatorsCfg.addParameterSet(compensatorCfg);
 
