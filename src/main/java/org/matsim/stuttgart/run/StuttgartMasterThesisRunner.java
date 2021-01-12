@@ -26,7 +26,6 @@ import ch.sbb.matsim.config.SBBTransitConfigGroup;
 import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
 import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
 import org.apache.log4j.Logger;
-import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.router.AnalysisMainModeIdentifier;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
@@ -68,8 +67,9 @@ import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorith
  * @author gleich
  */
 
-public class RunStuttgartWedekindCalibration {
-    private static final Logger log = Logger.getLogger(RunStuttgartWedekindCalibration.class );
+public class StuttgartMasterThesisRunner {
+    private static final Logger log = Logger.getLogger(StuttgartMasterThesisRunner.class );
+
 
     public static void main(String[] args) {
 
@@ -77,8 +77,12 @@ public class RunStuttgartWedekindCalibration {
             log.info( arg );
         }
 
-        Config config = prepareConfig( args ) ;
-        Scenario scenario = prepareScenario( config ) ;
+        Config config = prepareConfig(args) ;
+
+        String fareZoneShapeFileName = "fareZones_sp.shp";
+        String parkingZoneShapeFileName = "parkingShapes.shp";
+        Scenario scenario = prepareScenario(config ,fareZoneShapeFileName, parkingZoneShapeFileName) ;
+
         Controler controler = prepareControler( scenario ) ;
         controler.run() ;
     }
@@ -88,7 +92,8 @@ public class RunStuttgartWedekindCalibration {
         OutputDirectoryLogging.catchLogEntries();
 
 
-        // -- PREPARE CUSTOM MODULES
+        // -- PREPARE CUSTOM MODULES --
+
         String[] typedArgs = Arrays.copyOfRange( args, 1, args.length );
 
         ConfigGroup[] customModulesToAdd = new ConfigGroup[]{ setupRaptorConfigGroup(), setupCompensatorsConfigGroup(), setupPTRoutingModes(), setupPTFaresGroup(), setupSBBTransit(), setupParkingCostConfigGroup()};
@@ -105,14 +110,14 @@ public class RunStuttgartWedekindCalibration {
             counter++;
         }
 
-        // -- LOAD CONFIG WITH CUSTOM MODULES
+
+        // -- LOAD CONFIG WITH CUSTOM MODULES --
         final Config config = ConfigUtils.loadConfig( args[ 0 ], customModulesAll );
 
 
         // -- CONTROLER --
         config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
         config.controler().setWriteTripsInterval(50);
-        
 
         // -- VSP DEFAULTS --
         config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.ignore );
@@ -120,17 +125,30 @@ public class RunStuttgartWedekindCalibration {
         config.qsim().setUsingTravelTimeCheckInTeleportation( true );
         config.qsim().setTrafficDynamics( TrafficDynamics.kinematicWaves );
 
-
+        // -- INTERMODAL --
         List<String> modes = new ArrayList<>(Arrays.asList(config.subtourModeChoice().getModes()));
         modes.add("pt_w_bike_allowed");
         config.subtourModeChoice().setModes(modes.toArray(new String[0]));
 
+        // -- CALIBRATION/ BASE CASE SETTINGS --
+        config.subtourModeChoice().setChainBasedModes(new String[]{"car, bike"});
+        config.subtourModeChoice().setProbaForRandomSingleTripMode(0.5);
+
+        // Remove old mode routing params for bike
+        double bikeBeelineDistanceFactor = config.plansCalcRoute().getBeelineDistanceFactors().get(TransportMode.bike);
+        config.plansCalcRoute().removeModeRoutingParams(TransportMode.bike);
+
+        // Create new mode routing params for bike
+        PlansCalcRouteConfigGroup.ModeRoutingParams pars = new PlansCalcRouteConfigGroup.ModeRoutingParams();
+        pars.setMode(TransportMode.bike);
+        pars.setBeelineDistanceFactor(bikeBeelineDistanceFactor);
+        pars.setTeleportedModeSpeed(4.0579732);
+        config.plansCalcRoute().addModeRoutingParams(pars);
 
         // -- OTHER --
         config.qsim().setUsePersonIdForMissingVehicleId(false);
         config.controler().setRoutingAlgorithmType(FastAStarLandmarks);
-        config.subtourModeChoice().setProbaForRandomSingleTripMode( 0.5 );
-        config.qsim().setInsertingWaitingVehiclesBeforeDrivingVehicles( true );
+        config.qsim().setInsertingWaitingVehiclesBeforeDrivingVehicles(true);
 
 
         // -- ACTIVITIES --
@@ -148,12 +166,12 @@ public class RunStuttgartWedekindCalibration {
         Utils.createTypicalDurations("educ_higher", minDuration, maxDuration, difference).forEach(params -> config.planCalcScore().addActivityParams(params));
 
 
-        // -- SET OUTPUT DIRECTORY FOR HOME PC RUNS
+        // -- SET OUTPUT DIRECTORY FOR HOME PC RUNS --
         String outputDir = args[0].replace((args[0].substring(args[0].lastIndexOf("/") + 1)),"") + "output";
         config.controler().setOutputDirectory(outputDir);
 
 
-        // -- SET PROPERTIES BY BASH SCRIPT (FOR CLUSTER USAGE ONLY)
+        // -- SET PROPERTIES BY BASH SCRIPT (FOR CLUSTER USAGE ONLY) --
         ConfigUtils.applyCommandline( config, typedArgs ) ;
 
         log.info("Config successfully prepared...");
@@ -162,20 +180,22 @@ public class RunStuttgartWedekindCalibration {
     }
 
 
-    public static Scenario prepareScenario( Config config ) {
+    public static Scenario prepareScenario( Config config , String fareZoneShapeFileName, String parkingZoneShapeFileName) {
         Gbl.assertNotNull( config );
+
+
 
         Scenario scenario = ScenarioUtils.loadScenario(config);
 
         // Add fareZones and VVSBikeAndRideStops
         String schedulePath = config.transit().getTransitScheduleFileURL(config.getContext()).getPath();
         PrepareTransitSchedule ptPreparer = new PrepareTransitSchedule();
-        ptPreparer.run(scenario, schedulePath.substring(0, schedulePath.lastIndexOf('/')) + "/fareZones_sp.shp");
+        ptPreparer.run(scenario, schedulePath.substring(0, schedulePath.lastIndexOf('/')) + "/" + fareZoneShapeFileName);
 
         // Add parking costs to network
         String networkPath = config.network().getInputFileURL(config.getContext()).getPath();
         AddAdditionalNetworkAttributes parkingPreparer = new AddAdditionalNetworkAttributes();
-        parkingPreparer.run(scenario, networkPath.substring(0, networkPath.lastIndexOf('/')) + "/parkingShapes.shp");
+        parkingPreparer.run(scenario, networkPath.substring(0, networkPath.lastIndexOf('/')) + "/" + parkingZoneShapeFileName);
 
         log.info("Scenario successfully prepared...");
 
