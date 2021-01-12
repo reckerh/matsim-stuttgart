@@ -130,20 +130,6 @@ public class StuttgartMasterThesisRunner {
         modes.add("pt_w_bike_allowed");
         config.subtourModeChoice().setModes(modes.toArray(new String[0]));
 
-        // -- CALIBRATION/ BASE CASE SETTINGS --
-        config.subtourModeChoice().setChainBasedModes(new String[]{"car, bike"});
-        config.subtourModeChoice().setProbaForRandomSingleTripMode(0.5);
-
-        // Remove old mode routing params for bike
-        double bikeBeelineDistanceFactor = config.plansCalcRoute().getBeelineDistanceFactors().get(TransportMode.bike);
-        config.plansCalcRoute().removeModeRoutingParams(TransportMode.bike);
-
-        // Create new mode routing params for bike
-        PlansCalcRouteConfigGroup.ModeRoutingParams pars = new PlansCalcRouteConfigGroup.ModeRoutingParams();
-        pars.setMode(TransportMode.bike);
-        pars.setBeelineDistanceFactor(bikeBeelineDistanceFactor);
-        pars.setTeleportedModeSpeed(4.0579732);
-        config.plansCalcRoute().addModeRoutingParams(pars);
 
         // -- OTHER --
         config.qsim().setUsePersonIdForMissingVehicleId(false);
