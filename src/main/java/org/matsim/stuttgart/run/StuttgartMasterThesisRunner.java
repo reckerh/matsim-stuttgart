@@ -92,27 +92,10 @@ public class StuttgartMasterThesisRunner {
         OutputDirectoryLogging.catchLogEntries();
 
 
-        // -- PREPARE CUSTOM MODULES --
-
-        String[] typedArgs = Arrays.copyOfRange( args, 1, args.length );
-
-        ConfigGroup[] customModulesToAdd = new ConfigGroup[]{ setupRaptorConfigGroup(), setupCompensatorsConfigGroup(), setupPTRoutingModes(), setupPTFaresGroup(), setupSBBTransit(), setupParkingCostConfigGroup()};
-        ConfigGroup[] customModulesAll = new ConfigGroup[customModules.length + customModulesToAdd.length];
-
-        int counter = 0;
-        for (ConfigGroup customModule : customModules) {
-            customModulesAll[counter] = customModule;
-            counter++;
-        }
-
-        for (ConfigGroup customModule : customModulesToAdd) {
-            customModulesAll[counter] = customModule;
-            counter++;
-        }
-
-
         // -- LOAD CONFIG WITH CUSTOM MODULES --
-        final Config config = ConfigUtils.loadConfig( args[ 0 ], customModulesAll );
+        String[] typedArgs = Arrays.copyOfRange( args, 1, args.length );
+        final Config config = ConfigUtils.loadConfig( args[ 0 ] , customModules);
+        addOrGetAdditionalModules(config);
 
 
         // -- CONTROLER --
@@ -130,22 +113,9 @@ public class StuttgartMasterThesisRunner {
         modes.add("pt_w_bike_allowed");
         config.subtourModeChoice().setModes(modes.toArray(new String[0]));
 
-        // -- CALIBRATION/ BASE CASE SETTINGS --
-        config.subtourModeChoice().setChainBasedModes(new String[]{"car, bike"});
-        config.subtourModeChoice().setProbaForRandomSingleTripMode(0.5);
-
-        // Remove old mode routing params for bike
-        double bikeBeelineDistanceFactor = config.plansCalcRoute().getBeelineDistanceFactors().get(TransportMode.bike);
-        config.plansCalcRoute().removeModeRoutingParams(TransportMode.bike);
-
-        // Create new mode routing params for bike
-        PlansCalcRouteConfigGroup.ModeRoutingParams pars = new PlansCalcRouteConfigGroup.ModeRoutingParams();
-        pars.setMode(TransportMode.bike);
-        pars.setBeelineDistanceFactor(bikeBeelineDistanceFactor);
-        pars.setTeleportedModeSpeed(4.0579732);
-        config.plansCalcRoute().addModeRoutingParams(pars);
 
         // -- OTHER --
+        config.subtourModeChoice().setProbaForRandomSingleTripMode(0.5);
         config.qsim().setUsePersonIdForMissingVehicleId(false);
         config.controler().setRoutingAlgorithmType(FastAStarLandmarks);
         config.qsim().setInsertingWaitingVehiclesBeforeDrivingVehicles(true);
@@ -283,10 +253,53 @@ public class StuttgartMasterThesisRunner {
     }
 
 
+    private static void addOrGetAdditionalModules(Config config) {
+        SwissRailRaptorConfigGroup configRaptor = ConfigUtils.addOrGetModule(config,
+                SwissRailRaptorConfigGroup.class);
+        if (configRaptor.getParameterSets().isEmpty()) {
+            setupRaptorConfigGroup(configRaptor);
+
+        }
+
+        IntermodalTripFareCompensatorsConfigGroup compensatorsCfg = ConfigUtils.addOrGetModule(config,
+                IntermodalTripFareCompensatorsConfigGroup.class);
+        if (compensatorsCfg.getParameterSets().isEmpty()) {
+            setupCompensatorsConfigGroup(compensatorsCfg);
+
+        }
+
+        PtIntermodalRoutingModesConfigGroup ptRoutingModes = ConfigUtils.addOrGetModule(config,
+                PtIntermodalRoutingModesConfigGroup.class);
+        if (ptRoutingModes.getParameterSets().isEmpty()) {
+            setupPTRoutingModes(ptRoutingModes);
+
+        }
+
+        PtFaresConfigGroup configFares = ConfigUtils.addOrGetModule(config,
+                PtFaresConfigGroup.class);
+        if (configFares.getParameterSets().isEmpty()) {
+            setupPTFaresGroup(configFares);
+
+        }
+
+        SBBTransitConfigGroup sbbTransit = ConfigUtils.addOrGetModule(config,
+                SBBTransitConfigGroup.class);
+        if (sbbTransit.getParams().isEmpty()) {
+            setupSBBTransit(sbbTransit);
+
+        }
+
+        ParkingCostConfigGroup parkingCostConfigGroup = ConfigUtils.addOrGetModule(config,
+                ParkingCostConfigGroup.class);
+        if (parkingCostConfigGroup.getParams().isEmpty()) {
+            setupParkingCostConfigGroup(parkingCostConfigGroup);
+
+        }
+
+    }
 
 
-    private static SwissRailRaptorConfigGroup setupRaptorConfigGroup() {
-        SwissRailRaptorConfigGroup configRaptor = new SwissRailRaptorConfigGroup();
+    private static void setupRaptorConfigGroup(SwissRailRaptorConfigGroup configRaptor) {
         String personAttributeBike = "canUseBike";
         String personAttributeBikeValue = "true";
 
@@ -319,12 +332,10 @@ public class StuttgartMasterThesisRunner {
 
         configRaptor.addIntermodalAccessEgress(paramSetAEBike);
 
-        return configRaptor;
     }
 
 
-    private static IntermodalTripFareCompensatorsConfigGroup setupCompensatorsConfigGroup() {
-        IntermodalTripFareCompensatorsConfigGroup compensatorsCfg = new IntermodalTripFareCompensatorsConfigGroup();
+    private static void setupCompensatorsConfigGroup(IntermodalTripFareCompensatorsConfigGroup compensatorsCfg) {
 
         IntermodalTripFareCompensatorConfigGroup compensatorCfg = new IntermodalTripFareCompensatorConfigGroup();
         compensatorCfg.setCompensationCondition(IntermodalTripFareCompensatorConfigGroup.CompensationCondition.PtModeUsedInSameTrip);
@@ -336,12 +347,10 @@ public class StuttgartMasterThesisRunner {
 
         compensatorsCfg.addParameterSet(compensatorCfg);
 
-        return compensatorsCfg;
     }
 
 
-    private static PtIntermodalRoutingModesConfigGroup setupPTRoutingModes() {
-        PtIntermodalRoutingModesConfigGroup ptRoutingModes = new PtIntermodalRoutingModesConfigGroup();
+    private static void setupPTRoutingModes(PtIntermodalRoutingModesConfigGroup ptRoutingModes) {
         String personAttributeBike = "canUseBike";
         String personAttributeBikeValue = "true";
 
@@ -354,13 +363,10 @@ public class StuttgartMasterThesisRunner {
         routingModeParamSet.addPersonAttribute2ValuePair(personAttributeValue);
         ptRoutingModes.addPtIntermodalRoutingModeParameterSet(routingModeParamSet);
 
-        return ptRoutingModes;
     }
 
 
-    private static PtFaresConfigGroup setupPTFaresGroup() {
-        PtFaresConfigGroup configFares = new PtFaresConfigGroup();
-
+    private static void setupPTFaresGroup(PtFaresConfigGroup configFares) {
         // For values, see https://www.vvs.de/tickets/zeittickets-abo-polygo/jahresticket-jedermann/
 
         PtFaresConfigGroup.FaresGroup faresGroup = new PtFaresConfigGroup.FaresGroup();
@@ -394,23 +400,18 @@ public class StuttgartMasterThesisRunner {
         zonesGroup.addZone(new PtFaresConfigGroup.ZonesGroup.Zone("8", false));
         configFares.setZonesGroup(zonesGroup);
 
-        return configFares;
     }
 
 
-    private static SBBTransitConfigGroup setupSBBTransit() {
-        SBBTransitConfigGroup sbbTransit = new SBBTransitConfigGroup();
+    private static void setupSBBTransit(SBBTransitConfigGroup sbbTransit) {
         var modes = Set.of(TransportMode.train, "bus", "tram");
         sbbTransit.setDeterministicServiceModes(modes);
         sbbTransit.setCreateLinkEventsInterval(10);
 
-        return sbbTransit;
     }
 
 
-    private static ParkingCostConfigGroup setupParkingCostConfigGroup() {
-        ParkingCostConfigGroup parkingCostConfigGroup = new ParkingCostConfigGroup();
-
+    private static void setupParkingCostConfigGroup(ParkingCostConfigGroup parkingCostConfigGroup) {
         parkingCostConfigGroup.setFirstHourParkingCostLinkAttributeName("oneHourPCost");
         parkingCostConfigGroup.setExtraHourParkingCostLinkAttributeName("extraHourPCost");
         parkingCostConfigGroup.setMaxDailyParkingCostLinkAttributeName("maxDailyPCost");
@@ -418,7 +419,6 @@ public class StuttgartMasterThesisRunner {
         parkingCostConfigGroup.setParkingPenaltyAttributeName("pFine");
         parkingCostConfigGroup.setResidentialParkingFeeAttributeName("resPCosts");
 
-        return parkingCostConfigGroup;
     }
 
 
