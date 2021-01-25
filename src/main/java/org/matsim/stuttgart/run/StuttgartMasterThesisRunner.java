@@ -92,7 +92,7 @@ public class StuttgartMasterThesisRunner {
     }
 
 
-    public static Config prepareConfig(String [] args, ConfigGroup... customModules) {
+    public static Config prepareConfig(String [] args, ConfigGroup... customModules) throws URISyntaxException {
         OutputDirectoryLogging.catchLogEntries();
 
 
@@ -140,12 +140,11 @@ public class StuttgartMasterThesisRunner {
         Utils.createTypicalDurations("educ_higher", minDuration, maxDuration, difference).forEach(params -> config.planCalcScore().addActivityParams(params));
 
 
-        // -- SET OUTPUT DIRECTORY FOR HOME PC RUNS --
-        String outputDir = args[0].replace((args[0].substring(args[0].lastIndexOf("/") + 1)),"") + "output";
-        config.controler().setOutputDirectory(outputDir);
+        // -- SET DEFAULT OUTPUT DIRECTORY FOR HOME PC RUNS--
+        config.controler().setOutputDirectory(Paths.get(config.getContext().toURI()).getParent().resolve("/output").toString());
 
 
-        // -- SET PROPERTIES BY BASH SCRIPT (FOR CLUSTER USAGE ONLY) --
+        // -- APPLY COMMAND LINE --
         ConfigUtils.applyCommandline( config, typedArgs ) ;
 
         log.info("Config successfully prepared...");
