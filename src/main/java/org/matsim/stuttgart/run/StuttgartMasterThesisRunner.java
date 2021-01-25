@@ -18,6 +18,7 @@
  * *********************************************************************** */
 package org.matsim.stuttgart.run;
 
+import java.net.URISyntaxException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
@@ -73,7 +74,7 @@ public class StuttgartMasterThesisRunner {
     private static final Logger log = Logger.getLogger(StuttgartMasterThesisRunner.class );
 
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws URISyntaxException {
 
         for (String arg : args) {
             log.info( arg );
@@ -81,10 +82,9 @@ public class StuttgartMasterThesisRunner {
 
         Config config = prepareConfig(args) ;
 
-        Path configPath = Paths.get(config.getContext().getPath().replaceFirst("/", "")).getParent();
+        String fareZoneShapeFileName = (Paths.get(config.getContext().toURI()).getParent()).resolve("input/fareZones_sp.shp").toString();
+        String parkingZoneShapeFileName = (Paths.get(config.getContext().toURI()).getParent()).resolve("input/parkingShapes.shp").toString();
 
-        String fareZoneShapeFileName = configPath.resolve("./input/fareZones_sp.shp").toString();
-        String parkingZoneShapeFileName = configPath.resolve("./input/parkingShapes.shp").toString();
         Scenario scenario = prepareScenario(config ,fareZoneShapeFileName, parkingZoneShapeFileName) ;
 
         Controler controler = prepareControler( scenario ) ;
