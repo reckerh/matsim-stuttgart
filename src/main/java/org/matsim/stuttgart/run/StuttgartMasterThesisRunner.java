@@ -74,7 +74,7 @@ public class StuttgartMasterThesisRunner {
     private static final Logger log = Logger.getLogger(StuttgartMasterThesisRunner.class );
 
 
-    public static void main(String[] args) throws URISyntaxException {
+    public static void main(String[] args) {
 
         for (String arg : args) {
             log.info( arg );
@@ -82,17 +82,25 @@ public class StuttgartMasterThesisRunner {
 
         Config config = prepareConfig(args) ;
 
-        String fareZoneShapeFileName = (Paths.get(config.getContext().toURI()).getParent()).resolve("input/fareZones_sp.shp").toString();
-        String parkingZoneShapeFileName = (Paths.get(config.getContext().toURI()).getParent()).resolve("input/parkingShapes.shp").toString();
+        try {
 
-        Scenario scenario = prepareScenario(config ,fareZoneShapeFileName, parkingZoneShapeFileName) ;
+            String fareZoneShapeFileName = (Paths.get(config.getContext().toURI()).getParent()).resolve("input/fareZones_sp.shp").toString();
+            String parkingZoneShapeFileName = (Paths.get(config.getContext().toURI()).getParent()).resolve("input/parkingShapes.shp").toString();
+            Scenario scenario = prepareScenario(config, fareZoneShapeFileName, parkingZoneShapeFileName);
 
-        Controler controler = prepareControler( scenario ) ;
-        controler.run() ;
+            Controler controler = prepareControler(scenario) ;
+            controler.run() ;
+
+        } catch (URISyntaxException e) {
+            log.error("URISyntaxException: " + e);
+
+        }
+
+
     }
 
 
-    public static Config prepareConfig(String [] args, ConfigGroup... customModules) throws URISyntaxException {
+    public static Config prepareConfig(String [] args, ConfigGroup... customModules) {
         OutputDirectoryLogging.catchLogEntries();
 
 
@@ -141,8 +149,13 @@ public class StuttgartMasterThesisRunner {
 
 
         // -- SET DEFAULT OUTPUT DIRECTORY FOR HOME PC RUNS--
-        config.controler().setOutputDirectory(Paths.get(config.getContext().toURI()).getParent().resolve("/output").toString());
+        try {
+            config.controler().setOutputDirectory(Paths.get(config.getContext().toURI()).getParent().resolve("/output").toString());
 
+        } catch (URISyntaxException e) {
+            log.error("URISyntaxException: " + e);
+
+        }
 
         // -- APPLY COMMAND LINE --
         ConfigUtils.applyCommandline( config, typedArgs ) ;
