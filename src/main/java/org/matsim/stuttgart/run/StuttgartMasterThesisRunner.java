@@ -18,6 +18,9 @@
  * *********************************************************************** */
 package org.matsim.stuttgart.run;
 
+import java.net.URISyntaxException;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -79,12 +82,21 @@ public class StuttgartMasterThesisRunner {
 
         Config config = prepareConfig(args) ;
 
-        String fareZoneShapeFileName = "fareZones_sp.shp";
-        String parkingZoneShapeFileName = "parkingShapes.shp";
-        Scenario scenario = prepareScenario(config ,fareZoneShapeFileName, parkingZoneShapeFileName) ;
+        try {
 
-        Controler controler = prepareControler( scenario ) ;
-        controler.run() ;
+            String fareZoneShapeFileName = (Paths.get(config.getContext().toURI()).getParent()).resolve("input/fareZones_sp.shp").toString();
+            String parkingZoneShapeFileName = (Paths.get(config.getContext().toURI()).getParent()).resolve("input/parkingShapes.shp").toString();
+            Scenario scenario = prepareScenario(config, fareZoneShapeFileName, parkingZoneShapeFileName);
+
+            Controler controler = prepareControler(scenario) ;
+            controler.run() ;
+
+        } catch (URISyntaxException e) {
+            log.error("URISyntaxException: " + e);
+
+        }
+
+
     }
 
 
@@ -136,12 +148,16 @@ public class StuttgartMasterThesisRunner {
         Utils.createTypicalDurations("educ_higher", minDuration, maxDuration, difference).forEach(params -> config.planCalcScore().addActivityParams(params));
 
 
-        // -- SET OUTPUT DIRECTORY FOR HOME PC RUNS --
-        String outputDir = args[0].replace((args[0].substring(args[0].lastIndexOf("/") + 1)),"") + "output";
-        config.controler().setOutputDirectory(outputDir);
+        // -- SET DEFAULT OUTPUT DIRECTORY FOR HOME PC RUNS--
+        try {
+            config.controler().setOutputDirectory(Paths.get(config.getContext().toURI()).getParent().resolve("/output").toString());
 
+        } catch (URISyntaxException e) {
+            log.error("URISyntaxException: " + e);
 
-        // -- SET PROPERTIES BY BASH SCRIPT (FOR CLUSTER USAGE ONLY) --
+        }
+
+        // -- APPLY COMMAND LINE --
         ConfigUtils.applyCommandline( config, typedArgs ) ;
 
         log.info("Config successfully prepared...");
@@ -366,7 +382,7 @@ public class StuttgartMasterThesisRunner {
         // For values, see https://www.vvs.de/tickets/zeittickets-abo-polygo/jahresticket-jedermann/
 
         PtFaresConfigGroup.FaresGroup faresGroup = new PtFaresConfigGroup.FaresGroup();
-        faresGroup.setOutOfZonePrice(10.);
+        faresGroup.setOutOfZonePrice(8.);
         faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(1, 1.89));
         faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(2, 2.42));
         faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(3, 3.23));
