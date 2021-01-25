@@ -19,8 +19,8 @@ public class StuttgartMasterThesisRunTest {
         // Some config modifications for the reduced test
         config.controler().setLastIteration(2) ;
 
-        String fareZoneShapeFileName = "fareZones_sp.shp";
-        String parkingZoneShapeFileName = "parkingShapes.shp";
+        String fareZoneShapeFileName = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/02_stuttgart-v1.0_test/input/fareZones_sp.shp";
+        String parkingZoneShapeFileName = "C:/Users/david/OneDrive/02_Uni/02_Master/05_Masterarbeit/03_MATSim/02_runs/stuttgart-v1.0/02_stuttgart-v1.0_test/input/parkingShapes.shp";
         Scenario scenario = StuttgartMasterThesisRunner.prepareScenario(config, fareZoneShapeFileName, parkingZoneShapeFileName) ;
 
         Controler controler = StuttgartMasterThesisRunner.prepareControler(scenario) ;

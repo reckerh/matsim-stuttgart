@@ -150,22 +150,18 @@ public class StuttgartMasterThesisRunner {
     }
 
 
-    public static Scenario prepareScenario( Config config , String fareZoneShapeFileName, String parkingZoneShapeFileName) {
+    public static Scenario prepareScenario( Config config , String fareZoneShapeFilePath, String parkingZoneShapeFilePath) {
         Gbl.assertNotNull( config );
-
-
 
         Scenario scenario = ScenarioUtils.loadScenario(config);
 
         // Add fareZones and VVSBikeAndRideStops
-        String schedulePath = config.transit().getTransitScheduleFileURL(config.getContext()).getPath();
         PrepareTransitSchedule ptPreparer = new PrepareTransitSchedule();
-        ptPreparer.run(scenario, schedulePath.substring(0, schedulePath.lastIndexOf('/')) + "/" + fareZoneShapeFileName);
+        ptPreparer.run(scenario, fareZoneShapeFilePath);
 
         // Add parking costs to network
-        String networkPath = config.network().getInputFileURL(config.getContext()).getPath();
         AddAdditionalNetworkAttributes parkingPreparer = new AddAdditionalNetworkAttributes();
-        parkingPreparer.run(scenario, networkPath.substring(0, networkPath.lastIndexOf('/')) + "/" + parkingZoneShapeFileName);
+        parkingPreparer.run(scenario, parkingZoneShapeFilePath);
 
         log.info("Scenario successfully prepared...");
 
