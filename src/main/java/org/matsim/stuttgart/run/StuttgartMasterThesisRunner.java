@@ -18,6 +18,8 @@
  * *********************************************************************** */
 package org.matsim.stuttgart.run;
 
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -79,8 +81,10 @@ public class StuttgartMasterThesisRunner {
 
         Config config = prepareConfig(args) ;
 
-        String fareZoneShapeFileName = "fareZones_sp.shp";
-        String parkingZoneShapeFileName = "parkingShapes.shp";
+        Path configPath = Paths.get(config.getContext().getPath().replaceFirst("/", "")).getParent();
+
+        String fareZoneShapeFileName = configPath.resolve("./input/fareZones_sp.shp").toString();
+        String parkingZoneShapeFileName = configPath.resolve("./input/parkingShapes.shp").toString();
         Scenario scenario = prepareScenario(config ,fareZoneShapeFileName, parkingZoneShapeFileName) ;
 
         Controler controler = prepareControler( scenario ) ;
@@ -366,7 +370,7 @@ public class StuttgartMasterThesisRunner {
         // For values, see https://www.vvs.de/tickets/zeittickets-abo-polygo/jahresticket-jedermann/
 
         PtFaresConfigGroup.FaresGroup faresGroup = new PtFaresConfigGroup.FaresGroup();
-        faresGroup.setOutOfZonePrice(10.);
+        faresGroup.setOutOfZonePrice(8.);
         faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(1, 1.89));
         faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(2, 2.42));
         faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(3, 3.23));
