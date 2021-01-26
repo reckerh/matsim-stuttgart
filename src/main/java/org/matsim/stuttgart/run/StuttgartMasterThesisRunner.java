@@ -301,12 +301,12 @@ public class StuttgartMasterThesisRunner {
 
         }
 
-/*        if (! config.getModules().containsKey(SBBTransitConfigGroup.GROUP_NAME)){
+        if (! config.getModules().containsKey(SBBTransitConfigGroup.GROUP_NAME)){
             SBBTransitConfigGroup sbbTransit = ConfigUtils.addOrGetModule(config,
                     SBBTransitConfigGroup.class);
             setupSBBTransit(sbbTransit);
 
-        }*/
+        }
 
         if (! config.getModules().containsKey(ParkingCostConfigGroup.GROUP_NAME)){
             ParkingCostConfigGroup parkingCostConfigGroup = ConfigUtils.addOrGetModule(config,
