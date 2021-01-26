@@ -19,7 +19,6 @@
 package org.matsim.stuttgart.run;
 
 import java.net.URISyntaxException;
-import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -86,7 +85,8 @@ public class StuttgartMasterThesisRunner {
 
             String fareZoneShapeFileName = (Paths.get(config.getContext().toURI()).getParent()).resolve("input/fareZones_sp.shp").toString();
             String parkingZoneShapeFileName = (Paths.get(config.getContext().toURI()).getParent()).resolve("input/parkingShapes.shp").toString();
-            Scenario scenario = prepareScenario(config, fareZoneShapeFileName, parkingZoneShapeFileName);
+            Scenario scenario = prepareScenario(config);
+            finishScenario(scenario, fareZoneShapeFileName, parkingZoneShapeFileName);
 
             Controler controler = prepareControler(scenario) ;
             controler.run() ;
@@ -166,11 +166,15 @@ public class StuttgartMasterThesisRunner {
     }
 
 
-    public static Scenario prepareScenario( Config config , String fareZoneShapeFilePath, String parkingZoneShapeFilePath) {
+    public static Scenario prepareScenario( Config config ) {
         Gbl.assertNotNull( config );
-
         Scenario scenario = ScenarioUtils.loadScenario(config);
+        return scenario;
 
+    }
+
+
+    public static void finishScenario(Scenario scenario, String fareZoneShapeFilePath, String parkingZoneShapeFilePath){
         // Add fareZones and VVSBikeAndRideStops
         PrepareTransitSchedule ptPreparer = new PrepareTransitSchedule();
         ptPreparer.run(scenario, fareZoneShapeFilePath);
@@ -181,7 +185,6 @@ public class StuttgartMasterThesisRunner {
 
         log.info("Scenario successfully prepared...");
 
-        return scenario;
     }
 
 
