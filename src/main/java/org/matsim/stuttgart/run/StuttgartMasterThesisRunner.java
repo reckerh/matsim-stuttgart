@@ -116,7 +116,7 @@ public class StuttgartMasterThesisRunner {
 
         // -- VSP DEFAULTS --
         config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.ignore );
-        config.plansCalcRoute().setAccessEgressType(PlansCalcRouteConfigGroup.AccessEgressType.accessEgressModeToLink); //setInsertingAccessEgressWalk( true );
+        config.plansCalcRoute().setAccessEgressType(PlansCalcRouteConfigGroup.AccessEgressType.accessEgressModeToLink);
         config.qsim().setUsingTravelTimeCheckInTeleportation( true );
         config.qsim().setTrafficDynamics( TrafficDynamics.kinematicWaves );
 
@@ -258,7 +258,6 @@ public class StuttgartMasterThesisRunner {
 
         controler.configureQSimComponents(SBBTransitEngineQSimModule::configure);
 
-
         // use parking cost module
         controler.addOverridingModule(new ParkingCostModule());
 
@@ -272,44 +271,46 @@ public class StuttgartMasterThesisRunner {
 
 
     private static void addOrGetAdditionalModules(Config config) {
-        SwissRailRaptorConfigGroup configRaptor = ConfigUtils.addOrGetModule(config,
-                SwissRailRaptorConfigGroup.class);
-        if (configRaptor.getParameterSets().isEmpty()) {
+        // Configure additional modules in standard way unless defined different in the input file
+
+        if (! config.getModules().containsKey(SwissRailRaptorConfigGroup.GROUP)){
+            SwissRailRaptorConfigGroup configRaptor = ConfigUtils.addOrGetModule(config,
+                    SwissRailRaptorConfigGroup.class);
             setupRaptorConfigGroup(configRaptor);
 
         }
 
-        IntermodalTripFareCompensatorsConfigGroup compensatorsCfg = ConfigUtils.addOrGetModule(config,
-                IntermodalTripFareCompensatorsConfigGroup.class);
-        if (compensatorsCfg.getParameterSets().isEmpty()) {
+        if (! config.getModules().containsKey(IntermodalTripFareCompensatorsConfigGroup.GROUP_NAME)){
+            IntermodalTripFareCompensatorsConfigGroup compensatorsCfg = ConfigUtils.addOrGetModule(config,
+                    IntermodalTripFareCompensatorsConfigGroup.class);
             setupCompensatorsConfigGroup(compensatorsCfg);
 
         }
 
-        PtIntermodalRoutingModesConfigGroup ptRoutingModes = ConfigUtils.addOrGetModule(config,
-                PtIntermodalRoutingModesConfigGroup.class);
-        if (ptRoutingModes.getParameterSets().isEmpty()) {
+        if (! config.getModules().containsKey(PtIntermodalRoutingModesConfigGroup.GROUP)){
+            PtIntermodalRoutingModesConfigGroup ptRoutingModes = ConfigUtils.addOrGetModule(config,
+                    PtIntermodalRoutingModesConfigGroup.class);
             setupPTRoutingModes(ptRoutingModes);
 
         }
 
-        PtFaresConfigGroup configFares = ConfigUtils.addOrGetModule(config,
-                PtFaresConfigGroup.class);
-        if (configFares.getParameterSets().isEmpty()) {
+        if (! config.getModules().containsKey(PtFaresConfigGroup.GROUP_NAME)){
+            PtFaresConfigGroup configFares = ConfigUtils.addOrGetModule(config,
+                    PtFaresConfigGroup.class);
             setupPTFaresGroup(configFares);
 
         }
 
-        SBBTransitConfigGroup sbbTransit = ConfigUtils.addOrGetModule(config,
-                SBBTransitConfigGroup.class);
-        if (sbbTransit.getParams().isEmpty()) {
+/*        if (! config.getModules().containsKey(SBBTransitConfigGroup.GROUP_NAME)){
+            SBBTransitConfigGroup sbbTransit = ConfigUtils.addOrGetModule(config,
+                    SBBTransitConfigGroup.class);
             setupSBBTransit(sbbTransit);
 
-        }
+        }*/
 
-        ParkingCostConfigGroup parkingCostConfigGroup = ConfigUtils.addOrGetModule(config,
-                ParkingCostConfigGroup.class);
-        if (parkingCostConfigGroup.getParams().isEmpty()) {
+        if (! config.getModules().containsKey(ParkingCostConfigGroup.GROUP_NAME)){
+            ParkingCostConfigGroup parkingCostConfigGroup = ConfigUtils.addOrGetModule(config,
+                    ParkingCostConfigGroup.class);
             setupParkingCostConfigGroup(parkingCostConfigGroup);
 
         }
