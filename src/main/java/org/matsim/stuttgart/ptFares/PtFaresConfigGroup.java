@@ -3,6 +3,7 @@ package org.matsim.stuttgart.ptFares;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ReflectiveConfigGroup;
 import org.matsim.core.utils.collections.CollectionUtils;
+import org.matsim.extensions.pt.routing.ptRoutingModes.PtIntermodalRoutingModesConfigGroup;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,8 +23,8 @@ public class PtFaresConfigGroup extends ReflectiveConfigGroup {
 
     private static String ptFareZoneAttributeName = "ptFareZone";
     private static String ptInteractionPrefix = "pt interaction";
-    private ZonesGroup zonesGroup = new ZonesGroup();
-    private FaresGroup faresGroup = new FaresGroup();
+    private ZonesGroup zonesGroup;
+    private FaresGroup faresGroup;
 
 
     public PtFaresConfigGroup() {
@@ -70,17 +71,31 @@ public class PtFaresConfigGroup extends ReflectiveConfigGroup {
         return faresGroup;
     }
 
+    @Override
+    public ConfigGroup createParameterSet(String type) {
+        if (ZonesGroup.TYPE.equals(type)) {
+            return new PtFaresConfigGroup.ZonesGroup();
+
+        } else if (FaresGroup.TYPE.equals(type)) {
+            return new PtFaresConfigGroup.FaresGroup();
+
+        } else {
+            throw new IllegalArgumentException("Unsupported parameterset-type: " + type);
+        }
+
+    }
+
 
 
     public static class ZonesGroup extends ReflectiveConfigGroup{
-        public static final String GROUP_NAME = "zones";
+        public static final String TYPE = "zones";
         private static final String OUT_OF_ZONE_TAG = "outOfZoneTag";
 
         private static final Set<Zone> zones = new HashSet<>();
         private static String outOfZoneTag = "out";
 
         public ZonesGroup() {
-            super(GROUP_NAME);
+            super(TYPE);
         }
 
         @StringGetter(OUT_OF_ZONE_TAG)
@@ -118,22 +133,32 @@ public class PtFaresConfigGroup extends ReflectiveConfigGroup {
             return allZones;
         }
 
+        @Override
+        public ConfigGroup createParameterSet(String type) {
+            if (Zone.TYPE.equals(type)) {
+                return new PtFaresConfigGroup.ZonesGroup.Zone();
+            } else {
+                throw new IllegalArgumentException("Unsupported parameterset-type: " + type);
+            }
+
+        }
+
 
         public static class Zone extends ReflectiveConfigGroup{
-            public static final String GROUP_NAME = "zone";
+            public static final String TYPE = "zone";
 
             public Zone() {
-                super(GROUP_NAME);
+                super(TYPE);
             }
 
             public Zone(String zoneName, boolean isHybrid) {
-                super(GROUP_NAME);
+                super(TYPE);
                 setZoneName(zoneName);
                 setIsHybrid(isHybrid);
             }
 
             public Zone(String zoneName, boolean isHybrid, Set<String> zoneAssignment) {
-                super(GROUP_NAME);
+                super(TYPE);
                 setZoneName(zoneName);
                 setIsHybrid(isHybrid);
                 setZoneAssignment(zoneAssignment);
@@ -192,7 +217,7 @@ public class PtFaresConfigGroup extends ReflectiveConfigGroup {
 
 
     public static class FaresGroup extends ReflectiveConfigGroup{
-        public static final String GROUP_NAME = "fares";
+        public static final String TYPE = "fares";
 
         private static final String OUT_OF_ZONE_PRICE = "outOfZonePrice";
 
@@ -201,7 +226,7 @@ public class PtFaresConfigGroup extends ReflectiveConfigGroup {
         private static final Map<Integer, Fare> fares = new HashMap<>();
 
         public FaresGroup() {
-            super(GROUP_NAME);
+            super(TYPE);
         }
 
 
@@ -231,8 +256,18 @@ public class PtFaresConfigGroup extends ReflectiveConfigGroup {
             return fares.get(numberZones).getTicketPrice();
         }
 
+        @Override
+        public ConfigGroup createParameterSet(String type) {
+            if (FaresGroup.Fare.TYPE.equals(type)) {
+                return new PtFaresConfigGroup.FaresGroup.Fare();
+            } else {
+                throw new IllegalArgumentException("Unsupported parameterset-type: " + type);
+            }
+
+        }
+
         public static class Fare extends ReflectiveConfigGroup{
-            public static final String GROUP_NAME = "zone";
+            public static final String TYPE = "zone";
             private static final String NUMBER_ZONES = "numberZones";
             private static final String TICKET_PRICE = "ticketPrice";
 
@@ -240,11 +275,11 @@ public class PtFaresConfigGroup extends ReflectiveConfigGroup {
             private double ticketPrice = 0.;
 
             public Fare() {
-                super(GROUP_NAME);
+                super(TYPE);
             }
 
             public Fare(int numberZones, double ticketPrice) {
-                super(GROUP_NAME);
+                super(TYPE);
                 setNumberZones(numberZones);
                 setTicketPrice(ticketPrice);
             }
