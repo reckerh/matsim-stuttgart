@@ -35,11 +35,12 @@ public class Utils {
     public static List<PlanCalcScoreConfigGroup.ActivityParams> createActivityPatterns(String type, long minDurationInSeconds, long maxDurationInSeconds, long durationDifferenceInSeconds, double openingHour, double closingHour) {
 
         List<PlanCalcScoreConfigGroup.ActivityParams> result = createActivityPatterns(type, minDurationInSeconds, maxDurationInSeconds, durationDifferenceInSeconds);
-        result.forEach(activityParams -> {
+        for (var activityParams: result){
             activityParams.setOpeningTime(openingHour * 3600.);
             activityParams.setClosingTime(closingHour * 3600.);
-        });
+        }
         return result;
+
     }
 
 
