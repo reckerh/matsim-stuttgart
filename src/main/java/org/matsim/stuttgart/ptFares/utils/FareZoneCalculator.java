@@ -21,8 +21,8 @@ public class FareZoneCalculator {
     public FareZoneCalculator(Scenario scenario, PtFaresConfigGroup ptFaresConfigGroup){
         this.scenario = scenario;
         this.ptFaresConfigGroup = ptFaresConfigGroup;
-        this.hybridZones = ptFaresConfigGroup.getZonesGroup().getAllHybridZones();
-        this.baseZones = ptFaresConfigGroup.getZonesGroup().getAllBaseZones();
+        this.hybridZones = ptFaresConfigGroup.getZonesGroup().getHybridZoneStringsWithCorrBaseZones();
+        this.baseZones = ptFaresConfigGroup.getZonesGroup().getBaseZoneStrings();
         this.outOfZoneTag = ptFaresConfigGroup.getZonesGroup().getOutOfZoneTag();
 
         fareZoneConsistencyChecker();
@@ -38,9 +38,7 @@ public class FareZoneCalculator {
         Set<String> fareZonesInSchedule = scenario.getTransitSchedule().getFacilities().values().stream()
                 .map(transitStopFacility -> (String) transitStopFacility.getAttributes().getAttribute(ptFaresConfigGroup.getPtFareZoneAttributeName()))
                 .collect(Collectors.toSet());
-        Set<String> fareZonesInConfig = ptFaresConfigGroup.getZonesGroup().getAllZones().stream()
-                .map(PtFaresConfigGroup.ZonesGroup.Zone::getZoneName)
-                .collect(Collectors.toSet());
+        Set<String> fareZonesInConfig = ptFaresConfigGroup.getZonesGroup().getZones().stream().map(PtFaresConfigGroup.ZonesGroup.Zone::getZoneName).collect(Collectors.toSet());
         for (var fareZone:fareZonesInSchedule){
             if (! fareZonesInConfig.contains(fareZone) && ! fareZone.equals(ptFaresConfigGroup.getZonesGroup().getOutOfZoneTag())){
                 log.error(String.format("Fare zone '%s' in transit schedule is not defined in fare zone config.", fareZone));
@@ -52,7 +50,7 @@ public class FareZoneCalculator {
         // Step 2: Check that base zones are castable to integer
         // Stuttgart specific implementation
         try{
-            for (String baseZone:ptFaresConfigGroup.getZonesGroup().getAllBaseZones()){
+            for (String baseZone:ptFaresConfigGroup.getZonesGroup().getBaseZoneStrings()){
                 Integer.parseInt(baseZone);
             }
 
@@ -64,9 +62,9 @@ public class FareZoneCalculator {
 
         // Step 3: Check if the correct number of fares is defined
 
-        int numberOfZones = ptFaresConfigGroup.getZonesGroup().getAllBaseZones().size();
+        int numberOfZones = ptFaresConfigGroup.getZonesGroup().getBaseZoneStrings().size();
         for (int i = 0; i < numberOfZones; i++){
-            if (! ptFaresConfigGroup.getFaresGroup().getAllFares().containsKey(i+1)){
+            if (! ptFaresConfigGroup.getFaresGroup().getFaresAsMap().containsKey(i+1)){
                 log.error(String.format("Fare with number of zones [ %s ] has to be defined.", i + 1));
                 checkFailed = true;
             }

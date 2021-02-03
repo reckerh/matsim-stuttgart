@@ -226,7 +226,7 @@ public class PtFaresHandlerTest {
     private static SBBTransitConfigGroup setupSBBTransit() {
 
         SBBTransitConfigGroup sbbTransit = new SBBTransitConfigGroup();
-        Set<String> modes = new HashSet<>(Arrays.asList("train"));
+        Set<String> modes = new HashSet<>(Collections.singletonList("train"));
         sbbTransit.setDeterministicServiceModes(modes);
         sbbTransit.setCreateLinkEventsInterval(0);
 
