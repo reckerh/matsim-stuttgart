@@ -20,7 +20,7 @@ import java.util.List;
 public class Utils {
 
     // Copied from https://github.com/matsim-vsp/mosaik-2/blob/master/src/main/java/org/matsim/mosaik2/Utils.java
-    public static List<PlanCalcScoreConfigGroup.ActivityParams> createTypicalDurations(String type, long minDurationInSeconds, long maxDurationInSeconds, long durationDifferenceInSeconds) {
+    public static List<PlanCalcScoreConfigGroup.ActivityParams> createActivityPatterns(String type, long minDurationInSeconds, long maxDurationInSeconds, long durationDifferenceInSeconds) {
 
         List<PlanCalcScoreConfigGroup.ActivityParams> result = new ArrayList<>();
         for (long duration = minDurationInSeconds; duration <= maxDurationInSeconds; duration += durationDifferenceInSeconds) {
@@ -30,6 +30,19 @@ public class Utils {
         }
         return result;
     }
+
+
+    public static List<PlanCalcScoreConfigGroup.ActivityParams> createActivityPatterns(String type, long minDurationInSeconds, long maxDurationInSeconds, long durationDifferenceInSeconds, double openingHour, double closingHour) {
+
+        List<PlanCalcScoreConfigGroup.ActivityParams> result = createActivityPatterns(type, minDurationInSeconds, maxDurationInSeconds, durationDifferenceInSeconds);
+        for (var activityParams: result){
+            activityParams.setOpeningTime(openingHour * 3600.);
+            activityParams.setClosingTime(closingHour * 3600.);
+        }
+        return result;
+
+    }
+
 
     public static CoordinateTransformation getTransformationWGS84ToUTM32() {
         return TransformationFactory.getCoordinateTransformation("EPSG:4326", "EPSG:25832");
