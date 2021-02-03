@@ -294,7 +294,7 @@ public class StuttgartMasterThesisRunner {
 
         }
 
-        if (! config.getModules().containsKey(PtFaresConfigGroup.GROUP_NAME)){
+        if (! config.getModules().containsKey(PtFaresConfigGroup.GROUP)){
             PtFaresConfigGroup configFares = ConfigUtils.addOrGetModule(config,
                     PtFaresConfigGroup.class);
             setupPTFaresGroup(configFares);

@@ -3,7 +3,6 @@ package org.matsim.stuttgart.ptFares;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ReflectiveConfigGroup;
 import org.matsim.core.utils.collections.CollectionUtils;
-import org.matsim.extensions.pt.routing.ptRoutingModes.PtIntermodalRoutingModesConfigGroup;
 
 import java.util.HashMap;
 import java.util.HashSet;
@@ -17,7 +16,7 @@ import java.util.stream.Collectors;
 
 public class PtFaresConfigGroup extends ReflectiveConfigGroup {
 
-    public static final String GROUP_NAME = "ptFares";
+    public static final String GROUP = "ptFares";
     private static final String PT_FARE_ZONE_ATTRIBUTE_NAME = "ptFareZoneAttributeName";
     private static final String PT_INTERACTION_PREFIX = "ptInteractionPrefix";
 
@@ -28,7 +27,7 @@ public class PtFaresConfigGroup extends ReflectiveConfigGroup {
 
 
     public PtFaresConfigGroup() {
-        super(GROUP_NAME);
+        super(GROUP);
     }
 
 

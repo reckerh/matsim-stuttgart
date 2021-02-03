@@ -3,7 +3,6 @@ package org.matsim.stuttgart.ptFares;
 import org.junit.Test;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
-import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
 
 import java.util.Map;
 
@@ -14,7 +13,8 @@ public class PtFaresConfigGroupTest {
         String configPath = "test/input/ptFares/config_withPtFares.xml";
 
         Config config = ConfigUtils.loadConfig(configPath, new PtFaresConfigGroup());
-        PtFaresConfigGroup ptFaresConfigGroup = ConfigUtils.addOrGetModule(config, PtFaresConfigGroup.GROUP_NAME, PtFaresConfigGroup.class);
+
+        PtFaresConfigGroup ptFaresConfigGroup = ConfigUtils.addOrGetModule(config, PtFaresConfigGroup.GROUP, PtFaresConfigGroup.class);
 
         Map<Integer, Double> zones2Fares = ptFaresConfigGroup.getFaresGroup().getAllFares();
 
@@ -22,7 +22,10 @@ public class PtFaresConfigGroupTest {
             System.out.println("No. zones: " + set.getKey().toString() + " => fare: " + set.getValue().toString());
         }
 
-        
+
+
+
+
 
     }
 

@@ -179,35 +179,35 @@
 		<param name="ptInteractionPrefix" value="pt interaction" />
 		<parameterset type="fares" >
 			<param name="outOfZonePrice" value="8.0" />
-			<parameterset type="zone" >
+			<parameterset type="fare" >
 				<param name="numberZones" value="1" />
 				<param name="ticketPrice" value="0.0" />
 			</parameterset>
-			<parameterset type="zone" >
+			<parameterset type="fare" >
 				<param name="numberZones" value="2" />
 				<param name="ticketPrice" value="0.0" />
 			</parameterset>
-			<parameterset type="zone" >
+			<parameterset type="fare" >
 				<param name="numberZones" value="3" />
 				<param name="ticketPrice" value="0.0" />
 			</parameterset>
-			<parameterset type="zone" >
+			<parameterset type="fare" >
 				<param name="numberZones" value="4" />
 				<param name="ticketPrice" value="0.0" />
 			</parameterset>
-			<parameterset type="zone" >
+			<parameterset type="fare" >
 				<param name="numberZones" value="5" />
 				<param name="ticketPrice" value="0.0" />
 			</parameterset>
-			<parameterset type="zone" >
+			<parameterset type="fare" >
 				<param name="numberZones" value="6" />
 				<param name="ticketPrice" value="0.0" />
 			</parameterset>
-			<parameterset type="zone" >
+			<parameterset type="fare" >
 				<param name="numberZones" value="7" />
 				<param name="ticketPrice" value="0.0" />
 			</parameterset>
-			<parameterset type="zone" >
+			<parameterset type="fare" >
 				<param name="numberZones" value="8" />
 				<param name="ticketPrice" value="0.0" />
 			</parameterset>
