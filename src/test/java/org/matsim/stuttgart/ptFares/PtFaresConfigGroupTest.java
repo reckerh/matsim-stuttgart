@@ -7,7 +7,7 @@ import org.matsim.core.config.ConfigUtils;
 public class PtFaresConfigGroupTest {
 
     @Test
-    public final void runPtFaresConfigGroup_v2Test(){
+    public final void runPtFaresConfigGroupTest(){
         String configPath = "test/input/ptFares/config_withPtFares.xml";
 
         Config config = ConfigUtils.loadConfig(configPath, new PtFaresConfigGroup());
