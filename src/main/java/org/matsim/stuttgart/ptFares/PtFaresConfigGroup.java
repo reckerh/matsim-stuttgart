@@ -15,27 +15,68 @@ import java.util.stream.Collectors;
  */
 
 public class PtFaresConfigGroup extends ReflectiveConfigGroup {
+    public static final String GROUP = "ptFares";
 
-    public static final String GROUP_NAME = "ptFares";
     private static final String PT_FARE_ZONE_ATTRIBUTE_NAME = "ptFareZoneAttributeName";
     private static final String PT_INTERACTION_PREFIX = "ptInteractionPrefix";
 
     private static String ptFareZoneAttributeName = "ptFareZone";
     private static String ptInteractionPrefix = "pt interaction";
-    private ZonesGroup zonesGroup = new ZonesGroup();
-    private FaresGroup faresGroup = new FaresGroup();
 
+    private PtFaresConfigGroup.ZonesGroup zonesGroup;
+    private PtFaresConfigGroup.FaresGroup faresGroup;
 
     public PtFaresConfigGroup() {
-        super(GROUP_NAME);
+        super(GROUP);
     }
 
+    @Override
+    public ConfigGroup createParameterSet(String type) {
+        if (PtFaresConfigGroup.ZonesGroup.TYPE.equals(type)) {
+            return new PtFaresConfigGroup.ZonesGroup();
+        } else if (PtFaresConfigGroup.FaresGroup.TYPE.equals(type)) {
+            return new PtFaresConfigGroup.FaresGroup();
+        } else {
+            throw new IllegalArgumentException("Unsupported parameterset-type: " + type);
+        }
+    }
+
+    public void addParameterSet(ConfigGroup cfg) {
+        if (cfg instanceof PtFaresConfigGroup.ZonesGroup) {
+            this.setZonesGroup((ZonesGroup)cfg);
+        } else if (cfg instanceof PtFaresConfigGroup.FaresGroup) {
+            this.setFaresGroup((FaresGroup) cfg);
+        } else {
+            throw new IllegalArgumentException("Unsupported parameterset: " + cfg.getClass().getName());
+        }
+    }
+
+    public PtFaresConfigGroup.ZonesGroup setZonesGroup(PtFaresConfigGroup.ZonesGroup cfg) {
+        PtFaresConfigGroup.ZonesGroup old = getZonesGroup();
+        this.zonesGroup = cfg;
+        super.addParameterSet(cfg);
+        return old;
+    }
+
+    public PtFaresConfigGroup.FaresGroup setFaresGroup(PtFaresConfigGroup.FaresGroup cfg) {
+        PtFaresConfigGroup.FaresGroup old = getFaresGroup();
+        this.faresGroup = cfg;
+        super.addParameterSet(cfg);
+        return old;
+    }
+
+    public PtFaresConfigGroup.ZonesGroup getZonesGroup() {
+        return this.zonesGroup;
+    }
+
+    public PtFaresConfigGroup.FaresGroup getFaresGroup() {
+        return this.faresGroup;
+    }
 
     @StringGetter(PT_FARE_ZONE_ATTRIBUTE_NAME)
     public String getPtFareZoneAttributeName() {
         return ptFareZoneAttributeName;
     }
-
 
     @StringSetter(PT_FARE_ZONE_ATTRIBUTE_NAME)
     public void setPtFareZoneAttributeName(String attributeName) {
@@ -52,35 +93,68 @@ public class PtFaresConfigGroup extends ReflectiveConfigGroup {
         ptInteractionPrefix = attributeName;
     }
 
-    public void setZonesGroup(ZonesGroup zonesGroup) {
-        super.addParameterSet(zonesGroup);
-        this.zonesGroup = zonesGroup;
-    }
 
-    public ZonesGroup getZonesGroup() {
-        return zonesGroup;
-    }
-
-    public void setFaresGroup(FaresGroup faresGroup) {
-        super.addParameterSet(faresGroup);
-        this.faresGroup = faresGroup;
-    }
-
-    public FaresGroup getFaresGroup() {
-        return faresGroup;
-    }
-
-
-
-    public static class ZonesGroup extends ReflectiveConfigGroup{
-        public static final String GROUP_NAME = "zones";
+    public static class ZonesGroup extends ReflectiveConfigGroup {
+        public static final String TYPE = "zones";
         private static final String OUT_OF_ZONE_TAG = "outOfZoneTag";
 
-        private static final Set<Zone> zones = new HashSet<>();
         private static String outOfZoneTag = "out";
+        private static final Set<PtFaresConfigGroup.ZonesGroup.Zone> zones = new HashSet<>();
 
         public ZonesGroup() {
-            super(GROUP_NAME);
+            super(TYPE);
+        }
+
+        @Override
+        public ConfigGroup createParameterSet(String type) {
+            if (Zone.TYPE.equals(type)) {
+                return new PtFaresConfigGroup.ZonesGroup.Zone();
+            } else {
+                throw new IllegalArgumentException("Unsupported parameterset-type: " + type);
+            }
+        }
+
+        public void addParameterSet(ConfigGroup cfg) {
+            if (cfg instanceof PtFaresConfigGroup.ZonesGroup.Zone) {
+                this.addZone((ZonesGroup.Zone)cfg);
+            } else {
+                throw new IllegalArgumentException("Unsupported parameterset: " + cfg.getClass().getName());
+            }
+        }
+
+        public void addZone(PtFaresConfigGroup.ZonesGroup.Zone zone) {
+            super.addParameterSet(zone);
+            zones.add(zone);
+        }
+
+        public Set<PtFaresConfigGroup.ZonesGroup.Zone> getZones(){
+            return zones;
+        }
+
+        public Set<Zone> getBaseZones(){
+            return zones.stream()
+                    .filter(zones -> !zones.isHybrid)
+                    .collect(Collectors.toSet());
+        }
+
+        public Set<String> getBaseZoneStrings(){
+            return getBaseZones().stream()
+                    .map(Zone::getZoneName)
+                    .collect(Collectors.toSet());
+        }
+
+        public Set<Zone> getHybridZones(){
+            return zones.stream()
+                    .filter(zones -> zones.isHybrid)
+                    .collect(Collectors.toSet());
+        }
+
+        public Map<String, Set<String>> getHybridZoneStringsWithCorrBaseZones(){
+            return getHybridZones().stream()
+                    .collect(Collectors.toMap(
+                            Zone::getZoneName,
+                            Zone::getZoneAssignment)
+                    );
         }
 
         @StringGetter(OUT_OF_ZONE_TAG)
@@ -93,47 +167,21 @@ public class PtFaresConfigGroup extends ReflectiveConfigGroup {
             outOfZoneTag = attributeName;
         }
 
-        public void addZone(Zone zone) {
-            super.addParameterSet(zone);
-            zones.add(zone);
-        }
-
-        public Set<Zone> getAllZones(){
-            return zones;
-        }
-
-        public Set<String> getAllBaseZones(){
-            Set<String> allZones = new HashSet<>();
-            for(var zone: zones){
-                if (!zone.isHybrid){ allZones.add(zone.zoneName); }
-            }
-            return allZones;
-        }
-
-        public Map<String, Set<String>> getAllHybridZones(){
-            Map<String, Set<String>> allZones = new HashMap<>();
-            for(var zone: zones){
-                if (zone.isHybrid){ allZones.put(zone.zoneName, zone.getZoneAssignment()); }
-            }
-            return allZones;
-        }
-
-
         public static class Zone extends ReflectiveConfigGroup{
-            public static final String GROUP_NAME = "zone";
+            public static final String TYPE = "zone";
 
             public Zone() {
-                super(GROUP_NAME);
+                super(TYPE);
             }
 
             public Zone(String zoneName, boolean isHybrid) {
-                super(GROUP_NAME);
+                super(TYPE);
                 setZoneName(zoneName);
                 setIsHybrid(isHybrid);
             }
 
             public Zone(String zoneName, boolean isHybrid, Set<String> zoneAssignment) {
-                super(GROUP_NAME);
+                super(TYPE);
                 setZoneName(zoneName);
                 setIsHybrid(isHybrid);
                 setZoneAssignment(zoneAssignment);
@@ -191,20 +239,52 @@ public class PtFaresConfigGroup extends ReflectiveConfigGroup {
     }
 
 
-    public static class FaresGroup extends ReflectiveConfigGroup{
-        public static final String GROUP_NAME = "fares";
-
+    public static class FaresGroup extends ReflectiveConfigGroup {
+        public static final String TYPE = "fares";
         private static final String OUT_OF_ZONE_PRICE = "outOfZonePrice";
 
-
+        private static final Map<Integer, PtFaresConfigGroup.FaresGroup.Fare> fares = new HashMap<>();
         private static double outOfZonePrice = 0.;
-        private static final Map<Integer, Fare> fares = new HashMap<>();
 
         public FaresGroup() {
-            super(GROUP_NAME);
+            super(TYPE);
         }
 
+        @Override
+        public ConfigGroup createParameterSet(String type) {
+            if (FaresGroup.Fare.TYPE.equals(type)) {
+                return new PtFaresConfigGroup.FaresGroup.Fare();
+            } else {
+                throw new IllegalArgumentException("Unsupported parameterset-type: " + type);
+            }
+        }
 
+        public void addParameterSet(ConfigGroup cfg) {
+            if (cfg instanceof PtFaresConfigGroup.FaresGroup.Fare) {
+                this.addFare((FaresGroup.Fare)cfg);
+            } else {
+                throw new IllegalArgumentException("Unsupported parameterset: " + cfg.getClass().getName());
+            }
+        }
+
+        public void addFare(PtFaresConfigGroup.FaresGroup.Fare fare) {
+            super.addParameterSet(fare);
+            fares.put(fare.getNumberZones(), fare);
+        }
+
+        public Map<Integer, PtFaresConfigGroup.FaresGroup.Fare> getFares(){
+            return fares;
+        }
+
+        public Double getFare(Integer numberZones){
+            return fares.get(numberZones).getTicketPrice();
+        }
+
+        public Map<Integer, Double> getFaresAsMap(){
+            return fares.entrySet().stream()
+                    .collect(Collectors.toMap(Map.Entry::getKey,
+                            map -> map.getValue().getTicketPrice()));
+        }
 
         @StringGetter(OUT_OF_ZONE_PRICE)
         public double getOutOfZonePrice() {
@@ -216,23 +296,8 @@ public class PtFaresConfigGroup extends ReflectiveConfigGroup {
             outOfZonePrice = price;
         }
 
-        public void addFare(Fare fare) {
-            super.addParameterSet(fare);
-            fares.put(fare.getNumberZones(), fare);
-        }
-
-        public Map<Integer, Double> getAllFares(){
-            return fares.entrySet().stream()
-                    .collect(Collectors.toMap(Map.Entry::getKey,
-                            map -> map.getValue().getTicketPrice()));
-        }
-
-        public Double getFare(Integer numberZones){
-            return fares.get(numberZones).getTicketPrice();
-        }
-
         public static class Fare extends ReflectiveConfigGroup{
-            public static final String GROUP_NAME = "zone";
+            public static final String TYPE = "fare";
             private static final String NUMBER_ZONES = "numberZones";
             private static final String TICKET_PRICE = "ticketPrice";
 
@@ -240,11 +305,11 @@ public class PtFaresConfigGroup extends ReflectiveConfigGroup {
             private double ticketPrice = 0.;
 
             public Fare() {
-                super(GROUP_NAME);
+                super(TYPE);
             }
 
             public Fare(int numberZones, double ticketPrice) {
-                super(GROUP_NAME);
+                super(TYPE);
                 setNumberZones(numberZones);
                 setTicketPrice(ticketPrice);
             }
@@ -272,6 +337,5 @@ public class PtFaresConfigGroup extends ReflectiveConfigGroup {
         }
 
     }
-
 
 }
