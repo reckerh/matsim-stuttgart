@@ -13,17 +13,11 @@ public class FareZoneCalculator {
 
     Scenario scenario;
     PtFaresConfigGroup ptFaresConfigGroup;
-    Map<String, Set<String>> hybridZones;
-    Set<String> baseZones;
-    String outOfZoneTag;
 
     @Inject
     public FareZoneCalculator(Scenario scenario, PtFaresConfigGroup ptFaresConfigGroup){
         this.scenario = scenario;
         this.ptFaresConfigGroup = ptFaresConfigGroup;
-        this.hybridZones = ptFaresConfigGroup.getZonesGroup().getHybridZoneStringsWithCorrBaseZones();
-        this.baseZones = ptFaresConfigGroup.getZonesGroup().getBaseZoneStrings();
-        this.outOfZoneTag = ptFaresConfigGroup.getZonesGroup().getOutOfZoneTag();
 
         fareZoneConsistencyChecker();
     }
@@ -90,7 +84,7 @@ public class FareZoneCalculator {
         List<String> zones = determineDistinctZonesFromTrips(trips);
         // find hybrid zones in list
         List<Integer> hybridZoneIndices = zones.stream()
-                .filter(hybridZones::containsKey)
+                .filter(ptFaresConfigGroup.getZonesGroup().getHybridZoneStringsWithCorrBaseZones()::containsKey)
                 .map(zones::indexOf)
                 .collect(Collectors.toList());
 
@@ -108,7 +102,8 @@ public class FareZoneCalculator {
             int combinations = 2;
             for (var id: hybridZoneIndices){
 
-                List<String> zoneAssignments = new ArrayList<>(hybridZones.get(zones.get(id)));
+                List<String> zoneAssignments = new ArrayList<>(ptFaresConfigGroup.getZonesGroup()
+                        .getHybridZoneStringsWithCorrBaseZones().get(zones.get(id)));
                 for (int i = 0; i < combinations/2; i++){
                     zoneCombinations.add(new ArrayList<>(zones));
                     zoneCombinations.get(i).set(id, zoneAssignments.get(0));
