@@ -41,10 +41,11 @@ import com.google.inject.Inject;
  * @author nagel / gleich
  *
  */
+
 public final class StuttgartAnalysisMainModeIdentifier implements AnalysisMainModeIdentifier {
     private final List<String> modeHierarchy = new ArrayList<>() ;
     private static final Logger log = Logger.getLogger(StuttgartAnalysisMainModeIdentifier.class);
-    public static final String ANALYSIS_MAIN_MODE_PT_WITH_DRT_USED_FOR_ACCESS_OR_EGRESS = "pt_w_drt_used";
+    public static final String ANALYSIS_MAIN_MODE_PT_WITH_BIKE_USED_FOR_ACCESS_OR_EGRESS = "pt_with_bike_used";
 
     @Inject
     public StuttgartAnalysisMainModeIdentifier() {
@@ -61,7 +62,8 @@ public final class StuttgartAnalysisMainModeIdentifier implements AnalysisMainMo
         // trip as two separate trips. kai, sep'16
     }
 
-    @Override public String identifyMainMode( List<? extends PlanElement> planElements ) {
+    @Override
+    public String identifyMainMode( List<? extends PlanElement> planElements ) {
         int mainModeIndex = -1 ;
         List<String> modesFound = new ArrayList<>();
         for ( PlanElement pe : planElements ) {
@@ -90,24 +92,24 @@ public final class StuttgartAnalysisMainModeIdentifier implements AnalysisMainMo
         String mainMode = modeHierarchy.get( mainModeIndex ) ;
         // differentiate pt monomodal/intermodal
 
-        // ToDo: umschreiben
         if (mainMode.equals(TransportMode.pt)) {
             boolean isIntermodal = false;
             for (String modeFound: modesFound) {
-                if (modeFound.equals(TransportMode.pt)) {
-                    continue;
-                } else if (modeFound.equals(TransportMode.walk)) {
-                    continue;
-                } else if (modeFound.equals(TransportMode.bike)) {
-                    isIntermodal = true;
-                } else {
-                    log.error("unknown intermodal pt trip: " + planElements.toString());
-                    throw new RuntimeException("unknown intermodal pt trip");
+                switch (modeFound) {
+                    case TransportMode.pt:
+                    case TransportMode.walk:
+                        continue;
+                    case TransportMode.bike:
+                        isIntermodal = true;
+                        break;
+                    default:
+                        log.error("unknown intermodal pt trip: " + planElements.toString());
+                        throw new RuntimeException("unknown intermodal pt trip");
                 }
             }
 
             if (isIntermodal) {
-                return "pt_with_bike_used";
+                return ANALYSIS_MAIN_MODE_PT_WITH_BIKE_USED_FOR_ACCESS_OR_EGRESS;
             } else {
                 return TransportMode.pt;
             }
