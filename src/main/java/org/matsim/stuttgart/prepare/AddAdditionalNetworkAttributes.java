@@ -67,7 +67,7 @@ public class AddAdditionalNetworkAttributes {
     }
 
 
-    private void addWalkAndBikeToNetworkLinks(Network network){
+    public void addWalkAndBikeToNetworkLinks(Network network){
 
         for (var link: network.getLinks().values()){
             if (!link.getAllowedModes().contains("pt")){
@@ -85,7 +85,7 @@ public class AddAdditionalNetworkAttributes {
     }
 
 
-    private void mergeNetworkLinksWithParkingAttributes(Network network, Collection<SimpleFeature> features){
+    public void mergeNetworkLinksWithParkingAttributes(Network network, Collection<SimpleFeature> features){
 
 
         for (var link : network.getLinks().values()){

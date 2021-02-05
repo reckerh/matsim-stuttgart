@@ -20,15 +20,15 @@ package org.matsim.stuttgart.run;
 
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
+
 import ch.sbb.matsim.config.SBBTransitConfigGroup;
 import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
 import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
 import org.apache.log4j.Logger;
+import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.router.AnalysisMainModeIdentifier;
+import org.matsim.core.utils.gis.ShapeFileReader;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsModule;
@@ -59,6 +59,7 @@ import org.matsim.stuttgart.prepare.AddAdditionalNetworkAttributes;
 import org.matsim.stuttgart.prepare.PrepareTransitSchedule;
 import org.matsim.stuttgart.ptFares.PtFaresConfigGroup;
 import org.matsim.stuttgart.ptFares.PtFaresModule;
+import org.opengis.feature.simple.SimpleFeature;
 import playground.vsp.simpleParkingCostHandler.ParkingCostConfigGroup;
 import playground.vsp.simpleParkingCostHandler.ParkingCostModule;
 
@@ -172,7 +173,10 @@ public class StuttgartMasterThesisRunner {
 
     public static Scenario prepareScenario( Config config ) {
         Gbl.assertNotNull( config );
-        return ScenarioUtils.loadScenario(config);
+
+        Scenario scenario = ScenarioUtils.loadScenario(config);
+        new AddAdditionalNetworkAttributes().addWalkAndBikeToNetworkLinks(scenario.getNetwork());
+        return scenario;
 
     }
 
@@ -183,8 +187,8 @@ public class StuttgartMasterThesisRunner {
         ptPreparer.run(scenario, fareZoneShapeFilePath);
 
         // Add parking costs to network
-        AddAdditionalNetworkAttributes parkingPreparer = new AddAdditionalNetworkAttributes();
-        parkingPreparer.run(scenario, parkingZoneShapeFilePath);
+        Collection<SimpleFeature> features = ShapeFileReader.getAllFeatures(parkingZoneShapeFilePath);
+        new AddAdditionalNetworkAttributes().mergeNetworkLinksWithParkingAttributes(scenario.getNetwork(), features);
 
         log.info("Scenario successfully prepared...");
 
