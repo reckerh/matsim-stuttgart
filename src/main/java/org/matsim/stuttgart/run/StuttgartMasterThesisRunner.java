@@ -26,7 +26,6 @@ import ch.sbb.matsim.config.SBBTransitConfigGroup;
 import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
 import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
 import org.apache.log4j.Logger;
-import org.matsim.api.core.v01.network.Network;
 import org.matsim.core.router.AnalysisMainModeIdentifier;
 import org.matsim.core.utils.gis.ShapeFileReader;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
@@ -57,6 +56,7 @@ import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import org.matsim.stuttgart.prepare.AddAdditionalNetworkAttributes;
 import org.matsim.stuttgart.prepare.PrepareTransitSchedule;
+import org.matsim.stuttgart.prepare.RemoveFacilitiesFromPlans;
 import org.matsim.stuttgart.ptFares.PtFaresConfigGroup;
 import org.matsim.stuttgart.ptFares.PtFaresModule;
 import org.opengis.feature.simple.SimpleFeature;
@@ -175,7 +175,13 @@ public class StuttgartMasterThesisRunner {
         Gbl.assertNotNull( config );
 
         Scenario scenario = ScenarioUtils.loadScenario(config);
+
+        // Add walk and bike to all network links
         new AddAdditionalNetworkAttributes().addWalkAndBikeToNetworkLinks(scenario.getNetwork());
+
+        // Remove facilities from plans
+        new RemoveFacilitiesFromPlans().run(scenario);
+
         return scenario;
 
     }
