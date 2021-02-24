@@ -8,6 +8,7 @@ import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.network.NetworkWriter;
 import org.matsim.core.config.ConfigUtils;
@@ -16,8 +17,8 @@ import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.gis.ShapeFileReader;
 import org.opengis.feature.simple.SimpleFeature;
-
 import java.util.Collection;
+import java.util.HashSet;
 
 
 /**
@@ -55,6 +56,10 @@ public class AddAdditionalNetworkAttributes {
         Network network = scenario.getNetwork();
         Collection<SimpleFeature> features = ShapeFileReader.getAllFeatures(shapeFile);
 
+        log.info("Add modes walk and bike for each non pt mode...");
+        addWalkAndBikeToNetworkLinks(network);
+        log.info("Successful Modification!");
+
         log.info("Start merging parking zones to network links...");
         mergeNetworkLinksWithParkingAttributes(network, features);
         log.info("Parking zone merge successful!");
@@ -62,7 +67,25 @@ public class AddAdditionalNetworkAttributes {
     }
 
 
-    private void mergeNetworkLinksWithParkingAttributes(Network network, Collection<SimpleFeature> features){
+    public void addWalkAndBikeToNetworkLinks(Network network){
+
+        for (var link: network.getLinks().values()){
+            if (!link.getAllowedModes().contains("pt")){
+
+                // Add modes walk and bike for each non pt mode
+                var allowedModes = new HashSet<>(link.getAllowedModes());
+                allowedModes.add(TransportMode.walk);
+                allowedModes.add(TransportMode.bike);
+                link.setAllowedModes(allowedModes);
+
+            }
+
+        }
+
+    }
+
+
+    public void mergeNetworkLinksWithParkingAttributes(Network network, Collection<SimpleFeature> features){
 
 
         for (var link : network.getLinks().values()){
