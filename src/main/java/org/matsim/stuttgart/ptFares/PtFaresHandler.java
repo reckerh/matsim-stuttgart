@@ -159,7 +159,7 @@ public class PtFaresHandler implements TransitDriverStartsEventHandler, PersonLe
                     events.processEvent(new PersonMoneyEvent(getOrCalcCompensationTime(),
                             map.getKey(),
                             fare,
-                            "ptFares",
+                            "ptFare - " + zones.toString() + " zone(s)",
                             "ptAuthority"
                     ));
                 });
@@ -173,7 +173,7 @@ public class PtFaresHandler implements TransitDriverStartsEventHandler, PersonLe
                     events.processEvent(new PersonMoneyEvent(getOrCalcCompensationTime(),
                             map.getKey(),
                             fare,
-                            "ptFares",
+                            "ptFare - outOfZone",
                             "ptAuthority"
                     ));
                 });
