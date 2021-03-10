@@ -10,6 +10,7 @@ import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
 import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
+import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.OutputDirectoryLogging;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.stuttgart.Utils;
@@ -46,6 +47,7 @@ public class RunStuttgart {
         config.qsim().setUsePersonIdForMissingVehicleId(false);
         config.subtourModeChoice().setProbaForRandomSingleTripMode(0.5);
         config.controler().setRoutingAlgorithmType(FastAStarLandmarks);
+        config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
 
         final long minDuration = 600;
         final long maxDuration = 3600 * 27;
