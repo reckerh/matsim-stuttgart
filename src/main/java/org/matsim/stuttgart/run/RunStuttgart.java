@@ -18,6 +18,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
+import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
+
 public class RunStuttgart {
 
     private static final Logger log = Logger.getLogger(RunStuttgart.class);
@@ -43,6 +45,7 @@ public class RunStuttgart {
         config.qsim().setUsingTravelTimeCheckInTeleportation(true);
         config.qsim().setUsePersonIdForMissingVehicleId(false);
         config.subtourModeChoice().setProbaForRandomSingleTripMode(0.5);
+        config.controler().setRoutingAlgorithmType(FastAStarLandmarks);
 
         final long minDuration = 600;
         final long maxDuration = 3600 * 27;
