@@ -45,42 +45,49 @@ public class PlansActivityAnalyzer {
 
         for (var person: population.getPersons().values()){
 
-            Plan selectedPlan = person.getSelectedPlan();
+            if (! (person.getId().toString().startsWith("freight") || person.getId().toString().startsWith("commercial"))){
+                // Exclude freight and commercial
 
-            // Inspect first element
-            PlanElement firstPlanElement = selectedPlan.getPlanElements().get(0);
+                Plan selectedPlan = person.getSelectedPlan();
 
-            if (firstPlanElement instanceof Activity) {
-                Activity firstActivity = (Activity) firstPlanElement;
-                if (firstActivity.getType().startsWith(homeActivityPrefix)) {
-                    countWithFirstActivityHome = countWithFirstActivityHome + 1;
-                } else {
-                    countWithoutFirstActivityHome = countWithoutFirstActivityHome + 1;
-                }
-            }
+                // Inspect first element
+                PlanElement firstPlanElement = selectedPlan.getPlanElements().get(0);
 
-            // Inspect last element
-            PlanElement lastPlanElement = selectedPlan.getPlanElements().get(selectedPlan.getPlanElements().size() - 1);
-            if (lastPlanElement instanceof Activity){
-                Activity lastActivity = (Activity)lastPlanElement;
-                if (lastActivity.getType().startsWith(homeActivityPrefix)){
-                    countWithOvernightHome = countWithOvernightHome + 1;
-
-                } else {
-                    countWithoutOvernightHome = countWithoutOvernightHome +1;
-                    String lastActivityType = lastActivity.getType().substring(lastActivity.getType().lastIndexOf("_") + 1);
-                    double scheduledActivityDuration = Double.parseDouble(lastActivityType);
-
-                    if (scheduledActivityDuration < 3600.){
-                        countWithoutOvernightHomeAndShortDuration = countWithoutOvernightHomeAndShortDuration + 1;
-
+                if (firstPlanElement instanceof Activity) {
+                    Activity firstActivity = (Activity) firstPlanElement;
+                    if (firstActivity.getType().startsWith(homeActivityPrefix)) {
+                        countWithFirstActivityHome = countWithFirstActivityHome + 1;
+                    } else {
+                        countWithoutFirstActivityHome = countWithoutFirstActivityHome + 1;
                     }
                 }
+
+                // Inspect last element
+                PlanElement lastPlanElement = selectedPlan.getPlanElements().get(selectedPlan.getPlanElements().size() - 1);
+                if (lastPlanElement instanceof Activity){
+                    Activity lastActivity = (Activity)lastPlanElement;
+                    if (lastActivity.getType().startsWith(homeActivityPrefix)){
+                        countWithOvernightHome = countWithOvernightHome + 1;
+
+                    } else {
+                        countWithoutOvernightHome = countWithoutOvernightHome +1;
+                        String lastActivityType = lastActivity.getType().substring(lastActivity.getType().lastIndexOf("_") + 1);
+                        double scheduledActivityDuration = Double.parseDouble(lastActivityType);
+
+                        if (scheduledActivityDuration < 3600.){
+                            countWithoutOvernightHomeAndShortDuration = countWithoutOvernightHomeAndShortDuration + 1;
+
+                        }
+                    }
+                }
+
+
+                // Inspect subtours
+                personId2SubtourCount.put(person.getId(), TripStructureUtils.getSubtours(selectedPlan).size());
+
             }
 
 
-            // Inspect subtours
-            personId2SubtourCount.put(person.getId(), TripStructureUtils.getSubtours(selectedPlan).size());
 
         }
 
