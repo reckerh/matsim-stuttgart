@@ -399,7 +399,7 @@ public class StuttgartMasterThesisRunner {
         // For values, see https://www.vvs.de/tickets/zeittickets-abo-polygo/jahresticket-jedermann/
 
         PtFaresConfigGroup.FaresGroup faresGroup = new PtFaresConfigGroup.FaresGroup();
-        faresGroup.setOutOfZonePrice(8.);
+        faresGroup.setOutOfZonePrice(9.);
         faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(1, 1.89));
         faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(2, 2.42));
         faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(3, 3.23));
