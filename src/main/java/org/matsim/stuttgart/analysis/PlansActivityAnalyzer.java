@@ -19,6 +19,20 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 
+/**
+ * @author dwedekind
+ */
+
+/**
+ * This is a class for analyzing the Senozon plans input
+ *
+ * The main method takes to input arguments:
+ * -populationFile => File of population to be analyzed
+ * -outputDir => What directory to write the analysis output to
+ *
+ */
+
+
 public class PlansActivityAnalyzer {
     private static final Logger log = Logger.getLogger(PlansActivityAnalyzer.class);
     private final String[] HEADER = {"measure", "value"};
