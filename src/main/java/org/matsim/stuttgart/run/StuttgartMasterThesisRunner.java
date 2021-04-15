@@ -399,6 +399,8 @@ public class StuttgartMasterThesisRunner {
         // For values, see https://www.vvs.de/tickets/zeittickets-abo-polygo/jahresticket-jedermann/
 
         PtFaresConfigGroup.FaresGroup faresGroup = new PtFaresConfigGroup.FaresGroup();
+
+        // 10 seems to be an adequate value (for calibrating long distance trips but also reasonable pricewise)
         faresGroup.setOutOfZonePrice(10.);
         faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(1, 1.89));
         faresGroup.addFare(new PtFaresConfigGroup.FaresGroup.Fare(2, 2.42));
