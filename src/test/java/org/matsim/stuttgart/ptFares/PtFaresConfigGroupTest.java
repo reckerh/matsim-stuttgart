@@ -1,5 +1,6 @@
 package org.matsim.stuttgart.ptFares;
 
+import org.junit.Ignore;
 import org.junit.Test;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
@@ -7,6 +8,7 @@ import org.matsim.core.config.ConfigUtils;
 public class PtFaresConfigGroupTest {
 
     @Test
+    @Ignore
     public final void runPtFaresConfigGroupTest(){
         String configPath = "test/input/ptFares/config_withPtFares.xml";
 
