@@ -57,13 +57,6 @@
             <artifactId>vsp</artifactId>
             <version>${matsim.version}</version>
         </dependency>
-
-        <!-- Matsim SBB extensions are located in matsim core now... -->
-<!--    <dependency>
-            <groupId>ch.sbb</groupId>
-            <artifactId>matsim-sbb-extensions</artifactId>
-            <version>12.11</version>
-        </dependency>-->
         <dependency>
             <groupId>com.github.matsim-org</groupId>
             <artifactId>gtfs2matsim</artifactId>
@@ -126,13 +119,6 @@
     </build>
 
     <repositories>
-
-        <!-- Matsim SBB extensions are located in matsim core now... -->
-<!--    <repository>
-            <id>SBB</id>
-            <url>https://schweizerischebundesbahnen.bintray.com/simba.mvn</url>
-        </repository>-->
-
         <repository>
             <!-- Geotools is not on Maven central -->
             <id>osgeo</id>
