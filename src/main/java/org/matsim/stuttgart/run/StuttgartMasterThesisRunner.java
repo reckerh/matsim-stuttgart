@@ -21,6 +21,7 @@ package org.matsim.stuttgart.run;
 import java.net.URISyntaxException;
 import java.nio.file.Paths;
 import java.util.*;
+import java.util.function.Consumer;
 
 import ch.sbb.matsim.config.SBBTransitConfigGroup;
 import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
@@ -84,6 +85,8 @@ public class StuttgartMasterThesisRunner {
 
         try {
 
+            config.controler().setOutputDirectory(Paths.get(config.getContext().toURI()).getParent().resolve("/output").toString());
+
             String fareZoneShapeFileName = (Paths.get(config.getContext().toURI()).getParent()).resolve("input/fareZones_sp.shp").toString();
             String parkingZoneShapeFileName = (Paths.get(config.getContext().toURI()).getParent()).resolve("input/parkingShapes.shp").toString();
             Scenario scenario = prepareScenario(config);
@@ -101,40 +104,68 @@ public class StuttgartMasterThesisRunner {
     }
 
 
-    public static Config prepareConfig(String [] args, ConfigGroup... customModules) {
+    public static Config prepareConfig(String [] args) {
         OutputDirectoryLogging.catchLogEntries();
 
+        // -- LOAD CONFIG GROUP --
 
-        // -- LOAD CONFIG WITH CUSTOM MODULES --
+        // Load default modules
         String[] typedArgs = Arrays.copyOfRange( args, 1, args.length );
-        final Config config = ConfigUtils.loadConfig( args[ 0 ] , customModules);
-        addOrGetAdditionalModules(config);
+        final Config config = ConfigUtils.loadConfig( args[ 0 ] );
+
+        // Materialize custom config groups
+        // Either take default setup from below or read from config file if exists
+        materializeConfigGroup(config, SwissRailRaptorConfigGroup.GROUP, SwissRailRaptorConfigGroup.class, StuttgartMasterThesisRunner::setupRaptorConfigGroup);
+        materializeConfigGroup(config, IntermodalTripFareCompensatorsConfigGroup.GROUP_NAME, IntermodalTripFareCompensatorsConfigGroup.class, StuttgartMasterThesisRunner::setupCompensatorsConfigGroup);
+        materializeConfigGroup(config, PtIntermodalRoutingModesConfigGroup.GROUP, PtIntermodalRoutingModesConfigGroup.class, StuttgartMasterThesisRunner::setupPTRoutingModes);
+        materializeConfigGroup(config, PtFaresConfigGroup.GROUP, PtFaresConfigGroup.class, StuttgartMasterThesisRunner::setupPTFaresGroup);
+        materializeConfigGroup(config, SBBTransitConfigGroup.GROUP_NAME, SBBTransitConfigGroup.class, StuttgartMasterThesisRunner::setupSBBTransit);
+        materializeConfigGroup(config, ParkingCostConfigGroup.GROUP_NAME, ParkingCostConfigGroup.class, StuttgartMasterThesisRunner::setupParkingCostConfigGroup);
 
 
         // -- CONTROLER --
+
+        // Some controler setting changes
         config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
         config.controler().setWriteTripsInterval(50);
 
+
         // -- VSP DEFAULTS --
+
+        // Some vsp default settings
         config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.ignore );
         config.plansCalcRoute().setAccessEgressType(PlansCalcRouteConfigGroup.AccessEgressType.accessEgressModeToLink);
         config.qsim().setUsingTravelTimeCheckInTeleportation( true );
         config.qsim().setTrafficDynamics( TrafficDynamics.kinematicWaves );
 
+
         // -- INTERMODAL --
+
+        // Add a new mode to subtour mode choice
+        // This mode "pt_w_bike_allowed" is introduced for easier analyzing and distinguishing between regular pt trips and pt trips with bike & ride later
         List<String> modes = new ArrayList<>(Arrays.asList(config.subtourModeChoice().getModes()));
         modes.add("pt_w_bike_allowed");
         config.subtourModeChoice().setModes(modes.toArray(new String[0]));
 
 
         // -- OTHER --
+
+        // This was a recommended setting
         config.subtourModeChoice().setProbaForRandomSingleTripMode(0.5);
+
         config.qsim().setUsePersonIdForMissingVehicleId(false);
+
+        // This is the recommended routing algorithm
         config.controler().setRoutingAlgorithmType(FastAStarLandmarks);
+
         config.qsim().setInsertingWaitingVehiclesBeforeDrivingVehicles(true);
 
 
         // -- ACTIVITIES --
+
+        // For better readability, the input config file does not contain all activity types
+        // Create them here
+
         final long minDuration = 600;
         final long maxDuration = 3600 * 27;
         final long difference = 600;
@@ -145,7 +176,6 @@ public class StuttgartMasterThesisRunner {
         Utils.createActivityPatterns("educ_secondary", minDuration, maxDuration, difference).forEach(params -> config.planCalcScore().addActivityParams(params));
         Utils.createActivityPatterns("educ_higher", minDuration, maxDuration, difference).forEach(params -> config.planCalcScore().addActivityParams(params));
 
-
         // Activities with opening & closing time
         Utils.createActivityPatterns("work", minDuration, maxDuration, difference, 6, 20).forEach(params -> config.planCalcScore().addActivityParams(params));
         Utils.createActivityPatterns("business", minDuration, maxDuration, difference, 6, 20).forEach(params -> config.planCalcScore().addActivityParams(params));
@@ -153,21 +183,15 @@ public class StuttgartMasterThesisRunner {
         Utils.createActivityPatterns("shopping", minDuration, maxDuration, difference, 8, 20).forEach(params -> config.planCalcScore().addActivityParams(params));
 
 
-        // -- SET DEFAULT OUTPUT DIRECTORY FOR HOME PC RUNS--
-        try {
-            config.controler().setOutputDirectory(Paths.get(config.getContext().toURI()).getParent().resolve("/output").toString());
-
-        } catch (URISyntaxException e) {
-            log.error("URISyntaxException: " + e);
-
-        }
-
         // -- APPLY COMMAND LINE --
+
+        // Finally apply overwriting command line setting if exist
         ConfigUtils.applyCommandline( config, typedArgs ) ;
 
         log.info("Config successfully prepared...");
 
         return config ;
+
     }
 
 
@@ -177,9 +201,14 @@ public class StuttgartMasterThesisRunner {
         Scenario scenario = ScenarioUtils.loadScenario(config);
 
         // Add walk and bike to all network links
+        // This is a safety thing, as in the scenario creation some links will have original modes "car" and "ride" removed
+        // The network cleaner would remove these links totally (when there would be no modes assigned anymore)
+        // And I am not sure if this would lead to strange route results in the scenarios
         new AddAdditionalNetworkAttributes().addWalkAndBikeToNetworkLinks(scenario.getNetwork());
 
         // Remove facilities from plans
+        // For later scenario creation, facilities need to be removed
+        // Thus, calibration runner should be without facilities as well
         new RemoveFacilitiesFromPlans().run(scenario);
 
         return scenario;
@@ -207,7 +236,11 @@ public class StuttgartMasterThesisRunner {
         final Controler controler = new Controler( scenario );
 
         // -- ADDITIONAL MODULES --
+
+        // Use the swiss rail raptor for routing
+        // As I am using an earlier release, this module has to be installed
         if (controler.getConfig().transit().isUsingTransitInMobsim()) {
+
             // use the sbb pt raptor router
             controler.addOverridingModule( new AbstractModule() {
                 @Override
@@ -241,11 +274,12 @@ public class StuttgartMasterThesisRunner {
             }
         } );
 
-
+        // use fare compensators module and pt routing modes module for adjusting sbb router settings
         controler.addOverridingModule(new IntermodalTripFareCompensatorsModule());
         controler.addOverridingModule(new PtIntermodalRoutingModesModule());
 
 
+        // install the Stuttgart relevant main mode analyzer; override the default one
         controler.addOverridingModule( new AbstractModule() {
             @Override
             public void install() {
@@ -259,11 +293,9 @@ public class StuttgartMasterThesisRunner {
         controler.addOverridingModule(new AbstractModule() {
             @Override
             public void install() {
-                // To use the deterministic pt simulation (Part 1 of 2):
                 install(new SBBTransitModule());
             }
 
-            // To use the deterministic pt simulation (Part 2 of 2):
         });
 
         controler.configureQSimComponents(SBBTransitEngineQSimModule::configure);
@@ -280,55 +312,19 @@ public class StuttgartMasterThesisRunner {
     }
 
 
-    private static void addOrGetAdditionalModules(Config config) {
-        // Configure additional modules in standard way unless defined different in the input file
+    private static <T extends ConfigGroup> void materializeConfigGroup (Config config, String configGroupName, Class<T> clazz, Consumer<T> defaultSetup){
+        var containsConfigGroup = config.getModules().containsKey(configGroupName);
+        T configGroup = ConfigUtils.addOrGetModule(config, clazz);
 
-        if (! config.getModules().containsKey(SwissRailRaptorConfigGroup.GROUP)){
-            SwissRailRaptorConfigGroup configRaptor = ConfigUtils.addOrGetModule(config,
-                    SwissRailRaptorConfigGroup.class);
-            setupRaptorConfigGroup(configRaptor);
-
-        }
-
-        if (! config.getModules().containsKey(IntermodalTripFareCompensatorsConfigGroup.GROUP_NAME)){
-            IntermodalTripFareCompensatorsConfigGroup compensatorsCfg = ConfigUtils.addOrGetModule(config,
-                    IntermodalTripFareCompensatorsConfigGroup.class);
-            setupCompensatorsConfigGroup(compensatorsCfg);
-
-        }
-
-        if (! config.getModules().containsKey(PtIntermodalRoutingModesConfigGroup.GROUP)){
-            PtIntermodalRoutingModesConfigGroup ptRoutingModes = ConfigUtils.addOrGetModule(config,
-                    PtIntermodalRoutingModesConfigGroup.class);
-            setupPTRoutingModes(ptRoutingModes);
-
-        }
-
-        if (! config.getModules().containsKey(PtFaresConfigGroup.GROUP)){
-            PtFaresConfigGroup configFares = ConfigUtils.addOrGetModule(config,
-                    PtFaresConfigGroup.class);
-            setupPTFaresGroup(configFares);
-
-        }
-
-        if (! config.getModules().containsKey(SBBTransitConfigGroup.GROUP_NAME)){
-            SBBTransitConfigGroup sbbTransit = ConfigUtils.addOrGetModule(config,
-                    SBBTransitConfigGroup.class);
-            setupSBBTransit(sbbTransit);
-
-        }
-
-        if (! config.getModules().containsKey(ParkingCostConfigGroup.GROUP_NAME)){
-            ParkingCostConfigGroup parkingCostConfigGroup = ConfigUtils.addOrGetModule(config,
-                    ParkingCostConfigGroup.class);
-            setupParkingCostConfigGroup(parkingCostConfigGroup);
-
+        if (! containsConfigGroup){
+            defaultSetup.accept(configGroup);
         }
 
     }
 
 
     private static void setupRaptorConfigGroup(SwissRailRaptorConfigGroup configRaptor) {
+
         String personAttributeBike = "canUseBike";
         String personAttributeBikeValue = "true";
 
