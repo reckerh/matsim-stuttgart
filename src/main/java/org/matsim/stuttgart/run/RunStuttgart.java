@@ -1,10 +1,12 @@
 package org.matsim.stuttgart.run;
 
+import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import org.apache.log4j.Logger;
-import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
+import org.matsim.contrib.bicycle.BicycleConfigGroup;
+import org.matsim.contrib.bicycle.Bicycles;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ConfigUtils;
@@ -14,8 +16,6 @@ import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryLogging;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.stuttgart.Utils;
-import org.matsim.vehicles.VehicleType;
-import org.matsim.vehicles.VehiclesFactory;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -37,10 +37,18 @@ public class RunStuttgart {
 
         OutputDirectoryLogging.catchLogEntries();
 
+        // Materialize bike config group
+        BicycleConfigGroup bikeConfigGroup = new BicycleConfigGroup();
+        bikeConfigGroup.setBicycleMode(TransportMode.bike);
+
         //this feels a little messy, but I guess this is how var-args work
         List<ConfigGroup> moduleList = new ArrayList<>(Arrays.asList(modules));
+        moduleList.add(bikeConfigGroup);
+        moduleList.add(new SwissRailRaptorConfigGroup());
 
-        Config config = ConfigUtils.loadConfig(args, moduleList.toArray(ConfigGroup[]::new));
+        var moduleArray = moduleList.toArray(new ConfigGroup[0]);
+
+        Config config = ConfigUtils.loadConfig(args, moduleArray);
 
         config.plansCalcRoute().setAccessEgressType(PlansCalcRouteConfigGroup.AccessEgressType.accessEgressModeToLink);
         config.qsim().setUsingTravelTimeCheckInTeleportation(true);
@@ -85,6 +93,9 @@ public class RunStuttgart {
                 addTravelDisutilityFactoryBinding(TransportMode.ride).to(carTravelDisutilityFactoryKey());
             }
         });
+
+        // add bicycle module
+        Bicycles.addAsOverridingModule(controler);
 
         return controler;
     }
