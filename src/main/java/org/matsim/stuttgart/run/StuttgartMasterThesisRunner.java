@@ -330,14 +330,6 @@ public class StuttgartMasterThesisRunner {
 
         configRaptor.setUseIntermodalAccessEgress(true);
 
-        for (SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet accessEgressParams: configRaptor.getIntermodalAccessEgressParameterSets()) {
-            if (accessEgressParams.getMode().equals(TransportMode.bike)) {
-                accessEgressParams.setPersonFilterAttribute(personAttributeBike);
-                accessEgressParams.setPersonFilterValue(personAttributeBikeValue);
-            }
-        }
-
-
         // AcessEgressWalk
         SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet paramSetAEWalk = new SwissRailRaptorConfigGroup.IntermodalAccessEgressParameterSet();
         paramSetAEWalk.setInitialSearchRadius(1000);
@@ -354,6 +346,9 @@ public class StuttgartMasterThesisRunner {
         paramSetAEBike.setMaxRadius(10000);
         paramSetAEBike.setStopFilterAttribute("VVSBikeAndRide");
         paramSetAEBike.setStopFilterValue("true");
+
+        paramSetAEBike.setPersonFilterAttribute(personAttributeBike);
+        paramSetAEBike.setPersonFilterValue(personAttributeBikeValue);
 
         configRaptor.addIntermodalAccessEgress(paramSetAEBike);
 
