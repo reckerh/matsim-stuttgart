@@ -120,7 +120,6 @@
 
     <repositories>
         <repository>
-            <!-- Geotools is not on Maven central -->
             <id>osgeo</id>
             <name>Geotools repository</name>
             <url>https://repo.osgeo.org/repository/release/</url>
