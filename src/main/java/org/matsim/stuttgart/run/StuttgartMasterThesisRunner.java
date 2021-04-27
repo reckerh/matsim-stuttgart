@@ -85,10 +85,8 @@ public class StuttgartMasterThesisRunner {
 
         try {
 
-            config.controler().setOutputDirectory(Paths.get(config.getContext().toURI()).getParent().resolve("/output").toString());
-
             String fareZoneShapeFileName = (Paths.get(config.getContext().toURI()).getParent()).resolve("input/add/fareZones_bc.shp").toString();
-            String parkingZoneShapeFileName = (Paths.get(config.getContext().toURI()).getParent()).resolve("input/add/parkingShapes_bc.shp").toString();
+            String parkingZoneShapeFileName = (Paths.get(config.getContext().toURI()).getParent()).resolve("input/add/parkingShapes_bc_v2.shp").toString();
             Scenario scenario = prepareScenario(config);
             finishScenario(scenario, fareZoneShapeFileName, parkingZoneShapeFileName);
 
