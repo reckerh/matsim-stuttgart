@@ -105,6 +105,7 @@ public class StuttgartMasterThesisRunner {
 
 
     public static Config prepareConfig(String [] args) {
+        log.info("StuttgartMasterThesisRunner - 27-04-2021 15:29");
         OutputDirectoryLogging.catchLogEntries();
 
         // -- LOAD CONFIG GROUP --
