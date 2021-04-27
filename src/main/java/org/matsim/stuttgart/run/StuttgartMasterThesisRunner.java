@@ -87,8 +87,8 @@ public class StuttgartMasterThesisRunner {
 
             config.controler().setOutputDirectory(Paths.get(config.getContext().toURI()).getParent().resolve("/output").toString());
 
-            String fareZoneShapeFileName = (Paths.get(config.getContext().toURI()).getParent()).resolve("input/fareZones_sp.shp").toString();
-            String parkingZoneShapeFileName = (Paths.get(config.getContext().toURI()).getParent()).resolve("input/parkingShapes.shp").toString();
+            String fareZoneShapeFileName = (Paths.get(config.getContext().toURI()).getParent()).resolve("input/add/fareZones_bc.shp").toString();
+            String parkingZoneShapeFileName = (Paths.get(config.getContext().toURI()).getParent()).resolve("input/add/parkingShapes_bc.shp").toString();
             Scenario scenario = prepareScenario(config);
             finishScenario(scenario, fareZoneShapeFileName, parkingZoneShapeFileName);
 
@@ -105,7 +105,7 @@ public class StuttgartMasterThesisRunner {
 
 
     public static Config prepareConfig(String [] args) {
-        log.info("StuttgartMasterThesisRunner - 27-04-2021 15:29");
+        log.info("StuttgartMasterThesisRunner - 27-04-2021 16:57");
         OutputDirectoryLogging.catchLogEntries();
 
         // -- LOAD CONFIG GROUP --
