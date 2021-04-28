@@ -17,24 +17,29 @@ import org.matsim.core.controler.OutputDirectoryLogging;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.stuttgart.Utils;
 
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
 public class RunStuttgart {
-
     private static final Logger log = Logger.getLogger(RunStuttgart.class);
+    private static final String inputConfig = "projects\\matsim-stuttgart\\stuttgart-v2.0\\config-0pct.xml";
+    private static final String outputDirectory = "projects\\matsim-stuttgart\\stuttgart-v2.0\\output";
 
     public static void main(String[] args) {
 
-        Config config = loadConfig(args);
+        var arguments = Utils.parseSharedSvn(args);
+
+        Config config = loadConfig(new String[]{Paths.get(arguments.getSharedSvn()).resolve(inputConfig).toString()});
+        config.controler().setOutputDirectory(Paths.get(arguments.getSharedSvn()).resolve(outputDirectory).toString());
+
         Scenario scenario = loadScenario(config);
         Controler controler = loadControler(scenario);
         controler.run();
     }
 
     public static Config loadConfig(String[] args, ConfigGroup... modules) {
-
         OutputDirectoryLogging.catchLogEntries();
 
         // Materialize bike config group

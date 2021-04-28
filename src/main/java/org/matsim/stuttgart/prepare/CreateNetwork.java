@@ -34,7 +34,7 @@ public class CreateNetwork {
     // ToDo: Move files and paths to Stutgart repository
 
     private static final String senozonNetworkPath = "projects\\matsim-stuttgart\\stuttgart-v0.0-snz-original\\optimizedNetwork.xml.gz";
-    private static final String outputNetwork = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\network-stuttgart.xml.gz";
+    private static final String outputNetwork = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\network-stuttgart-woPt.xml.gz";
     private static final String osmFile = "projects\\mosaik-2\\raw-data\\osm\\germany-20200715.osm.pbf";
     private static final Collection<String> elevationData = List.of("projects\\mosaik-2\\raw-data\\heightmaps\\srtm_38_03.tif", "projects\\mosaik-2\\raw-data\\heightmaps\\srtm_39_03.tif");
     private static final CoordinateTransformation transformUTM32ToWGS84 = TransformationFactory.getCoordinateTransformation("EPSG:25832", "EPSG:4326");
