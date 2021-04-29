@@ -19,11 +19,10 @@ import java.time.LocalDate;
 
 public class CreatePt {
 
-    private static final String schedule = "projects\\mosaik-2\\raw-data\\gtfs\\vvs_gtfs_20201105.zip";
+    private static final String schedule = "projects\\matsim-stuttgart\\stuttgart-v2.0\\raw-data\\gtfs\\vvs_gtfs_20210429.zip";
     private static final String transitSchedule = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\transit-schedule-stuttgart.xml.gz";
     private static final String transitVehicles = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\transit-vehicles-stuttgart.xml.gz";
-    private static final String inputNetwork = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\network-stuttgart-woPt.xml.gz";
-    private static final String outputNetwork = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\network-stuttgart.xml.gz";
+    private static final String inputNetwork = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\network-stuttgart.xml.gz";
 
     public static void main(String[] args) {
 
@@ -57,6 +56,6 @@ public class CreatePt {
 
         new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(svn.resolve(transitSchedule).toString());
         new MatsimVehicleWriter(scenario.getTransitVehicles()).writeFile(svn.resolve(transitVehicles).toString());
-        new NetworkWriter(scenario.getNetwork()).write(svn.resolve(outputNetwork).toString());
+
     }
 }
