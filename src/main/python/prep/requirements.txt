@@ -1,4 +1,0 @@
-pyproj
-pandas
-matsim
-plotly

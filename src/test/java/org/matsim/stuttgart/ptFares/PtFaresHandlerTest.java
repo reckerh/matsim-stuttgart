@@ -28,9 +28,9 @@ import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.gbl.Gbl;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.extensions.pt.routing.EnhancedRaptorIntermodalAccessEgress;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.pt.transitSchedule.api.TransitStopFacility;
-import org.matsim.stuttgart.run.StuttgartRaptorIntermodalAccessEgress;
 
 import java.util.*;
 
@@ -104,7 +104,7 @@ public class PtFaresHandlerTest {
         controler.addOverridingModule(new AbstractModule() {
             @Override
             public void install() {
-                bind(RaptorIntermodalAccessEgress.class).to(StuttgartRaptorIntermodalAccessEgress.class);
+                bind(RaptorIntermodalAccessEgress.class).to(EnhancedRaptorIntermodalAccessEgress.class);
             }
         });
 
@@ -226,7 +226,7 @@ public class PtFaresHandlerTest {
     private static SBBTransitConfigGroup setupSBBTransit() {
 
         SBBTransitConfigGroup sbbTransit = new SBBTransitConfigGroup();
-        Set<String> modes = new HashSet<>(Arrays.asList("train"));
+        Set<String> modes = new HashSet<>(Collections.singletonList("train"));
         sbbTransit.setDeterministicServiceModes(modes);
         sbbTransit.setCreateLinkEventsInterval(0);
 

@@ -1,8 +1,7 @@
 package org.matsim.stuttgart;
+
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import org.apache.log4j.LogManager;
-import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
 import org.matsim.core.utils.geometry.CoordinateTransformation;
@@ -20,12 +19,8 @@ import java.util.List;
 
 public class Utils {
 
-    private static final Logger logger = LogManager.getLogger("UtilsLogger");
-    private static final CoordinateTransformation transformation = TransformationFactory.getCoordinateTransformation("EPSG:4326", "EPSG:25832");
-
-
     // Copied from https://github.com/matsim-vsp/mosaik-2/blob/master/src/main/java/org/matsim/mosaik2/Utils.java
-    public static List<PlanCalcScoreConfigGroup.ActivityParams> createTypicalDurations(String type, long minDurationInSeconds, long maxDurationInSeconds, long durationDifferenceInSeconds) {
+    public static List<PlanCalcScoreConfigGroup.ActivityParams> createActivityPatterns(String type, long minDurationInSeconds, long maxDurationInSeconds, long durationDifferenceInSeconds) {
 
         List<PlanCalcScoreConfigGroup.ActivityParams> result = new ArrayList<>();
         for (long duration = minDurationInSeconds; duration <= maxDurationInSeconds; duration += durationDifferenceInSeconds) {
@@ -36,8 +31,21 @@ public class Utils {
         return result;
     }
 
+
+    public static List<PlanCalcScoreConfigGroup.ActivityParams> createActivityPatterns(String type, long minDurationInSeconds, long maxDurationInSeconds, long durationDifferenceInSeconds, double openingHour, double closingHour) {
+
+        List<PlanCalcScoreConfigGroup.ActivityParams> result = createActivityPatterns(type, minDurationInSeconds, maxDurationInSeconds, durationDifferenceInSeconds);
+        for (var activityParams: result){
+            activityParams.setOpeningTime(openingHour * 3600.);
+            activityParams.setClosingTime(closingHour * 3600.);
+        }
+        return result;
+
+    }
+
+
     public static CoordinateTransformation getTransformationWGS84ToUTM32() {
-        return transformation;
+        return TransformationFactory.getCoordinateTransformation("EPSG:4326", "EPSG:25832");
     }
 
     public static VehicleType createVehicleType(String id, double length, double maxV, double pce, VehiclesFactory factory) {
@@ -66,5 +74,4 @@ public class Utils {
             return sharedSvn;
         }
     }
-
 }

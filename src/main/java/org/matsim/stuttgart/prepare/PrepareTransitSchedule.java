@@ -75,6 +75,7 @@ public class PrepareTransitSchedule {
             if (fareZone.equals("out")){
                 transitStopFacility.getAttributes().putAttribute("VVSBikeAndRide", false);
 
+            }else{
                 if (bikeAndRideAssignment.contains(transitStopFacility.getId())){
                     transitStopFacility.getAttributes().putAttribute("VVSBikeAndRide", true);
                 }else{

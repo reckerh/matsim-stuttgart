@@ -9,7 +9,7 @@
     <version>0.0.1-SNAPSHOT</version>
 
     <properties>
-        <matsim.version>13.0-SNAPSHOT</matsim.version>
+        <matsim.version>13.0-2020w48-SNAPSHOT</matsim.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.source>11</maven.compiler.source>
@@ -54,38 +54,23 @@
         </dependency>
         <dependency>
             <groupId>org.matsim.contrib</groupId>
-            <artifactId>bicycle</artifactId>
+            <artifactId>vsp</artifactId>
             <version>${matsim.version}</version>
         </dependency>
-
-        <dependency>
-            <groupId>ch.sbb</groupId>
-            <artifactId>matsim-sbb-extensions</artifactId>
-            <version>12.11</version>
-        </dependency>
-
-        <dependency>
-            <groupId>com.github.matsim-scenarios</groupId>
-            <artifactId>matsim-los-angeles</artifactId>
-            <version>v1.1</version>
-            <exclusions>
-                <exclusion>
-                    <groupId>*</groupId>
-                    <artifactId>*</artifactId>
-                </exclusion>
-            </exclusions>
-        </dependency>
-
         <dependency>
             <groupId>com.github.matsim-org</groupId>
             <artifactId>gtfs2matsim</artifactId>
             <version>12.2</version>
         </dependency>
-
         <dependency>
             <groupId>com.beust</groupId>
             <artifactId>jcommander</artifactId>
             <version>1.71</version>
+        </dependency>
+        <dependency>
+            <groupId>com.github.matsim-vsp</groupId>
+            <artifactId>pt-extensions</artifactId>
+            <version>fac7381209</version>
         </dependency>
 
     </dependencies>
@@ -134,14 +119,7 @@
     </build>
 
     <repositories>
-
         <repository>
-            <id>SBB</id>
-            <url>https://schweizerischebundesbahnen.bintray.com/simba.mvn</url>
-        </repository>
-
-        <repository>
-            <!-- Geotools is not on Maven central -->
             <id>osgeo</id>
             <name>Geotools repository</name>
             <url>https://repo.osgeo.org/repository/release/</url>
@@ -172,6 +150,7 @@
             <id>jitpack.io</id>
             <url>https://jitpack.io</url>
         </repository>
+
     </repositories>
 
 </project>
