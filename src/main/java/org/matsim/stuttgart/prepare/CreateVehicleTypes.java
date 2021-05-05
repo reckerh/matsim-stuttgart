@@ -23,6 +23,7 @@ public class CreateVehicleTypes {
         var factory = VehicleUtils.getFactory();
         container.addVehicleType(Utils.createVehicleType("car", 7.5, 36.1111111111, 1, factory));
         container.addVehicleType(Utils.createVehicleType("ride", 7.5, 36.1111111111, 1, factory));
+        container.addVehicleType(Utils.createVehicleType("bike", 2.5, 3.5, 0.25, factory));
 
         new MatsimVehicleWriter(container).writeFile(sharedSvn.resolve(vehiclesFile).toString());
     }
