@@ -9,6 +9,8 @@ import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 
+import java.awt.geom.Rectangle2D;
+
 public class BoundingBox {
 
     private static final Logger log = Logger.getLogger(BoundingBox.class);
@@ -72,5 +74,14 @@ public class BoundingBox {
 
         var pFactory = new PreparedGeometryFactory();
         return pFactory.create(geometry);
+    }
+
+    Rectangle2D.Double toRectangle() {
+        return new Rectangle2D.Double(getMinX(), getMinY(), getMaxX() - getMinX(), getMaxY() - getMinY());
+    }
+
+    @Override
+    public String toString() {
+        return "{ minX: " + getMinX() + ", minY: " + getMinY() + ", maxX: " + getMaxX() + ", maxY: " + getMaxY() + " }";
     }
 }

@@ -2,6 +2,7 @@ package org.matsim.stuttgart.prepare;
 
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.network.Network;
+import org.matsim.api.core.v01.network.NetworkWriter;
 import org.matsim.contrib.gtfs.GtfsConverter;
 import org.matsim.core.config.ConfigUtils;
 import org.matsim.core.network.NetworkUtils;
@@ -18,15 +19,15 @@ import java.time.LocalDate;
 
 public class CreatePt {
 
-    private static final String schedule = "projects\\mosaik-2\\raw-data\\gtfs\\vvs_gtfs_20201105.zip";
-    private static final String transitSchedule = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\transitSchedule-stuttgart.xml.gz";
-    private static final String transitVehicles = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\transitVehicles-stuttgart.xml.gz";
-    private static final String outputNetwork = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\network-stuttgart.xml.gz";
+    private static final String schedule = "projects\\matsim-stuttgart\\stuttgart-v2.0\\raw-data\\gtfs\\vvs_gtfs_20210429.zip";
+    private static final String transitSchedule = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\transit-schedule-stuttgart.xml.gz";
+    private static final String transitVehicles = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\transit-vehicles-stuttgart.xml.gz";
+    private static final String inputNetwork = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\network-stuttgart.xml.gz";
 
     public static void main(String[] args) {
 
         var arguments = Utils.parseSharedSvn(args);
-        var network = NetworkUtils.readNetwork(Paths.get(arguments.getSharedSvn()).resolve(outputNetwork).toString());
+        var network = NetworkUtils.readNetwork(Paths.get(arguments.getSharedSvn()).resolve(inputNetwork).toString());
         create(Paths.get(arguments.getSharedSvn()), network);
     }
 
@@ -48,12 +49,13 @@ public class CreatePt {
         scenario.getTransitVehicles().getVehicleTypes().forEach((id, type) -> type.setPcuEquivalents(0));
 
         new CreatePseudoNetwork(scenario.getTransitSchedule(), scenario.getNetwork(), "pt_").createNetwork();
-        writeScheduleAndVehicles(scenario, sharedSvn);
+        writeScheduleVehiclesAndNetwork(scenario, sharedSvn);
     }
 
-    private static void writeScheduleAndVehicles(Scenario scenario, Path svn) {
+    private static void writeScheduleVehiclesAndNetwork(Scenario scenario, Path svn) {
 
         new TransitScheduleWriter(scenario.getTransitSchedule()).writeFile(svn.resolve(transitSchedule).toString());
         new MatsimVehicleWriter(scenario.getTransitVehicles()).writeFile(svn.resolve(transitVehicles).toString());
+
     }
 }
