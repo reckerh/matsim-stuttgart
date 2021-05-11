@@ -20,7 +20,7 @@ public class CleanPopulation {
 
     private static final Logger log = Logger.getLogger(CleanPopulation.class);
     private static final Random random = new Random();
-    private static final String inputPopulation = "projects\\matsim-stuttgart\\stuttgart-v0.0-snz-original\\optimizedPopulation.xml.gz";
+    private static final String inputPopulation = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\optimizedPopulationWithFreight.xml.gz";
     private static final String outputPopulation = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\population-%dpct-stuttgart.xml.gz";
 
     public static void main(String[] args) {

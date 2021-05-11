@@ -23,6 +23,10 @@ public class PrepareScenario {
             CreateNetwork.writeNetwork(network, svn);
         }
 
+        // merge freight trips into population
+        MergeFreightTrips.extractRelevantFreightTrips(svn);
+        MergeFreightTrips.mergePopulationFiles(svn);
+
         // clean population from old network references and save it
         // downscaled populations are created via 'ReducePopulation'
         CleanPopulation.clean(svn);
