@@ -33,7 +33,7 @@ public class PrepareScenario {
         MergeFreightTrips.mergePopulationFiles(svn);
 
         // Create downscaled populations
-
+        ReducePopulation.createDownsamples(svn);
 
         // clean facilities from old network references and save it
         CleanFacilities.clean(svn);

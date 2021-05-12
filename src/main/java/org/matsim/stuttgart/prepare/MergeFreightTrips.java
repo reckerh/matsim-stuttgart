@@ -1,5 +1,6 @@
 package org.matsim.stuttgart.prepare;
 
+import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.api.core.v01.population.PopulationWriter;
@@ -14,6 +15,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 
 public class MergeFreightTrips {
+    private static final Logger log = Logger.getLogger(MergeFreightTrips.class);
 
     private static final String freightDataDirectory = "projects\\german-wide-freight\\v1.1\\german-wide-freight-25pct.xml.gz";
     private static final String networkPath = "projects\\german-wide-freight\\original-data\\german-primary-road.network.xml.gz";
@@ -36,6 +38,7 @@ public class MergeFreightTrips {
 
 
     public static void extractRelevantFreightTrips(Path svn) {
+        log.info("extract relevant freight trips");
 
         String[] args = new String[]{
                 svn.resolve(freightDataDirectory).toString(),
@@ -52,6 +55,7 @@ public class MergeFreightTrips {
 
 
     public static void mergePopulationFiles(Path svn) {
+        log.info("merge population files");
 
         Config config = ConfigUtils.createConfig();
         config.plans().setInputFile(svn.resolve(populationInputPath).toString());
