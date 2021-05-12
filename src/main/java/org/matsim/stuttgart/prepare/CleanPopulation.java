@@ -14,14 +14,12 @@ import org.matsim.stuttgart.Utils;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
-import java.util.Random;
 
 public class CleanPopulation {
 
     private static final Logger log = Logger.getLogger(CleanPopulation.class);
-    private static final Random random = new Random();
-    private static final String inputPopulation = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\optimizedPopulationWithFreight.xml.gz";
-    private static final String outputPopulation = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\population-%dpct-stuttgart.xml.gz";
+    private static final String inputPopulation = "projects\\matsim-stuttgart\\stuttgart-v0.0-snz-original\\optimizedPopulation.xml.gz";
+    private static final String outputPopulation = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\optimizedPopulationCleaned.xml.gz";
 
     public static void main(String[] args) {
 
@@ -65,25 +63,10 @@ public class CleanPopulation {
 
         splitActivityTypesBasedOnDuration(scenario.getPopulation());
 
-        new PopulationWriter(scenario.getPopulation()).write(sharedSvn.resolve(String.format(outputPopulation, 25)).toString());
-        writeReducedPopulation(scenario, 0.4, sharedSvn.resolve(String.format(outputPopulation, 10)).toString());
-        writeReducedPopulation(scenario, 0.04, sharedSvn.resolve(String.format(outputPopulation, 1)).toString());
-        writeReducedPopulation(scenario, 0.004, sharedSvn.resolve(String.format(outputPopulation, 0)).toString());
-    }
-
-    private static void writeReducedPopulation(Scenario scenario, double fractionOfOriginal, String outputPath) {
-
-        var reducedPopulation = PopulationUtils.createPopulation(ConfigUtils.createConfig());
-        for (Person person : scenario.getPopulation().getPersons().values()) {
-
-            if (random.nextDouble() <= fractionOfOriginal) {
-                reducedPopulation.addPerson(person);
-            }
-        }
-
-        new PopulationWriter(reducedPopulation).write(outputPath);
+        new PopulationWriter(scenario.getPopulation()).write(sharedSvn.resolve(outputPopulation).toString());
 
     }
+
 
     /**
      * Split activities into typical durations to improve value of travel time savings calculation.

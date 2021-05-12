@@ -22,7 +22,7 @@ public class MergeFreightTrips {
     private static final String outputCrs = "EPSG:25832";
 
     private static final String freightPopOutputPath = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\population-25pct-stuttgart-freight-only.xml.gz";
-    private static final String populationInputPath = "projects\\matsim-stuttgart\\stuttgart-v0.0-snz-original\\optimizedPopulation.xml.gz";
+    private static final String populationInputPath = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\optimizedPopulationCleaned.xml.gz";
     private static final String populationOutputPath = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\optimizedPopulationWithFreight.xml.gz";
 
     public static void main(String[] args) {
