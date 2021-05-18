@@ -16,6 +16,9 @@ import org.matsim.vehicles.MatsimVehicleWriter;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.time.LocalDate;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class CreatePt {
 
@@ -23,6 +26,8 @@ public class CreatePt {
     private static final String transitSchedule = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\transit-schedule-stuttgart.xml.gz";
     private static final String transitVehicles = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\transit-vehicles-stuttgart.xml.gz";
     private static final String inputNetwork = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\network-stuttgart.xml.gz";
+    private static final Collection<String> elevationData = List.of("projects\\matsim-stuttgart\\stuttgart-v2.0\\raw-data\\heightmaps\\srtm_38_03.tif", "projects\\matsim-stuttgart\\stuttgart-v2.0\\raw-data\\heightmaps\\srtm_39_03.tif");
+
 
     public static void main(String[] args) {
 
@@ -49,6 +54,23 @@ public class CreatePt {
         scenario.getTransitVehicles().getVehicleTypes().forEach((id, type) -> type.setPcuEquivalents(0));
 
         new CreatePseudoNetwork(scenario.getTransitSchedule(), scenario.getNetwork(), "pt_").createNetwork();
+
+        // add z-Coordinates in transit network
+        var elevationDataPaths = elevationData.stream()
+                .map(sharedSvn::resolve)
+                .map(Path::toString)
+                .collect(Collectors.toList());
+
+        var elevationReader = new ElevationReader(elevationDataPaths);
+
+        for (var node: scenario.getNetwork().getNodes().values()){
+            if (node.getId().toString().startsWith("pt_")){
+                // set all to elevation profile
+                // Is this a good idea? We don't have the correct z coordinate for tracks etc... Or is set all to 0 a better idea?
+                CreateNetwork.addElevationIfNecessary(node, elevationReader);
+            }
+        }
+
         writeScheduleVehiclesAndNetwork(scenario, sharedSvn);
     }
 

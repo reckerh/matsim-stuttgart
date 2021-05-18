@@ -2,7 +2,6 @@ package org.matsim.stuttgart.run;
 
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
-import org.apache.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.contrib.bicycle.BicycleConfigGroup;
@@ -18,7 +17,6 @@ import org.matsim.core.controler.OutputDirectoryLogging;
 import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.stuttgart.Utils;
 
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
@@ -26,17 +24,10 @@ import java.util.List;
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
 
 public class RunStuttgart {
-    private static final Logger log = Logger.getLogger(RunStuttgart.class);
-    private static final String inputConfig = "projects\\matsim-stuttgart\\stuttgart-v2.0\\config-0pct.xml";
-    private static final String outputDirectory = "projects\\matsim-stuttgart\\stuttgart-v2.0\\output";
 
     public static void main(String[] args) {
 
-        var arguments = Utils.parseSharedSvn(args);
-
-        Config config = loadConfig(new String[]{Paths.get(arguments.getSharedSvn()).resolve(inputConfig).toString()});
-        config.controler().setOutputDirectory(Paths.get(arguments.getSharedSvn()).resolve(outputDirectory).toString());
-
+        Config config = loadConfig(args);
         Scenario scenario = loadScenario(config);
         Controler controler = loadControler(scenario);
         controler.run();

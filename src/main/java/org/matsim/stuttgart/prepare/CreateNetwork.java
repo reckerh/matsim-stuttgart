@@ -30,9 +30,6 @@ public class CreateNetwork {
 
     private static final Logger log = Logger.getLogger(CreateNetwork.class);
 
-
-    // ToDo: Move files and paths to Stutgart repository
-
     private static final String senozonNetworkPath = "projects\\matsim-stuttgart\\stuttgart-v0.0-snz-original\\optimizedNetwork.xml.gz";
     private static final String outputNetwork = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\network-stuttgart.xml.gz";
     private static final String osmFile = "projects\\matsim-stuttgart\\stuttgart-v2.0\\raw-data\\osm\\germany-20200715.osm.pbf";
@@ -70,15 +67,13 @@ public class CreateNetwork {
                     if (link.getAllowedModes().contains(TransportMode.car)) {
                         var allowedModes = new HashSet<>(link.getAllowedModes());
                         allowedModes.add(TransportMode.ride);
+                        allowedModes.add("freight");
                         link.setAllowedModes(allowedModes);
                     }
 
                     // add z coord
                     addElevationIfNecessary(link.getFromNode(), elevationReader);
                     addElevationIfNecessary(link.getToNode(), elevationReader);
-
-                    // set parking costs
-                    // ToDo: Set parking costs and zones per link here
 
                 })
                 // override the defaults of the bicycle parser with the defaults of the standard parser to reduce memory
@@ -116,7 +111,7 @@ public class CreateNetwork {
         return BoundingBox.fromNetwork(senozonNetwork).toGeometry();
     }
 
-    private static synchronized void addElevationIfNecessary(Node node, ElevationReader elevationReader) {
+    public static synchronized void addElevationIfNecessary(Node node, ElevationReader elevationReader) {
 
         if (!node.getCoord().hasZ()) {
 

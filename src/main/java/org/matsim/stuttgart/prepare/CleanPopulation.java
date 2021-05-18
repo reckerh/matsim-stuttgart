@@ -59,6 +59,9 @@ public class CleanPopulation {
                     }
 
                     person.addPlan(newPlan);
+
+                    // add subpopulation attribute
+                    person.getAttributes().putAttribute("subpopulation", "person");
                 });
 
         splitActivityTypesBasedOnDuration(scenario.getPopulation());
