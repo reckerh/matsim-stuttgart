@@ -1,18 +1,25 @@
 package org.matsim.stuttgart.prepare;
 
 import org.apache.log4j.Logger;
+import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Population;
 import org.matsim.api.core.v01.population.PopulationWriter;
 import org.matsim.application.prepare.freight.ExtractRelevantFreightTrips;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.core.utils.geometry.CoordinateTransformation;
+import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 import org.matsim.stuttgart.Utils;
 import picocli.CommandLine;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
+import java.util.Collection;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class MergeFreightTrips {
     private static final Logger log = Logger.getLogger(MergeFreightTrips.class);
@@ -27,12 +34,24 @@ public class MergeFreightTrips {
     private static final String populationInputPath = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\optimizedPopulationCleaned.xml.gz";
     private static final String populationOutputPath = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\optimizedPopulationWithFreight.xml.gz";
 
+
     public static void main(String[] args) {
+        final Collection<String> elevationData = List.of("projects\\matsim-stuttgart\\stuttgart-v2.0\\raw-data\\heightmaps\\srtm_38_03.tif", "projects\\matsim-stuttgart\\stuttgart-v2.0\\raw-data\\heightmaps\\srtm_39_03.tif");
+        final CoordinateTransformation transformUTM32ToWGS84 = TransformationFactory.getCoordinateTransformation("EPSG:25832", "EPSG:4326");
 
         var arguments = Utils.parseSharedSvn(args);
 
-        //MergeFreightTrips.extractRelevantFreightTrips(Paths.get(arguments.getSharedSvn()));
-        MergeFreightTrips.mergePopulationFiles(Paths.get(arguments.getSharedSvn()));
+        var svn = Paths.get(arguments.getSharedSvn());
+        var elevationDataPaths = elevationData.stream()
+                .map(svn::resolve)
+                .map(Path::toString)
+                .collect(Collectors.toList());
+
+        var elevationReader = new ElevationReader(elevationDataPaths, transformUTM32ToWGS84);
+
+
+        //MergeFreightTrips.extractRelevantFreightTrips(svn);
+        MergeFreightTrips.mergePopulationFiles(svn, elevationReader);
 
     }
 
@@ -54,7 +73,7 @@ public class MergeFreightTrips {
     }
 
 
-    public static void mergePopulationFiles(Path svn) {
+    public static void mergePopulationFiles(Path svn, ElevationReader elevationReader) {
         log.info("merge population files");
 
         Config config = ConfigUtils.createConfig();
@@ -67,6 +86,14 @@ public class MergeFreightTrips {
         for (var person: freightScenario.getPopulation().getPersons().values()){
             inputScenario.getPopulation().addPerson(person);
         }
+
+        // add z values
+        inputScenario.getPopulation().getPersons().values().parallelStream()
+                .flatMap(person -> person.getPlans().stream())
+                .flatMap(plan -> TripStructureUtils.getActivities(plan, TripStructureUtils.StageActivityHandling.ExcludeStageActivities).stream())
+                .forEach(activity -> {
+                    activity.setCoord(Utils.addElevationIfNecessary(activity.getCoord(), elevationReader));
+                });
 
         new PopulationWriter(inputScenario.getPopulation()).write(svn.resolve(populationOutputPath).toString());
 

@@ -2,10 +2,14 @@ package org.matsim.stuttgart;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.network.Node;
 import org.matsim.core.config.groups.PlanCalcScoreConfigGroup;
+import org.matsim.core.utils.geometry.CoordUtils;
 import org.matsim.core.utils.geometry.CoordinateTransformation;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
+import org.matsim.stuttgart.prepare.ElevationReader;
 import org.matsim.vehicles.VehicleType;
 import org.matsim.vehicles.VehiclesFactory;
 
@@ -48,6 +52,29 @@ public class Utils {
         return TransformationFactory.getCoordinateTransformation("EPSG:4326", "EPSG:25832");
     }
 
+
+    public static synchronized void addElevationIfNecessary(Node node, ElevationReader elevationReader) {
+
+        var coord = addElevationIfNecessary(node.getCoord(), elevationReader);
+        node.setCoord(coord);
+    }
+
+    public static synchronized Coord addElevationIfNecessary(Coord coord, ElevationReader elevationReader) {
+
+        if (!coord.hasZ()) {
+
+            //the height map is in WGS-84 but the node was already transformed to UTM-32. Transform it the other way around now.
+            var height = elevationReader.getElevationAt(coord);
+
+            // I think it should work to replace the coord on the node reference, since the network only stores references
+            // to the node and the internal quad tree only references the x,y-values and the node. janek 4.2020
+            return CoordUtils.createCoord(coord.getX(), coord.getY(), height);
+        } else {
+            return coord;
+        }
+    }
+
+
     public static VehicleType createVehicleType(String id, double length, double maxV, double pce, VehiclesFactory factory) {
         var vehicleType = factory.createVehicleType(Id.create(id, VehicleType.class));
         vehicleType.setNetworkMode(id);
@@ -74,4 +101,7 @@ public class Utils {
             return sharedSvn;
         }
     }
+
+
+
 }
