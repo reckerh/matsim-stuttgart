@@ -42,7 +42,10 @@ public class CleanPopulation {
 
                     var firstActivity = (Activity) person.getSelectedPlan().getPlanElements().get(0);
                     firstActivity.setLinkId(null);
+                    firstActivity.setFacilityId(null);
+
                     newPlan.addActivity(firstActivity); // copy the first activity
+
 
                     // clear plans
                     person.setSelectedPlan(null);
@@ -55,6 +58,7 @@ public class CleanPopulation {
                         newPlan.addLeg(PopulationUtils.createLeg(TransportMode.walk));
                         var activity = trip.getDestinationActivity();
                         activity.setLinkId(null);
+                        activity.setFacilityId(null);
                         newPlan.addActivity(trip.getDestinationActivity());
                     }
 

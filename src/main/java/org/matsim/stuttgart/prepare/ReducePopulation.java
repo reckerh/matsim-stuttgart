@@ -49,8 +49,11 @@ public class ReducePopulation {
         log.info("loading population");
         new PopulationReader(scenario).readFile(sharedSvn.resolve(inputPopulation).toString());
 
+        scenario.getPopulation().getAttributes().putAttribute("coordinateReferenceSystem", "epsg:25832");
+
         log.info("write reduced populations");
         new PopulationWriter(scenario.getPopulation()).write(sharedSvn.resolve(String.format(outputPopulation, 25)).toString());
+
         writeReducedPopulation(scenario, 0.4, sharedSvn.resolve(String.format(outputPopulation, 10)).toString());
         writeReducedPopulation(scenario, 0.04, sharedSvn.resolve(String.format(outputPopulation, 1)).toString());
         writeReducedPopulation(scenario, 0.004, sharedSvn.resolve(String.format(outputPopulation, 0)).toString());
