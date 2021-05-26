@@ -24,6 +24,7 @@ public class CreateVehicleTypes {
         container.addVehicleType(Utils.createVehicleType("car", 7.5, 36.1111111111, 1, factory));
         container.addVehicleType(Utils.createVehicleType("ride", 7.5, 36.1111111111, 1, factory));
         container.addVehicleType(Utils.createVehicleType("bike", 2.5, 3.5, 0.25, factory));
+        container.addVehicleType(Utils.createVehicleType("freight", 15., 27.77777777, 3.5, factory));
 
         new MatsimVehicleWriter(container).writeFile(sharedSvn.resolve(vehiclesFile).toString());
     }

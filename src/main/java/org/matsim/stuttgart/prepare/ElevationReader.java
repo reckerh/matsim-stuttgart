@@ -5,6 +5,7 @@ import org.geotools.coverage.grid.GridCoverage2D;
 import org.geotools.gce.geotiff.GeoTiffReader;
 import org.geotools.geometry.DirectPosition2D;
 import org.matsim.api.core.v01.Coord;
+import org.matsim.core.utils.geometry.CoordinateTransformation;
 import org.opengis.referencing.operation.TransformException;
 
 import java.awt.image.Raster;
@@ -17,18 +18,21 @@ public class ElevationReader {
 
     private final static Logger log = Logger.getLogger(ElevationReader.class);
     private final Collection<ElevationMap> elevationMaps;
+    private final CoordinateTransformation transformation;
 
-    ElevationReader(Collection<String> filenames) {
+    ElevationReader(Collection<String> filenames, CoordinateTransformation transformation) {
 
         log.info("Loading " + filenames.size() + " height maps.");
         elevationMaps = filenames.parallelStream()
                 .map(ElevationMap::new)
                 .collect(Collectors.toList());
+        this.transformation = transformation;
     }
 
-    double getElevationAt(Coord coord) {
+    public double getElevationAt(Coord coord) {
 
-        var position = new DirectPosition2D(coord.getX(), coord.getY());
+        Coord transformed = transformation.transform(coord);
+        var position = new DirectPosition2D(transformed.getX(), transformed.getY());
 
         for (ElevationMap elevationMap : elevationMaps) {
 

@@ -48,6 +48,7 @@ public class CleanFacilities {
 
     public static void clean(Path sharedSvn) {
 
+        // ToDo add z coord to facility coord
 
         Config config = ConfigUtils.createConfig();
         config.facilities().setInputFile(sharedSvn.resolve(inputFacilities).toString());
