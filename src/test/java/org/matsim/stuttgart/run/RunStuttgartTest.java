@@ -5,12 +5,15 @@ import org.junit.Test;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.Config;
 import org.matsim.core.controler.Controler;
+import org.opengis.referencing.FactoryException;
+
+import java.net.MalformedURLException;
 
 public class RunStuttgartTest {
 
     @Test
     @Ignore
-    public void testRunner(){
+    public void testRunner() throws MalformedURLException, FactoryException {
 
 
         String configInput = System.getProperty("user.dir") + "/../shared-svn/projects/matsim-stuttgart/stuttgart-v2.0/testConfig.xml" ;

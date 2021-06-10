@@ -2,6 +2,11 @@ package org.matsim.stuttgart.run;
 
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
+import org.geotools.geometry.jts.JTS;
+import org.geotools.referencing.CRS;
+import org.locationtech.jts.geom.Geometry;
+import org.locationtech.jts.geom.prep.PreparedGeometry;
+import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.contrib.bicycle.BicycleConfigGroup;
@@ -15,18 +20,32 @@ import org.matsim.core.controler.AbstractModule;
 import org.matsim.core.controler.Controler;
 import org.matsim.core.controler.OutputDirectoryHierarchy;
 import org.matsim.core.controler.OutputDirectoryLogging;
+import org.matsim.core.router.TripStructureUtils;
 import org.matsim.core.scenario.ScenarioUtils;
+import org.matsim.core.utils.geometry.geotools.MGC;
+import org.matsim.core.utils.gis.ShapeFileReader;
 import org.matsim.stuttgart.Utils;
+import org.matsim.stuttgart.analysis.TripAnalyzerModule;
+import org.opengis.referencing.FactoryException;
+import org.opengis.referencing.operation.MathTransform;
+import org.opengis.referencing.operation.TransformException;
 
+import java.net.MalformedURLException;
+import java.net.URI;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
+import java.util.stream.Collectors;
 
+import static org.geotools.geometry.jts.JTS.transform;
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
 
 public class RunStuttgart {
 
-    public static void main(String[] args) {
+    private static final String shapeFilePath = "projects\\matsim-stuttgart\\stuttgart-v0.0-snz-original\\stuttgart_umland_5677.shp";
+
+    public static void main(String[] args) throws MalformedURLException, FactoryException {
 
         Config config = loadConfig(args);
         Scenario scenario = loadScenario(config);
@@ -86,7 +105,7 @@ public class RunStuttgart {
         return ScenarioUtils.loadScenario(config);
     }
 
-    public static Controler loadControler(Scenario scenario) {
+    public static Controler loadControler(Scenario scenario) throws MalformedURLException, FactoryException {
 
         Controler controler = new Controler(scenario);
         if (!controler.getConfig().transit().isUsingTransitInMobsim())
@@ -107,6 +126,39 @@ public class RunStuttgart {
         // add bicycle module
         Bicycles.addAsOverridingModule(controler);
 
+        // create modal share analysis
+        var dilutionArea = getDilutionArea();
+        var analyzerModule = new TripAnalyzerModule(personId -> {
+            var person = scenario.getPopulation().getPersons().get(personId);
+            var firstActivity = TripStructureUtils.getActivities(person.getSelectedPlan(), TripStructureUtils.StageActivityHandling.ExcludeStageActivities).get(0);
+            return dilutionArea.stream().anyMatch(geometry -> geometry.covers(MGC.coord2Point(firstActivity.getCoord())));
+        });
+        controler.addOverridingModule(analyzerModule);
+
         return controler;
+    }
+
+    private static Collection<PreparedGeometry> getDilutionArea() throws FactoryException, MalformedURLException {
+
+        var factory = new PreparedGeometryFactory();
+        var fromCRS = CRS.decode("EPSG:3857");
+        var toCRS = CRS.decode("EPSG:25832");
+        var transformation = CRS.findMathTransform(fromCRS, toCRS);
+
+        var uri = URI.create(shapeFilePath);
+        return ShapeFileReader.getAllFeatures(uri.toURL()).stream()
+                .map(simpleFeature -> (Geometry) simpleFeature.getDefaultGeometry())
+                .map(geometry -> transform(geometry, transformation))
+                .map(factory::create)
+                .collect(Collectors.toSet());
+
+    }
+
+    private static Geometry transform(Geometry geometry, MathTransform transform) {
+        try {
+            return JTS.transform(geometry, transform);
+        } catch (TransformException e) {
+            throw new RuntimeException(e);
+        }
     }
 }
