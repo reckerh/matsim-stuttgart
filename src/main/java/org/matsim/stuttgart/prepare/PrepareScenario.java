@@ -1,8 +1,10 @@
 package org.matsim.stuttgart.prepare;
 
+import org.matsim.application.prepare.freight.ExtractRelevantFreightTrips;
 import org.matsim.core.utils.geometry.CoordinateTransformation;
 import org.matsim.core.utils.geometry.transformations.TransformationFactory;
 import org.matsim.stuttgart.Utils;
+import picocli.CommandLine;
 
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -13,6 +15,7 @@ import java.util.stream.Collectors;
 public class PrepareScenario {
     private static final Collection<String> elevationData = List.of("projects\\matsim-stuttgart\\stuttgart-v2.0\\raw-data\\heightmaps\\srtm_38_03.tif", "projects\\matsim-stuttgart\\stuttgart-v2.0\\raw-data\\heightmaps\\srtm_39_03.tif");
     private static final CoordinateTransformation transformUTM32ToWGS84 = TransformationFactory.getCoordinateTransformation("EPSG:25832", "EPSG:4326");
+    private static final String filename = "matsim-stuttgart-v2.0";
 
     public static void main(String[] args) {
 
@@ -37,6 +40,9 @@ public class PrepareScenario {
             // write the network with pt
             CreateNetwork.writeNetwork(network, svn);
         }
+
+        // print statistics about original population
+        CheckPopulation.check(svn);
 
         // Extract freight trips population
         MergeFreightTrips.extractRelevantFreightTrips(svn);

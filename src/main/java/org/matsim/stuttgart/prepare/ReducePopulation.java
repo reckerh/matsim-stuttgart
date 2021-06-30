@@ -21,7 +21,7 @@ public class ReducePopulation {
 
     private static final Random random = new Random();
     private static final String inputPopulation = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\optimizedPopulationWithFreight.xml.gz";
-    private static final String outputPopulation = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\population-%dpct-stuttgart.xml.gz";
+    private static final String outputPopulation = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\matsim-stuttgart-v2.0-%dpct.plans.xml.gz";
 
 
     public static void main(String[] args) {

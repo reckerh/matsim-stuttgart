@@ -132,7 +132,7 @@ public class RunStuttgart {
             var person = scenario.getPopulation().getPersons().get(personId);
             var firstActivity = TripStructureUtils.getActivities(person.getSelectedPlan(), TripStructureUtils.StageActivityHandling.ExcludeStageActivities).get(0);
             return dilutionArea.stream().anyMatch(geometry -> geometry.covers(MGC.coord2Point(firstActivity.getCoord())));
-        });
+        }, "", "");
         controler.addOverridingModule(analyzerModule);
 
         return controler;

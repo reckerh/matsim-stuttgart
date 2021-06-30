@@ -26,9 +26,9 @@ import java.util.stream.Collectors;
 public class CreatePt {
 
     private static final String schedule = "projects\\matsim-stuttgart\\stuttgart-v2.0\\raw-data\\gtfs\\vvs_gtfs_20210429.zip";
-    private static final String transitSchedule = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\transit-schedule-stuttgart.xml.gz";
-    private static final String transitVehicles = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\transit-vehicles-stuttgart.xml.gz";
-    private static final String inputNetwork = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\network-stuttgart.xml.gz";
+    private static final String transitSchedule = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\matsim-stuttgart-v2.0.transit-schedule.xml.gz";
+    private static final String transitVehicles = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\matsim-stuttgart-v2.0.transit-vehicles.xml.gz";
+    private static final String inputNetwork = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\matsim-stuttgart-v2.0.network.xml.gz";
 
 
     public static void main(String[] args) {

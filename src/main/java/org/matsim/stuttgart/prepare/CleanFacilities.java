@@ -38,7 +38,7 @@ public class CleanFacilities {
 
     private static final Logger log = Logger.getLogger(CleanFacilities.class);
     private static final String inputFacilities = "projects\\matsim-stuttgart\\stuttgart-v0.0-snz-original\\optimizedFacilities.xml.gz";
-    private static final String outputFacilities = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\facilities-stuttgart.xml.gz";
+    private static final String outputFacilities = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\matsim-stuttgart-v2.0.facilities.xml.gz";
 
     public static void main(String[] args) {
 

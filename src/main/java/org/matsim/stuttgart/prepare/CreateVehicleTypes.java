@@ -9,7 +9,7 @@ import java.nio.file.Paths;
 
 public class CreateVehicleTypes {
 
-    private static final String vehiclesFile = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\vehicles-stuttgart.xml.gz";
+    private static final String vehiclesFile = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\matsim-stuttgart-v2.0.vehicles.xml.gz";
 
     public static void main(String[] args) {
 
