@@ -32,6 +32,7 @@ public class CSVWriter implements TabularWriter {
             }
 
         } catch (IOException e) {
+            // catch any error here, but try to go on since other writers might succeed in writing out data
             log.error("Failed to write to CSV: " + filename);
             log.error(e.getMessage());
             e.printStackTrace();

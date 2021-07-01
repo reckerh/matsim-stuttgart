@@ -16,11 +16,12 @@ import com.google.api.services.sheets.v4.model.*;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.Logger;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.security.GeneralSecurityException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -31,23 +32,27 @@ public class GoogleSheetsWriter implements TabularWriter {
 
     private static final String APPLICATION_NAME = "MATSim Google Spreadsheet Writer";
     private static final JsonFactory JSON_FACTORY = GsonFactory.getDefaultInstance();
-    private static final String TOKENS_DIRECTORY_PATH = "tokens";
+    //private static final String TOKENS_DIRECTORY_PATH = "tokens";
 
     /**
      * Global instance of the scopes required by this quickstart.
      * If modifying these scopes, delete your previously saved tokens/ folder.
      */
     private static final List<String> SCOPES = Collections.singletonList(SheetsScopes.SPREADSHEETS);
-    private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
+   // private static final String CREDENTIALS_FILE_PATH = "/credentials.json";
 
     private final String spreadsheetId;
     private final String sheetName;
     private final String[] header;
+    private final Path tokenDirectory;
+    private final Path credentials;
 
-    public GoogleSheetsWriter(String spreadsheetId, String sheetName, String[] header) {
+    public GoogleSheetsWriter(String spreadsheetId, String sheetName, Path tokenDirectory, Path credentials, String[] header) {
         this.spreadsheetId = spreadsheetId;
         this.sheetName = sheetName;
         this.header = header;
+        this.tokenDirectory = tokenDirectory;
+        this.credentials = credentials;
     }
 
     @Override
@@ -94,7 +99,8 @@ public class GoogleSheetsWriter implements TabularWriter {
             log.info("Successfully wrote to sheet id: " + spreadsheetId);
 
 
-        } catch (GeneralSecurityException | IOException e) {
+        } catch (Exception e) {
+            // catch any error, give feedback but try to go on because other writers might succeed still.
             log.error("Failed to write to " + spreadsheetId + " Reason: ");
             log.error(e.getMessage());
             e.printStackTrace();
@@ -109,18 +115,15 @@ public class GoogleSheetsWriter implements TabularWriter {
      * @return An authorized Credential object.
      * @throws IOException If the credentials.json file cannot be found.
      */
-    private static Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
+    private Credential getCredentials(final NetHttpTransport HTTP_TRANSPORT) throws IOException {
         // Load client secrets.
-        InputStream in = GoogleSheetsWriter.class.getResourceAsStream(CREDENTIALS_FILE_PATH);
-        if (in == null) {
-            throw new FileNotFoundException("Resource not found: " + CREDENTIALS_FILE_PATH);
-        }
+        InputStream in = Files.newInputStream(credentials);
         GoogleClientSecrets clientSecrets = GoogleClientSecrets.load(JSON_FACTORY, new InputStreamReader(in));
 
         // Build flow and trigger user authorization request.
         GoogleAuthorizationCodeFlow flow = new GoogleAuthorizationCodeFlow.Builder(
                 HTTP_TRANSPORT, JSON_FACTORY, clientSecrets, SCOPES)
-                .setDataStoreFactory(new FileDataStoreFactory(new java.io.File(TOKENS_DIRECTORY_PATH)))
+                .setDataStoreFactory(new FileDataStoreFactory(tokenDirectory.toFile()))
                 .setAccessType("offline")
                 .build();
         LocalServerReceiver receiver = new LocalServerReceiver.Builder().setPort(8888).build();

@@ -31,19 +31,18 @@ import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
 
 import java.net.MalformedURLException;
-import java.net.URI;
+import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.stream.Collectors;
 
-import static org.geotools.geometry.jts.JTS.transform;
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
 
 public class RunStuttgart {
 
-    private static final String shapeFilePath = "projects\\matsim-stuttgart\\stuttgart-v0.0-snz-original\\stuttgart_umland_5677.shp";
+    private static final String shapeFilePath = "projects/matsim-stuttgart/stuttgart-v0.0-snz-original/stuttgart_umland_5677.shp";
 
     public static void main(String[] args) throws MalformedURLException, FactoryException {
 
@@ -53,16 +52,21 @@ public class RunStuttgart {
         controler.run();
     }
 
-    public static Config loadConfig(String[] args, ConfigGroup... modules) {
+    public static Config loadConfig(String[] args, ConfigGroup... modules) throws MalformedURLException {
         OutputDirectoryLogging.catchLogEntries();
 
         // Materialize bike config group
         BicycleConfigGroup bikeConfigGroup = new BicycleConfigGroup();
         bikeConfigGroup.setBicycleMode(TransportMode.bike);
 
+        // materialize printer config group
+        TripAnalyzerModule.PrinterConfigGroup printerConfigGroup = new TripAnalyzerModule.PrinterConfigGroup();
+
+
         //this feels a little messy, but I guess this is how var-args work
         List<ConfigGroup> moduleList = new ArrayList<>(Arrays.asList(modules));
         moduleList.add(bikeConfigGroup);
+        moduleList.add(printerConfigGroup);
         moduleList.add(new SwissRailRaptorConfigGroup());
 
         var moduleArray = moduleList.toArray(new ConfigGroup[0]);
@@ -75,6 +79,7 @@ public class RunStuttgart {
         config.subtourModeChoice().setProbaForRandomSingleTripMode(0.5);
         config.controler().setRoutingAlgorithmType(FastAStarLandmarks);
         config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
+        config.setContext(Paths.get("C:/Users/Janekdererste/repos/shared-svn/projects/matsim-stuttgart/stuttgart-v2.0/input").toUri().toURL());
 
         final long minDuration = 600;
         final long maxDuration = 3600 * 27;
@@ -128,24 +133,42 @@ public class RunStuttgart {
 
         // create modal share analysis
         var dilutionArea = getDilutionArea();
-        var analyzerModule = new TripAnalyzerModule(personId -> {
+        var printerConfig = (TripAnalyzerModule.PrinterConfigGroup)controler.getConfig().getModules().get(TripAnalyzerModule.PrinterConfigGroup.GROUP_NAME);
+        printerConfig.setPersonFilter(personId -> {
             var person = scenario.getPopulation().getPersons().get(personId);
             var firstActivity = TripStructureUtils.getActivities(person.getSelectedPlan(), TripStructureUtils.StageActivityHandling.ExcludeStageActivities).get(0);
             return dilutionArea.stream().anyMatch(geometry -> geometry.covers(MGC.coord2Point(firstActivity.getCoord())));
-        }, "", "");
-        controler.addOverridingModule(analyzerModule);
+        });
 
+
+     /*   var analyzerModule = new TripAnalyzerModule(personId -> {
+            var person = scenario.getPopulation().getPersons().get(personId);
+            var firstActivity = TripStructureUtils.getActivities(person.getSelectedPlan(), TripStructureUtils.StageActivityHandling.ExcludeStageActivities).get(0);
+            return dilutionArea.stream().anyMatch(geometry -> geometry.covers(MGC.coord2Point(firstActivity.getCoord())));
+        },
+                List.of(TransportMode.bike, TransportMode.car, TransportMode.pt, TransportMode.ride, TransportMode.walk),
+                new int[]{500, 1000, 2000, 5000, 10000, 20000, 50000, 100000},
+                "1f4Wmgm5ZxaZLd_444elBFBMmVb2scDBFN3LJ7NS8S_Q",
+                "1gyByVlSASqbq-d5zStrNXtwTCtXrWMHuqBdNTxSZqVo"
+        );
+
+
+
+
+        controler.addOverridingModule(analyzerModule);
+      */
+        controler.addOverridingModule(new TripAnalyzerModule());
         return controler;
     }
 
     private static Collection<PreparedGeometry> getDilutionArea() throws FactoryException, MalformedURLException {
 
         var factory = new PreparedGeometryFactory();
-        var fromCRS = CRS.decode("EPSG:3857");
+        var fromCRS = CRS.decode("EPSG:5677");
         var toCRS = CRS.decode("EPSG:25832");
         var transformation = CRS.findMathTransform(fromCRS, toCRS);
 
-        var uri = URI.create(shapeFilePath);
+        var uri = Paths.get("C:/Users/Janekdererste/repos/shared-svn/").resolve(shapeFilePath).toUri();
         return ShapeFileReader.getAllFeatures(uri.toURL()).stream()
                 .map(simpleFeature -> (Geometry) simpleFeature.getDefaultGeometry())
                 .map(geometry -> transform(geometry, transformation))
