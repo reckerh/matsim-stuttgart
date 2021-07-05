@@ -103,7 +103,7 @@ public class GoogleSheetsWriter implements TabularWriter {
             // catch any error, give feedback but try to go on because other writers might succeed still.
             log.error("Failed to write to " + spreadsheetId + " Reason: ");
             log.error(e.getMessage());
-            e.printStackTrace();
+            log.error(e);
 
         }
     }

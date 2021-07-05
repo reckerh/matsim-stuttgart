@@ -19,7 +19,6 @@ public class TabularLogger implements TabularWriter {
     @Override
     public void write(List<List<Object>> values) {
 
-        log.info("----------------------- Trip Analyzer Module - Modal Share ---------------------------");
         log.info(String.join(", ", header));
 
         for (var row : values) {

@@ -58,97 +58,9 @@ public class TripAnalyzerModule extends AbstractModule {
 
         public static String GROUP_NAME = "modesPrinter";
 
-        private GoogleConfig googleConfig;
         private int[] distanceClasses;
         private String[] modes;
         private Predicate<Id<Person>> personFilter;
-
-        @StringSetter("modes")
-        public void setModes(String modes) {
-            setModes(StringUtils.split(modes, ","));
-        }
-
-        @StringSetter("distanceClasses")
-        public void setDistanceClasses(String classes) {
-            var distanceClasses = Arrays.stream(StringUtils.split(classes, ","))
-                    .map(String::trim)
-                    .mapToInt(Integer::parseInt)
-                    .toArray();
-
-            setDistanceClasses(distanceClasses);
-        }
-
-        @StringGetter("modes")
-        public String getModesAsString() {
-            return String.join(",", modes);
-        }
-        @StringGetter("distanceClasses")
-        public String getDistanceClassesAsString() {
-            return StringUtils.join(",", distanceClasses);
-        }
-        public GoogleConfig getGoogleConfig() {
-            return googleConfig;
-        }
-
-        public int[] getDistanceClasses() {
-            return distanceClasses;
-        }
-
-        public String[] getModes() {
-            return modes;
-        }
-
-        public PrinterConfigGroup setGoogleConfig(GoogleConfig googleConfig) {
-            this.googleConfig = googleConfig;
-            return this;
-        }
-
-        public PrinterConfigGroup setDistanceClasses(int[] distanceClasses) {
-            this.distanceClasses = distanceClasses;
-            return this;
-        }
-
-        public PrinterConfigGroup setModes(String[] modes) {
-            this.modes = modes;
-            return this;
-        }
-
-        public PrinterConfigGroup setPersonFilter(Predicate<Id<Person>> personFilter) {
-            this.personFilter = personFilter;
-            return this;
-        }
-
-        public Predicate<Id<Person>> getPersonFilter() { return personFilter; }
-
-        public PrinterConfigGroup() {
-            super(GROUP_NAME);
-        }
-
-        @Override
-        public ConfigGroup createParameterSet(String type) {
-            if (GoogleConfig.TYPE.equals(type)) {
-                return new GoogleConfig();
-            }
-            throw new IllegalArgumentException("Don't know parameter set: " + type);
-        }
-
-        @Override
-        public void addParameterSet(ConfigGroup set) {
-            if (set instanceof GoogleConfig) {
-                setGoogleConfig((GoogleConfig) set);
-            } else {
-                throw new IllegalArgumentException("Don't know what to do with: " + set.toString());
-            }
-        }
-
-        public boolean hasGoogleConfig() {
-            return googleConfig != null;
-        }
-    }
-
-    private static class GoogleConfig extends ReflectiveConfigGroup {
-
-        private static final String TYPE = "google";
         private String modalShareId;
         private String modalDistanceShareId;
         private Path tokenDirectory;
@@ -174,6 +86,79 @@ public class TripAnalyzerModule extends AbstractModule {
             return credentials.toString();
         }
 
+        @StringSetter("modalShareSpreadsheetId")
+        public PrinterConfigGroup setModalShareId(String modalShareId) {
+            this.modalShareId = modalShareId;
+            return this;
+        }
+
+        @StringSetter("modalDistanceShareSpreadsheetId")
+        public PrinterConfigGroup setModalDistanceShareId(String modalDistanceShareId) {
+            this.modalDistanceShareId = modalDistanceShareId;
+            return this;
+        }
+
+        @StringSetter("tokenDirectory")
+        public PrinterConfigGroup setTokenDirectory(String tokenDirectory) {
+            this.tokenDirectory = Paths.get(tokenDirectory);
+            return this;
+        }
+
+        @StringSetter("credentialsPath")
+        public PrinterConfigGroup setCredentials(String credentials) {
+            this.credentials = Paths.get(credentials);
+            return this;
+        }
+
+        @StringSetter("modes")
+        public void setModes(String modes) {
+            setModes(StringUtils.split(modes, ","));
+        }
+
+        @StringSetter("distanceClasses")
+        public void setDistanceClasses(String classes) {
+            var distanceClasses = Arrays.stream(StringUtils.split(classes, ","))
+                    .map(String::trim)
+                    .mapToInt(Integer::parseInt)
+                    .toArray();
+
+            setDistanceClasses(distanceClasses);
+        }
+
+        @StringGetter("modes")
+        public String getModesAsString() {
+            return String.join(",", modes);
+        }
+        @StringGetter("distanceClasses")
+        public String getDistanceClassesAsString() {
+            return StringUtils.join(",", distanceClasses);
+        }
+
+        public int[] getDistanceClasses() {
+            return distanceClasses;
+        }
+
+        public String[] getModes() {
+            return modes;
+        }
+
+        public PrinterConfigGroup setDistanceClasses(int[] distanceClasses) {
+            this.distanceClasses = distanceClasses;
+            return this;
+        }
+
+        public PrinterConfigGroup setModes(String[] modes) {
+            this.modes = modes;
+            return this;
+        }
+
+        public PrinterConfigGroup setPersonFilter(Predicate<Id<Person>> personFilter) {
+            this.personFilter = personFilter;
+            return this;
+        }
+
+        public Predicate<Id<Person>> getPersonFilter() { return personFilter; }
+
         public Path getTokenDirectory() {
             return tokenDirectory;
         }
@@ -182,32 +167,16 @@ public class TripAnalyzerModule extends AbstractModule {
             return credentials;
         }
 
-        @StringSetter("modalShareSpreadsheetId")
-        public GoogleConfig setModalShareId(String modalShareId) {
-            this.modalShareId = modalShareId;
-            return this;
+        public PrinterConfigGroup() {
+            super(GROUP_NAME);
         }
 
-        @StringSetter("modalDistanceShareSpreadsheetId")
-        public GoogleConfig setModalDistanceShareId(String modalDistanceShareId) {
-            this.modalDistanceShareId = modalDistanceShareId;
-            return this;
+        public boolean hasGoogleIdForModalShare() {
+            return !StringUtils.isBlank(this.modalShareId);
         }
 
-        @StringSetter("tokenDirectory")
-        public GoogleConfig setTokenDirectory(String tokenDirectory) {
-            this.tokenDirectory = Paths.get(tokenDirectory);
-            return this;
-        }
-
-        @StringSetter("credentialsPath")
-        public GoogleConfig setCredentials(String credentials) {
-            this.credentials = Paths.get(credentials);
-            return this;
-        }
-
-        public GoogleConfig() {
-            super(TYPE);
+        public boolean hasGoogleIdForModalDistanceShare() {
+            return !StringUtils.isBlank(this.modalDistanceShareId);
         }
     }
 
@@ -282,18 +251,16 @@ public class TripAnalyzerModule extends AbstractModule {
                 var modalShare = modalShare2(filteredTrips, printerConfigGroup.getModes());
 
 
-                log.info("Writing modal share to Modal Share to CSV");
+                log.info("----------------------- Trip Analyzer Module - Modal Share ---------------------------");
                 new TabularLogger(modalShareHeader).write(modalShare);
-                log.info("Writing modal share to Modal Share to CSV");
                 new CSVWriter(Paths.get(outputDirectoryHierarchy.getIterationFilename(event.getIteration(), "modal-share.csv")), modalShareHeader).write(modalShare);
 
-                if (printerConfigGroup.hasGoogleConfig()) {
-                    log.info("Writing modal share to Google Spreadsheets");
+                if (printerConfigGroup.hasGoogleIdForModalShare()) {
                     new GoogleSheetsWriter(
-                            printerConfigGroup.getGoogleConfig().getModalShareId(),
+                            printerConfigGroup.getModalShareId(),
                             controlerConfig.getRunId(),
-                            printerConfigGroup.getGoogleConfig().getTokenDirectory(),
-                            printerConfigGroup.getGoogleConfig().getCredentials(),
+                            printerConfigGroup.getTokenDirectory(),
+                            printerConfigGroup.getCredentials(),
                             modalShareHeader)
                             .write(modalShare);
                 }
@@ -301,15 +268,16 @@ public class TripAnalyzerModule extends AbstractModule {
                 var modalDistanceShareHeader = new String[]{"mode", "distance", "count", "share"};
                 var modalDistanceShare = modalDistanceShare2(filteredTrips, printerConfigGroup.modes, printerConfigGroup.distanceClasses);
 
+                log.info("----------------------- Trip Analyzer Module - Modal Distance Share ---------------------------");
                 new TabularLogger(modalDistanceShareHeader).write(modalDistanceShare);
                 new CSVWriter(Paths.get(outputDirectoryHierarchy.getIterationFilename(event.getIteration(), "modal-distance-share.csv")), modalDistanceShareHeader).write(modalDistanceShare);
 
-                if (printerConfigGroup.hasGoogleConfig()) {
+                if (printerConfigGroup.hasGoogleIdForModalDistanceShare()) {
                     new GoogleSheetsWriter(
-                            printerConfigGroup.getGoogleConfig().getModalDistanceShareId(),
+                            printerConfigGroup.getModalDistanceShareId(),
                             controlerConfig.getRunId(),
-                            printerConfigGroup.getGoogleConfig().getTokenDirectory(),
-                            printerConfigGroup.getGoogleConfig().getCredentials(),
+                            printerConfigGroup.getTokenDirectory(),
+                            printerConfigGroup.getCredentials(),
                             modalDistanceShareHeader)
                             .write(modalDistanceShare);
                 }
@@ -364,7 +332,6 @@ public class TripAnalyzerModule extends AbstractModule {
                     // google spreadsheets doesn't allow for NaN values. In case we have 0 observed and 0 overall trips
                     // in a category we decide to set the share to 0.
                     var share = Double.isNaN(calculatedShare) ? 0 : calculatedShare;
-                    log.info(mode + ", " + distanceClass + ": " + distanceAndModeValue + ", " + totalNumberForDistance + ", " + share);
 
                     values.add(List.of(mode, distanceClass, distanceAndModeValue, share));
                 }

@@ -2,6 +2,8 @@ package org.matsim.stuttgart.run;
 
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
+import com.jogamp.common.net.Uri;
+import org.apache.http.client.utils.URLEncodedUtils;
 import org.geotools.geometry.jts.JTS;
 import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Geometry;
@@ -30,7 +32,11 @@ import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
 
+import java.io.File;
 import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URL;
+import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -42,8 +48,6 @@ import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorith
 
 public class RunStuttgart {
 
-    private static final String shapeFilePath = "projects/matsim-stuttgart/stuttgart-v0.0-snz-original/stuttgart_umland_5677.shp";
-
     public static void main(String[] args) throws MalformedURLException, FactoryException {
 
         Config config = loadConfig(args);
@@ -52,7 +56,7 @@ public class RunStuttgart {
         controler.run();
     }
 
-    public static Config loadConfig(String[] args, ConfigGroup... modules) throws MalformedURLException {
+    public static Config loadConfig(String[] args, ConfigGroup... modules) throws MalformedURLException, FactoryException {
         OutputDirectoryLogging.catchLogEntries();
 
         // Materialize bike config group
@@ -62,11 +66,14 @@ public class RunStuttgart {
         // materialize printer config group
         TripAnalyzerModule.PrinterConfigGroup printerConfigGroup = new TripAnalyzerModule.PrinterConfigGroup();
 
+        // materialize stuttgart config group
+        var stuttgartConfig = new StuttgartConfigGroup();
 
         //this feels a little messy, but I guess this is how var-args work
         List<ConfigGroup> moduleList = new ArrayList<>(Arrays.asList(modules));
         moduleList.add(bikeConfigGroup);
         moduleList.add(printerConfigGroup);
+        moduleList.add(stuttgartConfig);
         moduleList.add(new SwissRailRaptorConfigGroup());
 
         var moduleArray = moduleList.toArray(new ConfigGroup[0]);
@@ -79,7 +86,6 @@ public class RunStuttgart {
         config.subtourModeChoice().setProbaForRandomSingleTripMode(0.5);
         config.controler().setRoutingAlgorithmType(FastAStarLandmarks);
         config.controler().setOverwriteFileSetting(OutputDirectoryHierarchy.OverwriteFileSetting.deleteDirectoryIfExists);
-        config.setContext(Paths.get("C:/Users/Janekdererste/repos/shared-svn/projects/matsim-stuttgart/stuttgart-v2.0/input").toUri().toURL());
 
         final long minDuration = 600;
         final long maxDuration = 3600 * 27;
@@ -132,46 +138,33 @@ public class RunStuttgart {
         Bicycles.addAsOverridingModule(controler);
 
         // create modal share analysis
-        var dilutionArea = getDilutionArea();
+        // takes path to dilution area from config, then creates a perosn filter and adds it to the analyzer config
+        var stuttgartConfig = (StuttgartConfigGroup)controler.getConfig().getModules().get(StuttgartConfigGroup.GROUP_NAME);
+        var shapeUrl = ConfigGroup.getInputFileURL(controler.getConfig().getContext(), stuttgartConfig.getDilutionAreaShape());
+
+        var dilutionArea = getDilutionArea(shapeUrl);
         var printerConfig = (TripAnalyzerModule.PrinterConfigGroup)controler.getConfig().getModules().get(TripAnalyzerModule.PrinterConfigGroup.GROUP_NAME);
         printerConfig.setPersonFilter(personId -> {
             var person = scenario.getPopulation().getPersons().get(personId);
             var firstActivity = TripStructureUtils.getActivities(person.getSelectedPlan(), TripStructureUtils.StageActivityHandling.ExcludeStageActivities).get(0);
             return dilutionArea.stream().anyMatch(geometry -> geometry.covers(MGC.coord2Point(firstActivity.getCoord())));
         });
-
-
-     /*   var analyzerModule = new TripAnalyzerModule(personId -> {
-            var person = scenario.getPopulation().getPersons().get(personId);
-            var firstActivity = TripStructureUtils.getActivities(person.getSelectedPlan(), TripStructureUtils.StageActivityHandling.ExcludeStageActivities).get(0);
-            return dilutionArea.stream().anyMatch(geometry -> geometry.covers(MGC.coord2Point(firstActivity.getCoord())));
-        },
-                List.of(TransportMode.bike, TransportMode.car, TransportMode.pt, TransportMode.ride, TransportMode.walk),
-                new int[]{500, 1000, 2000, 5000, 10000, 20000, 50000, 100000},
-                "1f4Wmgm5ZxaZLd_444elBFBMmVb2scDBFN3LJ7NS8S_Q",
-                "1gyByVlSASqbq-d5zStrNXtwTCtXrWMHuqBdNTxSZqVo"
-        );
-
-
-
-
-        controler.addOverridingModule(analyzerModule);
-      */
         controler.addOverridingModule(new TripAnalyzerModule());
         return controler;
     }
 
-    private static Collection<PreparedGeometry> getDilutionArea() throws FactoryException, MalformedURLException {
+    private static Collection<PreparedGeometry> getDilutionArea(URL shapeFile) throws FactoryException, MalformedURLException {
 
         var factory = new PreparedGeometryFactory();
-        var fromCRS = CRS.decode("EPSG:5677");
+       /* var fromCRS = CRS.decode("EPSG:5677");
         var toCRS = CRS.decode("EPSG:25832");
         var transformation = CRS.findMathTransform(fromCRS, toCRS);
 
-        var uri = Paths.get("C:/Users/Janekdererste/repos/shared-svn/").resolve(shapeFilePath).toUri();
-        return ShapeFileReader.getAllFeatures(uri.toURL()).stream()
+        */
+
+        return ShapeFileReader.getAllFeatures(shapeFile).stream()
                 .map(simpleFeature -> (Geometry) simpleFeature.getDefaultGeometry())
-                .map(geometry -> transform(geometry, transformation))
+                //.map(geometry -> transform(geometry, transformation))
                 .map(factory::create)
                 .collect(Collectors.toSet());
 
