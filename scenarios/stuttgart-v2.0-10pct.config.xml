@@ -9,7 +9,7 @@
     <module name="controler">
         <param name="lastIteration" value="500"/>
         <param name="overwriteFiles" value="deleteDirectoryIfExists"/>
-        <param name="runId" value="stuttgart"/>
+        <param name="runId" value="stuttgart-v2.0"/>
         <param name="outputDirectory" value="../output/"/>
         <param name="writeEventsInterval" value="50"/>
         <param name="writePlansInterval" value="50"/>
@@ -172,6 +172,6 @@
     </module>
     <module name="stuttgart">
         <param name="dilutionAreaShape"
-               value="C:/Users/Janekdererste/repos/shared-svn/projects/matsim-stuttgart/stuttgart-v0.0-snz-original/stuttgart_umland.shp"/>
+               value="../shapes/lh-stuttgart.shp"/>
     </module>
 </config>

@@ -8,8 +8,6 @@ import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.api.experimental.events.EventsManager;
-import org.matsim.core.config.Config;
-import org.matsim.core.config.ConfigGroup;
 import org.matsim.core.config.ReflectiveConfigGroup;
 import org.matsim.core.config.groups.ControlerConfigGroup;
 import org.matsim.core.controler.AbstractModule;
@@ -31,26 +29,10 @@ public class TripAnalyzerModule extends AbstractModule {
 
     private static final Logger log = LogManager.getLogger(TripAnalyzerModule.class);
 
-    //private final HandlerParams handlerParams;
-
-/*    public TripAnalyzerModule(Predicate<Id<Person>> filterPerson, List<String> modes, int[] upperDistanceBoundaries, String modalShareGoogleSpreadsheetId, String modalDistanceGoogleSpreadsheetId) {
-
-        this.handlerParams = new HandlerParams(
-                modalShareGoogleSpreadsheetId,
-                modalDistanceGoogleSpreadsheetId,
-                filterPerson,
-                modes,
-                upperDistanceBoundaries
-        );
-    }
-
- */
-
     @Override
     public void install() {
 
         addControlerListenerBinding().to(MobsimHandler.class);
-        //bind(HandlerParams.class).toInstance(this.handlerParams);
     }
 
     @SuppressWarnings("unused")
@@ -180,30 +162,7 @@ public class TripAnalyzerModule extends AbstractModule {
         }
     }
 
-  /*  private static class HandlerParams {
-
-        private final String modalShareSpreadsheetId;
-        private final String modalDistanceSpreadsheetId;
-        private final Predicate<Id<Person>> personFilter;
-        private final List<String> modes;
-        private final int[] distanceClasses;
-
-        public HandlerParams(String modalShareSpreadsheetId, String modalDistanceSpreadsheetId, Predicate<Id<Person>> personFilter, List<String> modes, int[] distanceClasses) {
-            this.modalShareSpreadsheetId = modalShareSpreadsheetId;
-            this.modalDistanceSpreadsheetId = modalDistanceSpreadsheetId;
-            this.personFilter = personFilter;
-            this.modes = modes;
-            this.distanceClasses = distanceClasses;
-        }
-    }
-
-   */
-
     private static class MobsimHandler implements BeforeMobsimListener, AfterMobsimListener {
-
-        // we want our table to always look the same
-        // private static final List<String> distanceClasses = List.of("<1", "1 to 3", "3 to 5", "5 to 10", ">10");
-        // private static final List<String> modes = List.of(TransportMode.car, TransportMode.ride, TransportMode.pt, TransportMode.bike, TransportMode.walk);
 
         @Inject
         private EventsManager eventsManager;
@@ -245,8 +204,6 @@ public class TripAnalyzerModule extends AbstractModule {
                         .filter(trip -> modesSet.contains(trip.getMode()))
                         .collect(Collectors.toSet());
 
-
-                // modalShare(filteredEntries, Paths.get(outputDirectoryHierarchy.getIterationFilename(event.getIteration(), "modal-share.csv")));
                 var modalShareHeader = new String[]{"mode", "count", "share"};
                 var modalShare = modalShare2(filteredTrips, printerConfigGroup.getModes());
 
