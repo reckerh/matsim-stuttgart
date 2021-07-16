@@ -25,3 +25,7 @@
 
 # compiled files
 /target
+
+# credentials
+/tokens
+/credentials

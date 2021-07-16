@@ -7,6 +7,7 @@ import org.matsim.core.config.Config;
 import org.matsim.core.controler.Controler;
 
 public class StuttgartMasterThesisRunTest {
+    /*
 
     @Test
     @Ignore
@@ -28,4 +29,6 @@ public class StuttgartMasterThesisRunTest {
         controler.run() ;
 
     }
+
+     */
 }

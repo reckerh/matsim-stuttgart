@@ -38,7 +38,5 @@ public class PtFaresModule extends AbstractModule {
         addEventHandlerBinding().toInstance(ptHandler);
         addControlerListenerBinding().toInstance(ptHandler);
         this.bind(FareZoneCalculator.class);
-
-
     }
 }

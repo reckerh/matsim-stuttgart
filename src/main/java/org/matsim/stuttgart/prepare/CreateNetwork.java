@@ -31,7 +31,7 @@ public class CreateNetwork {
     private static final Logger log = Logger.getLogger(CreateNetwork.class);
 
     private static final String senozonNetworkPath = "projects\\matsim-stuttgart\\stuttgart-v0.0-snz-original\\optimizedNetwork.xml.gz";
-    private static final String outputNetwork = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\network-stuttgart.xml.gz";
+    private static final String outputNetwork = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\matsim-stuttgart-v2.0.network.xml.gz";
     private static final String osmFile = "projects\\matsim-stuttgart\\stuttgart-v2.0\\raw-data\\osm\\germany-20200715.osm.pbf";
 
 
@@ -82,6 +82,8 @@ public class CreateNetwork {
                 // override the defaults of the bicycle parser with the defaults of the standard parser to reduce memory
                 // foot print. Otherwise too many ways are flagged to be included which we filter out later
                 .setLinkProperties(new ConcurrentHashMap<>(LinkProperties.createLinkProperties()))
+                // store the original geometry information in the link. we need this for our palm analysis
+                .setStoreOriginalGeometry(true)
                 .build()
                 .read(svnPath.resolve(osmFile));
 

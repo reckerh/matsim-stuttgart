@@ -19,7 +19,7 @@ public class CleanPopulation {
 
     private static final Logger log = Logger.getLogger(CleanPopulation.class);
     private static final String inputPopulation = "projects\\matsim-stuttgart\\stuttgart-v0.0-snz-original\\optimizedPopulation.xml.gz";
-    private static final String outputPopulation = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\optimizedPopulationCleaned.xml.gz";
+    static final String outputPopulation = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\optimizedPopulationCleaned.xml.gz";
 
     public static void main(String[] args) {
 

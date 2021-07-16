@@ -18,16 +18,29 @@
  * *********************************************************************** */
 package org.matsim.stuttgart.run;
 
-import java.net.URISyntaxException;
-import java.nio.file.Paths;
-import java.util.*;
-import java.util.function.Consumer;
 
 import ch.sbb.matsim.config.SBBTransitConfigGroup;
+import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
 import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
+import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
+import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import org.apache.log4j.Logger;
+import org.matsim.api.core.v01.Scenario;
+import org.matsim.api.core.v01.TransportMode;
+import org.matsim.core.config.Config;
+import org.matsim.core.config.ConfigGroup;
+import org.matsim.core.config.ConfigUtils;
+import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
+import org.matsim.core.config.groups.QSimConfigGroup;
+import org.matsim.core.config.groups.VspExperimentalConfigGroup;
+import org.matsim.core.controler.AbstractModule;
+import org.matsim.core.controler.Controler;
+import org.matsim.core.controler.OutputDirectoryHierarchy;
+import org.matsim.core.controler.OutputDirectoryLogging;
+import org.matsim.core.gbl.Gbl;
 import org.matsim.core.router.AnalysisMainModeIdentifier;
+import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.gis.ShapeFileReader;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
 import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
@@ -38,23 +51,6 @@ import org.matsim.extensions.pt.routing.EnhancedRaptorIntermodalAccessEgress;
 import org.matsim.extensions.pt.routing.ptRoutingModes.PtIntermodalRoutingModesConfigGroup;
 import org.matsim.extensions.pt.routing.ptRoutingModes.PtIntermodalRoutingModesModule;
 import org.matsim.stuttgart.Utils;
-import org.matsim.api.core.v01.Scenario;
-import org.matsim.api.core.v01.TransportMode;
-import org.matsim.core.config.Config;
-import org.matsim.core.config.ConfigGroup;
-import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
-import org.matsim.core.config.groups.QSimConfigGroup.TrafficDynamics;
-import org.matsim.core.config.groups.VspExperimentalConfigGroup;
-import org.matsim.core.controler.AbstractModule;
-import org.matsim.core.controler.Controler;
-import org.matsim.core.controler.OutputDirectoryHierarchy;
-import org.matsim.core.controler.OutputDirectoryLogging;
-import org.matsim.core.gbl.Gbl;
-import org.matsim.core.scenario.ScenarioUtils;
-import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
-import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
-import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import org.matsim.stuttgart.prepare.AddAdditionalNetworkAttributes;
 import org.matsim.stuttgart.prepare.PrepareTransitSchedule;
 import org.matsim.stuttgart.prepare.RemoveFacilitiesFromPlans;
@@ -64,6 +60,11 @@ import org.opengis.feature.simple.SimpleFeature;
 import playground.vsp.simpleParkingCostHandler.ParkingCostConfigGroup;
 import playground.vsp.simpleParkingCostHandler.ParkingCostModule;
 
+import java.net.URISyntaxException;
+import java.nio.file.Paths;
+import java.util.*;
+import java.util.function.Consumer;
+
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
 
 /**
@@ -71,17 +72,19 @@ import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorith
  * @author gleich
  */
 
+
 public class StuttgartMasterThesisRunner {
-    private static final Logger log = Logger.getLogger(StuttgartMasterThesisRunner.class );
+
+    private static final Logger log = Logger.getLogger(StuttgartMasterThesisRunner.class);
 
 
     public static void main(String[] args) {
 
         for (String arg : args) {
-            log.info( arg );
+            log.info(arg);
         }
 
-        Config config = prepareConfig(args) ;
+        Config config = prepareConfig(args);
 
         try {
 
@@ -95,10 +98,7 @@ public class StuttgartMasterThesisRunner {
 
         } catch (URISyntaxException e) {
             log.error("URISyntaxException: " + e);
-
         }
-
-
     }
 
 
@@ -132,10 +132,10 @@ public class StuttgartMasterThesisRunner {
         // -- VSP DEFAULTS --
 
         // Some vsp default settings
-        config.vspExperimental().setVspDefaultsCheckingLevel( VspExperimentalConfigGroup.VspDefaultsCheckingLevel.ignore );
+        config.vspExperimental().setVspDefaultsCheckingLevel(VspExperimentalConfigGroup.VspDefaultsCheckingLevel.ignore);
         config.plansCalcRoute().setAccessEgressType(PlansCalcRouteConfigGroup.AccessEgressType.accessEgressModeToLink);
-        config.qsim().setUsingTravelTimeCheckInTeleportation( true );
-        config.qsim().setTrafficDynamics( TrafficDynamics.kinematicWaves );
+        config.qsim().setUsingTravelTimeCheckInTeleportation(true);
+        config.qsim().setTrafficDynamics(QSimConfigGroup.TrafficDynamics.kinematicWaves);
 
 
         // -- INTERMODAL --
@@ -358,7 +358,9 @@ public class StuttgartMasterThesisRunner {
 
         IntermodalTripFareCompensatorConfigGroup compensatorCfg = new IntermodalTripFareCompensatorConfigGroup();
         compensatorCfg.setCompensationCondition(IntermodalTripFareCompensatorConfigGroup.CompensationCondition.PtModeUsedInSameTrip);
-        compensatorCfg.setDrtModesAsString(TransportMode.bike);
+
+        // I have no idea whether this is the correct setting but it compiles
+        compensatorCfg.setNonPtModesAsString(TransportMode.bike);
         compensatorCfg.setPtModesAsString("pt");
 
         // Based on own calculations considering theft, vandalism at Bike and Ride facilities etc...
@@ -441,7 +443,6 @@ public class StuttgartMasterThesisRunner {
         parkingCostConfigGroup.setResidentialParkingFeeAttributeName("resPCosts");
 
     }
-
-
-
 }
+
+

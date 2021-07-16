@@ -37,6 +37,7 @@ import java.util.*;
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
 
 public class PtFaresHandlerTest {
+
     private static final Logger log = Logger.getLogger(PtFaresHandlerTest.class);
 
     Map<Id<Person>, Double> transitFares = new HashMap<>();
@@ -240,5 +241,4 @@ public class PtFaresHandlerTest {
             transitFares.put(event.getPersonId(), event.getAmount());
         }
     }
-
 }

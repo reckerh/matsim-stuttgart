@@ -9,7 +9,7 @@
     <version>0.0.1-SNAPSHOT</version>
 
     <properties>
-        <matsim.version>14.0-PR1516</matsim.version>
+        <matsim.version>14.0-PR1592</matsim.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.source>11</maven.compiler.source>
@@ -39,11 +39,6 @@
         </dependency>
         <dependency>
             <groupId>org.matsim.contrib</groupId>
-            <artifactId>analysis</artifactId>
-            <version>${matsim.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.matsim.contrib</groupId>
             <artifactId>emissions</artifactId>
             <version>${matsim.version}</version>
         </dependency>
@@ -68,14 +63,19 @@
             <version>${matsim.version}</version>
         </dependency>
         <dependency>
+            <groupId>org.matsim.contrib</groupId>
+            <artifactId>sbb-extensions</artifactId>
+            <version>${matsim.version}</version>
+        </dependency>
+        <dependency>
             <groupId>com.github.matsim-org</groupId>
             <artifactId>gtfs2matsim</artifactId>
-            <version>12.2</version>
+            <version>13.0</version>
         </dependency>
         <dependency>
             <groupId>com.beust</groupId>
             <artifactId>jcommander</artifactId>
-            <version>1.71</version>
+            <version>1.81</version>
         </dependency>
         <dependency>
             <groupId>com.github.matsim-vsp</groupId>
@@ -83,20 +83,28 @@
             <version>c6cd2aa65b</version>
         </dependency>
 
+        <!-- google spreadsheets -->
+        <dependency>
+            <groupId>com.google.api-client</groupId>
+            <artifactId>google-api-client</artifactId>
+            <version>1.31.5</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.oauth-client</groupId>
+            <artifactId>google-oauth-client-jetty</artifactId>
+            <version>1.31.5</version>
+        </dependency>
+        <dependency>
+            <groupId>com.google.apis</groupId>
+            <artifactId>google-api-services-sheets</artifactId>
+            <version>v4-rev20210527-1.31.5</version>
+        </dependency>
+
 
     </dependencies>
 
     <build>
         <plugins>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-eclipse-plugin</artifactId>
-                <version>2.10</version>
-                <configuration>
-                    <downloadSources>true</downloadSources>
-                    <downloadJavadocs>true</downloadJavadocs>
-                </configuration>
-            </plugin>
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>
                 <artifactId>maven-shade-plugin</artifactId>
@@ -113,7 +121,7 @@
                                 <!-- This bit sets the main class for the executable jar as you otherwise would with the assembly plugin -->
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <manifestEntries>
-                                        <Main-Class>org.matsim.gui.MATSimGUI</Main-Class>
+                                        <Main-Class>org.matsim.stuttgart.run.StuttgartApplication</Main-Class>
                                         <Specification-Vendor>org.matsim</Specification-Vendor>
                                         <Implementation-Vendor>org.matsim</Implementation-Vendor>
                                         <Implementation-Version>${project.version}</Implementation-Version>
@@ -149,11 +157,6 @@
             <!-- Repository for MATSim releases (MATSim is not on Maven central) -->
             <id>matsim</id>
             <url>https://repo.matsim.org/repository/matsim/</url>
-        </repository>
-        <repository>
-            <!-- For MATSim snapshots: -->
-            <id>ojo-snapshots</id>
-            <url>https://oss.jfrog.org/libs-snapshot</url>
         </repository>
 
         <!-- network reader dependencies -->
