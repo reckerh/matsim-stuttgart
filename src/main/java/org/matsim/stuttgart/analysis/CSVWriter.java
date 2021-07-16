@@ -25,7 +25,12 @@ public class CSVWriter implements TabularWriter {
     @Override
     public void write(List<List<Object>> values) {
 
-        try(var writer = Files.newBufferedWriter(filename); var printer = CSVFormat.DEFAULT.withHeader(header).print(writer)) {
+        try(var writer = Files.newBufferedWriter(filename);
+            var printer = CSVFormat
+                .DEFAULT
+                .withDelimiter(';')
+                .withHeader(header)
+                .print(writer)) {
 
             for (var row : values) {
                 printer.printRecord(row);

@@ -72,12 +72,12 @@
             <artifactId>jcommander</artifactId>
             <version>1.81</version>
         </dependency>
-        <dependency>
+       <!-- <dependency>
             <groupId>com.github.matsim-vsp</groupId>
             <artifactId>pt-extensions</artifactId>
             <version>c6cd2aa65b</version>
         </dependency>
-
+-->
         <!-- google spreadsheets -->
         <dependency>
             <groupId>com.google.api-client</groupId>
@@ -116,7 +116,7 @@
                                 <!-- This bit sets the main class for the executable jar as you otherwise would with the assembly plugin -->
                                 <transformer implementation="org.apache.maven.plugins.shade.resource.ManifestResourceTransformer">
                                     <manifestEntries>
-                                        <Main-Class>org.matsim.stuttgart.run.RunStuttgart</Main-Class>
+                                        <Main-Class>org.matsim.stuttgart.run.StuttgartApplication</Main-Class>
                                         <Specification-Vendor>org.matsim</Specification-Vendor>
                                         <Implementation-Vendor>org.matsim</Implementation-Vendor>
                                         <Implementation-Version>${project.version}</Implementation-Version>
@@ -157,6 +157,11 @@
             <!-- For MATSim snapshots: -->
             <id>ojo-snapshots</id>
             <url>https://oss.jfrog.org/libs-snapshot</url>
+        </repository>
+
+        <repository>
+            <id>SBB</id>
+            <url>https://schweizerischebundesbahnen.bintray.com/simba.mvn</url>
         </repository>
 
         <!-- network reader dependencies -->

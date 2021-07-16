@@ -58,13 +58,13 @@ public class TripAnalyzerModule extends AbstractModule {
 
         public static String GROUP_NAME = "modesPrinter";
 
-        private int[] distanceClasses;
-        private String[] modes;
-        private Predicate<Id<Person>> personFilter;
-        private String modalShareId;
-        private String modalDistanceShareId;
-        private Path tokenDirectory;
-        private Path credentials;
+        private int[] distanceClasses = new int[0];
+        private String[] modes = new String[0];
+        private Predicate<Id<Person>> personFilter = id -> true;
+        private String modalShareId = "";
+        private String modalDistanceShareId = "";
+        private Path tokenDirectory = Paths.get("");
+        private Path credentials = Paths.get("");
 
         @StringGetter("modalShareSpreadsheetId")
         public String getModalShareId() {

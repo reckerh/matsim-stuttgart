@@ -18,60 +18,14 @@
  * *********************************************************************** */
 package org.matsim.stuttgart.run;
 
-import java.net.URISyntaxException;
-import java.nio.file.Paths;
-import java.util.*;
-import java.util.function.Consumer;
-
-import ch.sbb.matsim.config.SBBTransitConfigGroup;
-import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
-import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
-import org.apache.log4j.Logger;
-import org.matsim.core.router.AnalysisMainModeIdentifier;
-import org.matsim.core.utils.gis.ShapeFileReader;
-import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorConfigGroup;
-import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsConfigGroup;
-import org.matsim.extensions.pt.fare.intermodalTripFareCompensator.IntermodalTripFareCompensatorsModule;
-import org.matsim.extensions.pt.replanning.singleTripStrategies.ChangeSingleTripModeAndRoute;
-import org.matsim.extensions.pt.replanning.singleTripStrategies.RandomSingleTripReRoute;
-import org.matsim.extensions.pt.routing.EnhancedRaptorIntermodalAccessEgress;
-import org.matsim.extensions.pt.routing.ptRoutingModes.PtIntermodalRoutingModesConfigGroup;
-import org.matsim.extensions.pt.routing.ptRoutingModes.PtIntermodalRoutingModesModule;
-import org.matsim.stuttgart.Utils;
-import org.matsim.api.core.v01.Scenario;
-import org.matsim.api.core.v01.TransportMode;
-import org.matsim.core.config.Config;
-import org.matsim.core.config.ConfigGroup;
-import org.matsim.core.config.ConfigUtils;
-import org.matsim.core.config.groups.PlansCalcRouteConfigGroup;
-import org.matsim.core.config.groups.QSimConfigGroup.TrafficDynamics;
-import org.matsim.core.config.groups.VspExperimentalConfigGroup;
-import org.matsim.core.controler.AbstractModule;
-import org.matsim.core.controler.Controler;
-import org.matsim.core.controler.OutputDirectoryHierarchy;
-import org.matsim.core.controler.OutputDirectoryLogging;
-import org.matsim.core.gbl.Gbl;
-import org.matsim.core.scenario.ScenarioUtils;
-import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
-import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
-import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
-import org.matsim.stuttgart.prepare.AddAdditionalNetworkAttributes;
-import org.matsim.stuttgart.prepare.PrepareTransitSchedule;
-import org.matsim.stuttgart.prepare.RemoveFacilitiesFromPlans;
-import org.matsim.stuttgart.ptFares.PtFaresConfigGroup;
-import org.matsim.stuttgart.ptFares.PtFaresModule;
-import org.opengis.feature.simple.SimpleFeature;
-import playground.vsp.simpleParkingCostHandler.ParkingCostConfigGroup;
-import playground.vsp.simpleParkingCostHandler.ParkingCostModule;
-
-import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
-
 /**
  * @author dwedekind
  * @author gleich
  */
 
+
 public class StuttgartMasterThesisRunner {
+    /*
     private static final Logger log = Logger.getLogger(StuttgartMasterThesisRunner.class );
 
 
@@ -443,5 +397,7 @@ public class StuttgartMasterThesisRunner {
     }
 
 
-
+ */
 }
+
+
