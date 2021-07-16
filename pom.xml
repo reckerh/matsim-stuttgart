@@ -9,7 +9,7 @@
     <version>0.0.1-SNAPSHOT</version>
 
     <properties>
-        <matsim.version>14.0-PR1547</matsim.version>
+        <matsim.version>14.0-PR1592</matsim.version>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <maven.compiler.source>11</maven.compiler.source>
@@ -39,11 +39,6 @@
         </dependency>
         <dependency>
             <groupId>org.matsim.contrib</groupId>
-            <artifactId>analysis</artifactId>
-            <version>${matsim.version}</version>
-        </dependency>
-        <dependency>
-            <groupId>org.matsim.contrib</groupId>
             <artifactId>emissions</artifactId>
             <version>${matsim.version}</version>
         </dependency>
@@ -70,12 +65,12 @@
         <dependency>
             <groupId>com.github.matsim-org</groupId>
             <artifactId>gtfs2matsim</artifactId>
-            <version>12.2</version>
+            <version>13.0</version>
         </dependency>
         <dependency>
             <groupId>com.beust</groupId>
             <artifactId>jcommander</artifactId>
-            <version>1.71</version>
+            <version>1.81</version>
         </dependency>
         <dependency>
             <groupId>com.github.matsim-vsp</groupId>
