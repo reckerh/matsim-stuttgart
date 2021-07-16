@@ -75,7 +75,7 @@
         <dependency>
             <groupId>com.github.matsim-vsp</groupId>
             <artifactId>pt-extensions</artifactId>
-            <version>fac7381209</version>
+            <version>c6cd2aa65b</version>
         </dependency>
 
         <!-- google spreadsheets -->
