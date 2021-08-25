@@ -5,6 +5,8 @@ import org.locationtech.jts.geom.prep.PreparedGeometry;
 import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
+import org.matsim.api.core.v01.population.Activity;
+import org.matsim.api.core.v01.population.Leg;
 import org.matsim.application.MATSimApplication;
 import org.matsim.contrib.bicycle.BicycleConfigGroup;
 import org.matsim.contrib.bicycle.Bicycles;
@@ -33,6 +35,9 @@ import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorith
 
 @CommandLine.Command(header = ":: Open Stuttgart Scenario ::", version = StuttgartApplication.VERSION)
 public class StuttgartApplication extends MATSimApplication {
+
+    @CommandLine.Option(names = "--cleanNetworkRefs", description = "Removes network ids from plans file")
+    private boolean cleanNetworkReferences = false;
 
     /**
      * Current version identifier.
@@ -94,7 +99,24 @@ public class StuttgartApplication extends MATSimApplication {
     @Override
     protected void prepareScenario(Scenario scenario) {
 
-        // don't do anything
+        if (this.cleanNetworkReferences) {
+
+            // remove references from activities
+            scenario.getPopulation().getPersons().values().parallelStream()
+                    .flatMap(person -> person.getPlans().stream())
+                    .flatMap(plan -> plan.getPlanElements().stream())
+                    .filter(element -> element instanceof Activity)
+                    .map(element -> (Activity)element)
+                    .forEach(activity -> activity.setLinkId(null));
+
+            // remove references from legs
+            scenario.getPopulation().getPersons().values().parallelStream()
+                    .flatMap(person -> person.getPlans().stream())
+                    .flatMap(plan -> plan.getPlanElements().stream())
+                    .filter(element -> element instanceof Leg)
+                    .map(element -> (Leg)element)
+                    .forEach(leg -> leg.setRoute(null));
+        }
     }
 
     @Override

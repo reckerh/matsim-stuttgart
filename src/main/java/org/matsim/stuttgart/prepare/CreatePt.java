@@ -58,7 +58,7 @@ public class CreatePt {
         GtfsConverter.newBuilder()
                 .setScenario(scenario)
                 .setTransform(Utils.getTransformationWGS84ToUTM32())
-                .setDate(LocalDate.now())
+                .setDate(LocalDate.of(2021, 4, 29))
                 .setFeed(sharedSvn.resolve(schedule))
                 .build()
                 .convert();
