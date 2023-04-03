@@ -298,7 +298,7 @@ public class StuttgartMasterThesisRunner {
 
         });
 
-        controler.configureQSimComponents(SBBTransitEngineQSimModule::configure);
+        controler.configureQSimComponents(new SBBTransitEngineQSimModule()::configure);
 
         // use parking cost module
         controler.addOverridingModule(new ParkingCostModule());
