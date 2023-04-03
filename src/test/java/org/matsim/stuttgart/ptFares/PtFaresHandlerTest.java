@@ -8,7 +8,8 @@ import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
 import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
 import com.vividsolutions.jts.util.Assert;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.junit.Test;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
@@ -38,7 +39,7 @@ import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorith
 
 public class PtFaresHandlerTest {
 
-    private static final Logger log = Logger.getLogger(PtFaresHandlerTest.class);
+    private static final Logger log = LogManager.getLogger(PtFaresHandlerTest.class);
 
     Map<Id<Person>, Double> transitFares = new HashMap<>();
 
@@ -120,7 +121,7 @@ public class PtFaresHandlerTest {
             // To use the deterministic pt simulation (Part 2 of 2):
         });
 
-        controler.configureQSimComponents(SBBTransitEngineQSimModule::configure);
+        controler.configureQSimComponents(new SBBTransitEngineQSimModule()::configure);
 
         // use pt fares module
         controler.addOverridingModule(new PtFaresModule());
