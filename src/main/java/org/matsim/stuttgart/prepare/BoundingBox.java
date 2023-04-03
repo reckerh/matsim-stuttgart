@@ -1,6 +1,7 @@
 package org.matsim.stuttgart.prepare;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.locationtech.jts.geom.Coordinate;
 import org.locationtech.jts.geom.GeometryFactory;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
@@ -13,7 +14,7 @@ import java.awt.geom.Rectangle2D;
 
 public class BoundingBox {
 
-    private static final Logger log = Logger.getLogger(BoundingBox.class);
+    private static final Logger log = LogManager.getLogger(BoundingBox.class);
 
     private double minX = Double.POSITIVE_INFINITY;
     private double minY = Double.POSITIVE_INFINITY;

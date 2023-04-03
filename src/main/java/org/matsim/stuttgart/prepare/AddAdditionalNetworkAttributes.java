@@ -3,7 +3,8 @@ package org.matsim.stuttgart.prepare;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 import org.matsim.api.core.v01.Coord;
@@ -27,7 +28,7 @@ import java.util.HashSet;
 
 public class AddAdditionalNetworkAttributes {
 
-    private static final Logger log = Logger.getLogger(AddAdditionalNetworkAttributes.class);
+    private static final Logger log = LogManager.getLogger(AddAdditionalNetworkAttributes.class);
 
     public static void main(String[] args) {
 

@@ -25,7 +25,8 @@ import ch.sbb.matsim.mobsim.qsim.SBBTransitModule;
 import ch.sbb.matsim.mobsim.qsim.pt.SBBTransitEngineQSimModule;
 import ch.sbb.matsim.routing.pt.raptor.RaptorIntermodalAccessEgress;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.core.config.Config;
@@ -75,7 +76,7 @@ import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorith
 
 public class StuttgartMasterThesisRunner {
 
-    private static final Logger log = Logger.getLogger(StuttgartMasterThesisRunner.class);
+    private static final Logger log = LogManager.getLogger(StuttgartMasterThesisRunner.class);
 
 
     public static void main(String[] args) {

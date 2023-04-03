@@ -1,6 +1,7 @@
 package org.matsim.stuttgart.prepare;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.population.*;
@@ -17,7 +18,7 @@ import java.nio.file.Paths;
 
 public class CleanPopulation {
 
-    private static final Logger log = Logger.getLogger(CleanPopulation.class);
+    private static final Logger log = LogManager.getLogger(CleanPopulation.class);
     private static final String inputPopulation = "projects\\matsim-stuttgart\\stuttgart-v0.0-snz-original\\optimizedPopulation.xml.gz";
     static final String outputPopulation = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\optimizedPopulationCleaned.xml.gz";
 

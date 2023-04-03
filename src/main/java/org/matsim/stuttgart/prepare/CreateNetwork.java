@@ -1,6 +1,7 @@
 package org.matsim.stuttgart.prepare;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
 import org.matsim.api.core.v01.TransportMode;
 import org.matsim.api.core.v01.network.Network;
@@ -28,7 +29,7 @@ import java.util.stream.Collectors;
 
 public class CreateNetwork {
 
-    private static final Logger log = Logger.getLogger(CreateNetwork.class);
+    private static final Logger log = LogManager.getLogger(CreateNetwork.class);
 
     private static final String senozonNetworkPath = "projects\\matsim-stuttgart\\stuttgart-v0.0-snz-original\\optimizedNetwork.xml.gz";
     private static final String outputNetwork = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\matsim-stuttgart-v2.0.network.xml.gz";

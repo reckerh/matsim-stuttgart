@@ -19,7 +19,8 @@
 
 package org.matsim.stuttgart.prepare;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.core.config.Config;
 import org.matsim.core.config.ConfigUtils;
@@ -36,7 +37,7 @@ import java.nio.file.Paths;
 
 public class CleanFacilities {
 
-    private static final Logger log = Logger.getLogger(CleanFacilities.class);
+    private static final Logger log = LogManager.getLogger(CleanFacilities.class);
     private static final String inputFacilities = "projects\\matsim-stuttgart\\stuttgart-v0.0-snz-original\\optimizedFacilities.xml.gz";
     private static final String outputFacilities = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\matsim-stuttgart-v2.0.facilities.xml.gz";
 

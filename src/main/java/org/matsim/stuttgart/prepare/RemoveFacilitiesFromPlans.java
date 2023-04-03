@@ -2,7 +2,8 @@ package org.matsim.stuttgart.prepare;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Activity;
 import org.matsim.api.core.v01.population.Plan;
@@ -14,7 +15,7 @@ import org.matsim.core.scenario.ScenarioUtils;
 
 public class RemoveFacilitiesFromPlans {
 
-    private static final Logger log = Logger.getLogger(RemoveFacilitiesFromPlans.class);
+    private static final Logger log = LogManager.getLogger(RemoveFacilitiesFromPlans.class);
 
     public static void main(String[] args) {
         RemoveFacilitiesFromPlans.Input input = new RemoveFacilitiesFromPlans.Input();

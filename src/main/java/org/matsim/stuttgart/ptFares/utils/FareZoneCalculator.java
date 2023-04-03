@@ -1,6 +1,7 @@
 package org.matsim.stuttgart.ptFares.utils;
 import com.google.inject.Inject;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.pt.transitSchedule.api.TransitSchedule;
 import org.matsim.stuttgart.ptFares.PtFaresConfigGroup;
@@ -9,7 +10,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 public class FareZoneCalculator {
-    private static final Logger log = Logger.getLogger(FareZoneCalculator.class);
+    private static final Logger log = LogManager.getLogger(FareZoneCalculator.class);
 
     Scenario scenario;
     PtFaresConfigGroup ptFaresConfigGroup;

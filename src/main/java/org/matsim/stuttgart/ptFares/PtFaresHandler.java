@@ -1,7 +1,8 @@
 package org.matsim.stuttgart.ptFares;
 
 import com.google.inject.Inject;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.events.*;
@@ -26,7 +27,7 @@ import java.util.stream.Collectors;
 
 
 public class PtFaresHandler implements TransitDriverStartsEventHandler, PersonLeavesVehicleEventHandler, VehicleArrivesAtFacilityEventHandler, PersonEntersVehicleEventHandler, AfterMobsimListener, ActivityStartEventHandler {
-    private static final Logger log = Logger.getLogger( PtFaresHandler.class );
+    private static final Logger log = LogManager.getLogger( PtFaresHandler.class );
     private double compensationTime = Double.NaN;
     private final Set<Id<Person>> ptDrivers = new HashSet<>();
     private final Map<Id<Vehicle>, TransitVehicle> transitVehicles = new HashMap<>();

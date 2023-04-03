@@ -2,7 +2,8 @@ package org.matsim.stuttgart.prepare;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.Point;
 import org.matsim.api.core.v01.Coord;
@@ -31,7 +32,7 @@ import java.util.stream.Collectors;
 
 public class PrepareTransitSchedule {
 
-    private static final Logger log = Logger.getLogger(PrepareTransitSchedule.class);
+    private static final Logger log = LogManager.getLogger(PrepareTransitSchedule.class);
 
 
     public static void main(String[] args) {

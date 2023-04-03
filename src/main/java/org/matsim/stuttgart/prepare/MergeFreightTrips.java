@@ -1,6 +1,7 @@
 package org.matsim.stuttgart.prepare;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.population.Population;
@@ -22,7 +23,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 public class MergeFreightTrips {
-    private static final Logger log = Logger.getLogger(MergeFreightTrips.class);
+    private static final Logger log = LogManager.getLogger(MergeFreightTrips.class);
 
     private static final String freightDataDirectory = "projects\\german-wide-freight\\v1.1\\german-wide-freight-25pct.xml.gz";
     private static final String networkPath = "projects\\german-wide-freight\\original-data\\german-primary-road.network.xml.gz";

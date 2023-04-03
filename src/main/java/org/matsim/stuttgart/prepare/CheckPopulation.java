@@ -1,6 +1,7 @@
 package org.matsim.stuttgart.prepare;
 
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.stuttgart.Utils;
 import picocli.CommandLine;
 
@@ -9,7 +10,7 @@ import java.nio.file.Paths;
 
 public class CheckPopulation {
 
-    private static final Logger log = Logger.getLogger(CheckPopulation.class);
+    private static final Logger log = LogManager.getLogger(CheckPopulation.class);
     private static final String inputPopulation = "projects\\matsim-stuttgart\\stuttgart-v0.0-snz-original\\optimizedPopulation.xml.gz";
     private static final String shapeFilePath = "projects\\matsim-stuttgart\\stuttgart-v0.0-snz-original\\stuttgart_umland_5677.shp";
 

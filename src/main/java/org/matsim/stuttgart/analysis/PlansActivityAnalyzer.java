@@ -4,7 +4,8 @@ import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
-import org.apache.log4j.Logger;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Coord;
 import org.matsim.api.core.v01.Id;
 import org.matsim.api.core.v01.population.*;
@@ -34,7 +35,7 @@ import java.util.stream.Collectors;
 
 
 public class PlansActivityAnalyzer {
-    private static final Logger log = Logger.getLogger(PlansActivityAnalyzer.class);
+    private static final Logger log = LogManager.getLogger(PlansActivityAnalyzer.class);
     private final String[] HEADER = {"measure", "value"};
     private final String separator = ";";
 
