@@ -25,18 +25,18 @@ import java.util.stream.Collectors;
 
 public class CreatePt {
 
-    private static final String schedule = "projects\\matsim-stuttgart\\stuttgart-v2.0\\raw-data\\gtfs\\vvs_gtfs_20210429.zip";
-    private static final String transitSchedule = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\matsim-stuttgart-v2.0.transit-schedule.xml.gz";
-    private static final String transitVehicles = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\matsim-stuttgart-v2.0.transit-vehicles.xml.gz";
-    private static final String inputNetwork = "projects\\matsim-stuttgart\\stuttgart-v2.0\\input\\matsim-stuttgart-v2.0.network.xml.gz";
+    private static final String schedule = "input/stuttgart-v3.0/raw-data/gtfs/vvs_gtfs_realtime_230509.zip";
+    private static final String transitSchedule = "input/stuttgart-v3.0/matsim-stuttgart-v3.0.transit-schedule.xml.gz";
+    private static final String transitVehicles = "input/stuttgart-v3.0/matsim-stuttgart-v3.0.transit-vehicles.xml.gz";
+    private static final String inputNetwork = "input/stuttgart-v3.0/matsim-stuttgart-v3.0.network.xml.gz";
 
 
     public static void main(String[] args) {
-        final Collection<String> elevationData = List.of("projects\\matsim-stuttgart\\stuttgart-v2.0\\raw-data\\heightmaps\\srtm_38_03.tif", "projects\\matsim-stuttgart\\stuttgart-v2.0\\raw-data\\heightmaps\\srtm_39_03.tif");
+        final Collection<String> elevationData = List.of("input/stuttgart-v2.0/raw-data/heightmaps/srtm_38_03.tif", "input/stuttgart-v2.0/raw-data/heightmaps/srtm_39_03.tif");
         final CoordinateTransformation transformUTM32ToWGS84 = TransformationFactory.getCoordinateTransformation("EPSG:25832", "EPSG:4326");
 
-        var arguments = Utils.parseSharedSvn(args);
-        var svn = Paths.get(arguments.getSharedSvn());
+        //var arguments = Utils.parseSharedSvn(args);
+        var svn = Paths.get("C:/Users/schim/IdeaProjects/matsim-stuttgart"); //"/net/ils/reckermann/matsim-stuttgart"
 
         var network = NetworkUtils.readNetwork(svn.resolve(inputNetwork).toString());
 
@@ -48,6 +48,7 @@ public class CreatePt {
         var elevationReader = new ElevationReader(elevationDataPaths, transformUTM32ToWGS84);
 
         create(svn, network, elevationReader);
+        CreateNetworkWithBikeInfra.writeNetwork(network, svn);
     }
 
     public static void create(Path sharedSvn, Network network, ElevationReader elevationReader) {
@@ -58,7 +59,7 @@ public class CreatePt {
         GtfsConverter.newBuilder()
                 .setScenario(scenario)
                 .setTransform(Utils.getTransformationWGS84ToUTM32())
-                .setDate(LocalDate.of(2021, 4, 29))
+                .setDate(LocalDate.of(2023, 5, 9))
                 .setFeed(sharedSvn.resolve(schedule))
                 .build()
                 .convert();
