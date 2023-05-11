@@ -11,6 +11,7 @@ import org.locationtech.jts.geom.prep.PreparedGeometry;
 import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
+import org.matsim.api.core.v01.population.*;
 import org.matsim.application.MATSimApplication;
 import org.matsim.contrib.bicycle.BicycleConfigGroup;
 import org.matsim.contrib.bicycle.Bicycles;
@@ -115,7 +116,28 @@ public class RunStuttgart extends MATSimApplication {
 
     public static Scenario loadScenario(Config config) {
 
-        return ScenarioUtils.loadScenario(config);
+        Scenario scenario = ScenarioUtils.loadScenario(config);
+
+        /*for (Person person : scenario.getPopulation().getPersons().values()) {
+
+            for (Plan plan : person.getPlans()){
+
+                for (PlanElement planElement :  plan.getPlanElements()) {
+
+                    if (planElement.getAttributes().getAsMap().containsKey("mode")){
+
+                        Leg leg = (Leg) planElement;
+                        leg.setRoute(null);
+
+                    }
+
+                }
+
+            }
+
+        }*/
+
+        return scenario;
     }
 
     public static Controler loadControler(Scenario scenario) throws MalformedURLException, FactoryException {
