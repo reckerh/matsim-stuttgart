@@ -70,8 +70,8 @@
         </dependency>
         <dependency>
             <groupId>com.github.matsim-org</groupId>
-            <artifactId>gtfs2matsim</artifactId>
-            <version>13.0</version>
+            <artifactId>GTFS2MATSim</artifactId>
+            <version>14.0</version>
         </dependency>
         <dependency>
             <groupId>com.beust</groupId>
