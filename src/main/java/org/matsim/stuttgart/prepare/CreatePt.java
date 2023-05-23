@@ -36,7 +36,7 @@ public class CreatePt {
         final CoordinateTransformation transformUTM32ToWGS84 = TransformationFactory.getCoordinateTransformation("EPSG:25832", "EPSG:4326");
 
         //var arguments = Utils.parseSharedSvn(args);
-        var svn = Paths.get("C:/Users/schim/IdeaProjects/matsim-stuttgart"); //"/net/ils/reckermann/matsim-stuttgart"
+        var svn = Paths.get("/net/ils/reckermann/matsim-stuttgart"); //
 
         var network = NetworkUtils.readNetwork(svn.resolve(inputNetwork).toString());
 
