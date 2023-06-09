@@ -13,17 +13,17 @@ public class NetworkAttributeAnalysis {
     //the purpose of this class is to read out selected network attributes and write them into a CSV for analysis in other software
 
     public static void main(String[] args){
-        Network network = NetworkUtils.readNetwork("input/stuttgart-v3.0/matsim-stuttgart-v3.0.network-plusPT.xml.gz");
+        Network network = NetworkUtils.readNetwork("input/stuttgart-v3.0/matsim-stuttgart-v3.0.bikeFriendlyNetwork.xml.gz");
         String[] HEADER = new String[]{
                 "linkId", "capacity", "allowedModes", "fromNodeId", "toNodeId",
                 "fromX", "fromY", "fromZ",
                 "toX", "toY", "toZ",
-                "bike", "surface", "type", "cyclewaytype", "lcn"
+                "bike", "surface", "type", "cyclewaytype", "lcn", "numLanes"
         };
 
         try {
 
-            CSVPrinter csvPrinter = new CSVPrinter(IOUtils.getBufferedWriter("R_Analyses/input/stuttgart-v3.0/networkAttributesStuttgartV3PlusPt.csv"),
+            CSVPrinter csvPrinter = new CSVPrinter(IOUtils.getBufferedWriter("R_Analyses/input/stuttgart-v3.0/networkAttributesStuttgartBikeFriendly.csv"),
                     CSVFormat.DEFAULT.withDelimiter(',').withHeader(HEADER));
 
             for (Link link : network.getLinks().values()){
@@ -43,7 +43,8 @@ public class NetworkAttributeAnalysis {
                         link.getAttributes().getAttribute("surface"),
                         link.getAttributes().getAttribute("type"),
                         link.getAttributes().getAttribute("cycleway"),
-                        link.getAttributes().getAttribute("lcn")
+                        link.getAttributes().getAttribute("lcn"),
+                        link.getNumberOfLanes()
                 );
                 //System.out.println(link.getAttributes().getAttribute("surface"));
             }
