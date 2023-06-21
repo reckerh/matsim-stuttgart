@@ -29,6 +29,8 @@ import org.matsim.core.scenario.ScenarioUtils;
 import org.matsim.core.utils.geometry.geotools.MGC;
 import org.matsim.core.utils.gis.ShapeFileReader;
 import org.matsim.stuttgart.Utils;
+import org.matsim.stuttgart.analysis.CountingStation;
+import org.matsim.stuttgart.analysis.LinkCountHandler;
 import org.matsim.stuttgart.analysis.TripAnalyzerModule;
 import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.operation.MathTransform;
@@ -215,7 +217,13 @@ public class RunStuttgart extends MATSimApplication {
             var firstActivity = TripStructureUtils.getActivities(person.getSelectedPlan(), TripStructureUtils.StageActivityHandling.ExcludeStageActivities).get(0);
             return dilutionArea.stream().anyMatch(geometry -> geometry.covers(MGC.coord2Point(firstActivity.getCoord())));
         });
+
+        //create counting station network
+        new LinkCountHandler.CountingNetwork();
+        createCountingNetwork();
         controler.addOverridingModule(new TripAnalyzerModule());
+
+
         return controler;
     }
 
@@ -242,5 +250,43 @@ public class RunStuttgart extends MATSimApplication {
         } catch (TransformException e) {
             throw new RuntimeException(e);
         }
+    }
+
+    private static void createCountingNetwork(){
+        LinkCountHandler.CountingNetwork.addCountingStation(new CountingStation("Koenig-Karls-Bruecke Barometer",
+                new String[] {"2993895710004f", "2993895710004r", "2993895700003f", "2615633160000f"}));
+        LinkCountHandler.CountingNetwork.addCountingStation(new CountingStation("Boeblinger Strasse",
+                new String[] {"401040430002f", "401040430002r", "5957276710002f", "5957276710002r"}));
+        LinkCountHandler.CountingNetwork.addCountingStation(new CountingStation("Taubenheimstrasse",
+                new String[] {"3585536500004f", "3585536500004r"}));
+        LinkCountHandler.CountingNetwork.addCountingStation(new CountingStation("Waiblinger Strasse",
+                new String[] {"3585536510004f", "10968008150004f"}));
+
+        LinkCountHandler.CountingNetwork.addCountingStation(new CountingStation("Samaraweg",
+                new String[] {"10272926360000f", "10272926360000r"}));
+        LinkCountHandler.CountingNetwork.addCountingStation(new CountingStation("Tuebinger Strasse",
+                new String[] {"3536362270003f", "3467623440004f", "3467623440004r"}));
+        LinkCountHandler.CountingNetwork.addCountingStation(new CountingStation("Lautenschlager Strasse",
+                new String[] {"1750316500005f", "1750316500005f_bike-reverse"}));
+        LinkCountHandler.CountingNetwork.addCountingStation(new CountingStation("Inselstrasse",
+                new String[] {"3777509370000f", "3777509370000r", "248127500000f", "227009470000f"}));
+
+        LinkCountHandler.CountingNetwork.addCountingStation(new CountingStation("Kremmlerstrasse",
+                new String[] {"237199820003f", "237199820003r"}));
+        LinkCountHandler.CountingNetwork.addCountingStation(new CountingStation("Kirchheimer Strasse",
+                new String[] {"7629370820007f", "7629370820007r", "262444090001f", "262444090001r"}));
+        LinkCountHandler.CountingNetwork.addCountingStation(new CountingStation("Neckartalstrasse",
+                new String[] {"2993863910015f", "2993863910015r", "2977618270000f", "1966731520017f"}));
+        LinkCountHandler.CountingNetwork.addCountingStation(new CountingStation("Stuttgarter Strasse",
+                new String[] {"3684442310011f", "3684442310011r", "4369205380002f", "4369205380002r"}));
+
+        LinkCountHandler.CountingNetwork.addCountingStation(new CountingStation("Solitudestrasse",
+                new String[] {"3832380570013f", "3832380570013r", "290371860010f", "290371860010r", "3023316010000f", "3023316010000r"}));
+        LinkCountHandler.CountingNetwork.addCountingStation(new CountingStation("Waldburgstrasse",
+                new String[] {"3570056810004f", "3570056810004r", "3570049870031f", "3570049870031r"}));
+        LinkCountHandler.CountingNetwork.addCountingStation(new CountingStation("Am Kraeherwald",
+                new String[] {"2555251750007f", "2555251750007r", "393429710001f", "393429710001r"}));
+
+
     }
 }
