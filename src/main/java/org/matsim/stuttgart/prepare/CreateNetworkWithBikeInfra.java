@@ -58,8 +58,8 @@ public class CreateNetworkWithBikeInfra {
         var network = new OsmBicycleReader.Builder()
                 .setCoordinateTransformation(Utils.getTransformationWGS84ToUTM32())
                 .setIncludeLinkAtCoordWithHierarchy((coord, hierarchy) ->
-                        // only include path or bigger, and within bbox
-                        hierarchy <= 10 && bbox.covers(MGC.coord2Point(coord))
+                                // only include path or bigger, and within bbox
+                                hierarchy <= 10 && bbox.covers(MGC.coord2Point(coord))
                         //Link-Properties für für Rad relevante Links sind definiert in package org.matsim.contrib.osm.networkReader.OsmBicycleReader.java (in Teil zu addOverridingLinkProperties)
                         //-> meine Implementation schließt alles bis auf Steps aus
                 )
@@ -74,7 +74,7 @@ public class CreateNetworkWithBikeInfra {
                     }
 
                     //add lcn (local cycleway network) key-value to attributes
-                    if (map.containsKey("lcn")){
+                    if (map.containsKey("lcn")) {
                         link.getAttributes().putAttribute("lcn", map.get("lcn"));
                     }
 
@@ -99,30 +99,30 @@ public class CreateNetworkWithBikeInfra {
         //remove links with lower priorities that are private roads (-> service) or are not expected to represent bike infrastructure by hand
         //temporarily: Check if actually all road types (even those with lower priority) are present
         //TODO: Make sure that all additionally-added links only allow bicycle
-        HashMap<String,Integer> collectedTypes = new HashMap<>();
-        for (Link link : network.getLinks().values()){
+        HashMap<String, Integer> collectedTypes = new HashMap<>();
+        for (Link link : network.getLinks().values()) {
             String hwValue = (String) link.getAttributes().getAttribute("type");
-            collectedTypes.put(hwValue, collectedTypes.getOrDefault(hwValue, 0)+1);
+            collectedTypes.put(hwValue, collectedTypes.getOrDefault(hwValue, 0) + 1);
 
             //remove private (-> service) roads
-            if( hwValue.equals("service") ){
+            if (hwValue.equals("service")) {
                 network.removeLink(link.getId());
             }
 
             //filter other lower-priority highway types (except cycleway) for expected bike infrastructure
-            if( hwValue.equals("track") || hwValue.equals("path") || hwValue.equals("footway") || hwValue.equals("pedestrian")){
+            if (hwValue.equals("track") || hwValue.equals("path") || hwValue.equals("footway") || hwValue.equals("pedestrian")) {
 
-                if(! (
-                        ( link.getAttributes().getAttribute("bike") != null && ( link.getAttributes().getAttribute("bike").equals("yes") || link.getAttributes().getAttribute("bike").equals("designated") ) ) ||
-                                ( link.getAttributes().getAttribute("lcn") != null && link.getAttributes().getAttribute("lcn").equals("yes") )
-                        )) {
+                if (!(
+                        (link.getAttributes().getAttribute("bike") != null && (link.getAttributes().getAttribute("bike").equals("yes") || link.getAttributes().getAttribute("bike").equals("designated"))) ||
+                                (link.getAttributes().getAttribute("lcn") != null && link.getAttributes().getAttribute("lcn").equals("yes"))
+                )) {
                     network.removeLink(link.getId());
                 }
 
             }
 
-            if( ( hwValue.equals("track") || hwValue.equals("path") || hwValue.equals("footway") || hwValue.equals("pedestrian") || hwValue.equals("cycleway") ) &&
-            network.getLinks().get(link.getId())!=null ){
+            if ((hwValue.equals("track") || hwValue.equals("path") || hwValue.equals("footway") || hwValue.equals("pedestrian") || hwValue.equals("cycleway")) &&
+                    network.getLinks().get(link.getId()) != null) {
                 var allowedModes = new HashSet<String>();
                 allowedModes.add(TransportMode.bike);
                 network.getLinks().get(link.getId()).setAllowedModes(allowedModes);
@@ -130,8 +130,8 @@ public class CreateNetworkWithBikeInfra {
 
         }
 
-        for (String key : collectedTypes.keySet()){
-            log.info(key + ": "+collectedTypes.get(key));
+        for (String key : collectedTypes.keySet()) {
+            log.info(key + ": " + collectedTypes.get(key));
         }
 
 

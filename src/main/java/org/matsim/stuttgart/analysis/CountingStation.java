@@ -12,10 +12,10 @@ public class CountingStation {
     //public HashSet<Id<Link>> surveyedLinks;
     public HashMap<Id<Link>, Integer> bikeCounts;
 
-    public CountingStation(String name, String[] surveyedLinks){
+    public CountingStation(String name, String[] surveyedLinks) {
         this.name = name;
         this.bikeCounts = new HashMap<>();
-        for (String linkId : surveyedLinks){
+        for (String linkId : surveyedLinks) {
             this.bikeCounts.put(Id.createLinkId(linkId), 0);
         }
     }

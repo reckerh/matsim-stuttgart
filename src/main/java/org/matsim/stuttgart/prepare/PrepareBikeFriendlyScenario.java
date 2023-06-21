@@ -35,17 +35,17 @@ public class PrepareBikeFriendlyScenario {
         URL shapeUrl = new URL("https://svn.vsp.tu-berlin.de/repos/public-svn/matsim/scenarios/countries/de/stuttgart/stuttgart-v2.0-10pct/input/lh-stuttgart.shp");
         var dilutionArea = getDilutionArea(shapeUrl);
 
-        for (Link link : net.getLinks().values()){
+        for (Link link : net.getLinks().values()) {
 
             if (
-                    link.getAttributes().getAttribute(BicycleUtils.WAY_TYPE)!= null &&
+                    link.getAttributes().getAttribute(BicycleUtils.WAY_TYPE) != null &&
                             (
-                            link.getAttributes().getAttribute(BicycleUtils.WAY_TYPE).equals("primary") ||
-                            link.getAttributes().getAttribute(BicycleUtils.WAY_TYPE).equals("primary_link") ||
-                            link.getAttributes().getAttribute(BicycleUtils.WAY_TYPE).equals("secondary") ||
-                            link.getAttributes().getAttribute(BicycleUtils.WAY_TYPE).equals("secondary_link") ||
-                            link.getAttributes().getAttribute(BicycleUtils.WAY_TYPE).equals("tertiary") ||
-                            link.getAttributes().getAttribute(BicycleUtils.WAY_TYPE).equals("tertiary_link")
+                                    link.getAttributes().getAttribute(BicycleUtils.WAY_TYPE).equals("primary") ||
+                                            link.getAttributes().getAttribute(BicycleUtils.WAY_TYPE).equals("primary_link") ||
+                                            link.getAttributes().getAttribute(BicycleUtils.WAY_TYPE).equals("secondary") ||
+                                            link.getAttributes().getAttribute(BicycleUtils.WAY_TYPE).equals("secondary_link") ||
+                                            link.getAttributes().getAttribute(BicycleUtils.WAY_TYPE).equals("tertiary") ||
+                                            link.getAttributes().getAttribute(BicycleUtils.WAY_TYPE).equals("tertiary_link")
                             )
                             && link.getAllowedModes().contains(TransportMode.bike)
                             && link.getAllowedModes().contains(TransportMode.car)
@@ -53,24 +53,24 @@ public class PrepareBikeFriendlyScenario {
                             && dilutionArea.stream().anyMatch(geometry -> geometry.covers(MGC.coord2Point(link.getToNode().getCoord())))
             ) {
 
-                if( !(link.getAttributes().getAttribute(BicycleUtils.CYCLEWAY) != null && (
+                if (!(link.getAttributes().getAttribute(BicycleUtils.CYCLEWAY) != null && (
                         link.getAttributes().getAttribute(BicycleUtils.CYCLEWAY).equals("track") ||
                                 link.getAttributes().getAttribute(BicycleUtils.CYCLEWAY).equals("track;opposite_track") ||
                                 link.getAttributes().getAttribute(BicycleUtils.CYCLEWAY).equals("track;opposite_lane") ||
                                 link.getAttributes().getAttribute(BicycleUtils.CYCLEWAY).equals("opposite_track")
-                        )) ){
+                ))) {
 
                     //determine capacity of new bicycle Link
                     Double capaNewLink = determineNewLinkCapa(link);
 
                     //reduce capa of old link by capa of new Link; reduce number of lanes on old links if they have at least 2 lanes
                     link.setCapacity(link.getCapacity() - capaNewLink);
-                    if( link.getNumberOfLanes() >= 2. ){
+                    if (link.getNumberOfLanes() >= 2.) {
                         link.setNumberOfLanes(link.getNumberOfLanes() - 1.);
                     }
 
                     //create new bike links
-                    Link newLink = net.getFactory().createLink(Id.createLinkId(link.getId()+"_cycleway"), link.getFromNode(), link.getToNode());
+                    Link newLink = net.getFactory().createLink(Id.createLinkId(link.getId() + "_cycleway"), link.getFromNode(), link.getToNode());
                     newLink.setCapacity(capaNewLink);
                     newLink.getAttributes().putAttribute(BicycleUtils.WAY_TYPE, link.getAttributes().getAttribute(BicycleUtils.WAY_TYPE));
                     newLink.getAttributes().putAttribute(BicycleUtils.CYCLEWAY, "track");
@@ -91,7 +91,7 @@ public class PrepareBikeFriendlyScenario {
 
     }
 
-    private static Double determineNewLinkCapa(Link oldLink){
+    private static Double determineNewLinkCapa(Link oldLink) {
 
         Double stdCapa = switch (oldLink.getAttributes().getAttribute(BicycleUtils.WAY_TYPE).toString()) {
             case "primary", "primary_link" -> 1500.;
@@ -100,12 +100,11 @@ public class PrepareBikeFriendlyScenario {
             default -> 0.;
         };
 
-        if( oldLink.getCapacity() < stdCapa * 2. ) {
+        if (oldLink.getCapacity() < stdCapa * 2.) {
             return oldLink.getCapacity() / 2.;
         } else {
             return stdCapa;
         }
-
 
 
     }

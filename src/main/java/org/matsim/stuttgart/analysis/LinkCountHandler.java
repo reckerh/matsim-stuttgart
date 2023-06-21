@@ -19,35 +19,35 @@ public class LinkCountHandler implements LinkEnterEventHandler, VehicleEntersTra
     private final Map<Id<Link>, Integer> carCounter = new HashMap<>();
 
     @Override
-    public void handleEvent(LinkEnterEvent event){
+    public void handleEvent(LinkEnterEvent event) {
 
         //count car and bike link entries in entire network
-        if( isBike(event.getVehicleId()) ){
+        if (isBike(event.getVehicleId())) {
 
-            if( bikeCounter.get(event.getLinkId()) == null ){
+            if (bikeCounter.get(event.getLinkId()) == null) {
                 bikeCounter.put(event.getLinkId(), 1);
-            }else{
-                bikeCounter.put(event.getLinkId(), bikeCounter.get(event.getLinkId())+1);
+            } else {
+                bikeCounter.put(event.getLinkId(), bikeCounter.get(event.getLinkId()) + 1);
             }
 
         }
-        if( isCar(event.getVehicleId()) ){
+        if (isCar(event.getVehicleId())) {
 
-            if( carCounter.get(event.getLinkId()) == null ){
+            if (carCounter.get(event.getLinkId()) == null) {
                 carCounter.put(event.getLinkId(), 1);
-            }else{
-                carCounter.put(event.getLinkId(), carCounter.get(event.getLinkId())+1);
+            } else {
+                carCounter.put(event.getLinkId(), carCounter.get(event.getLinkId()) + 1);
             }
 
         }
 
         //handle link entries for counting stations
-        if ( CountingNetwork.getCountingStations() != null ){
+        if (CountingNetwork.getCountingStations() != null) {
 
-            for ( CountingStation countingStation : CountingNetwork.getCountingStations() ) {
+            for (CountingStation countingStation : CountingNetwork.getCountingStations()) {
 
-                if( countingStation.bikeCounts.containsKey(event.getLinkId()) && isBike(event.getVehicleId()) ) {
-                    countingStation.bikeCounts.put(event.getLinkId(), countingStation.bikeCounts.get(event.getLinkId())+1);
+                if (countingStation.bikeCounts.containsKey(event.getLinkId()) && isBike(event.getVehicleId())) {
+                    countingStation.bikeCounts.put(event.getLinkId(), countingStation.bikeCounts.get(event.getLinkId()) + 1);
                 }
 
             }
@@ -57,35 +57,35 @@ public class LinkCountHandler implements LinkEnterEventHandler, VehicleEntersTra
     }
 
     @Override
-    public void handleEvent(VehicleEntersTrafficEvent event){
+    public void handleEvent(VehicleEntersTrafficEvent event) {
 
         //count car and bike link entries in entire network
-        if( isBike(event.getVehicleId()) ){
+        if (isBike(event.getVehicleId())) {
 
-            if( bikeCounter.get(event.getLinkId()) == null ){
+            if (bikeCounter.get(event.getLinkId()) == null) {
                 bikeCounter.put(event.getLinkId(), 1);
-            }else{
-                bikeCounter.put(event.getLinkId(), bikeCounter.get(event.getLinkId())+1);
+            } else {
+                bikeCounter.put(event.getLinkId(), bikeCounter.get(event.getLinkId()) + 1);
             }
 
         }
-        if( isCar(event.getVehicleId()) ){
+        if (isCar(event.getVehicleId())) {
 
-            if( carCounter.get(event.getLinkId()) == null ){
+            if (carCounter.get(event.getLinkId()) == null) {
                 carCounter.put(event.getLinkId(), 1);
-            }else{
-                carCounter.put(event.getLinkId(), carCounter.get(event.getLinkId())+1);
+            } else {
+                carCounter.put(event.getLinkId(), carCounter.get(event.getLinkId()) + 1);
             }
 
         }
 
         //handle link entries for counting stations
-        if ( CountingNetwork.getCountingStations() != null ){
+        if (CountingNetwork.getCountingStations() != null) {
 
-            for ( CountingStation countingStation : CountingNetwork.getCountingStations() ) {
+            for (CountingStation countingStation : CountingNetwork.getCountingStations()) {
 
-                if( countingStation.bikeCounts.containsKey(event.getLinkId()) && isBike(event.getVehicleId()) ) {
-                    countingStation.bikeCounts.put(event.getLinkId(), countingStation.bikeCounts.get(event.getLinkId())+1);
+                if (countingStation.bikeCounts.containsKey(event.getLinkId()) && isBike(event.getVehicleId())) {
+                    countingStation.bikeCounts.put(event.getLinkId(), countingStation.bikeCounts.get(event.getLinkId()) + 1);
                 }
 
             }
@@ -94,21 +94,21 @@ public class LinkCountHandler implements LinkEnterEventHandler, VehicleEntersTra
 
     }
 
-    public Map<Id<Link>, Integer> getBikeCounts(){
+    public Map<Id<Link>, Integer> getBikeCounts() {
         return bikeCounter;
     }
 
-    public Map<Id<Link>, Integer> getCarCounts(){
+    public Map<Id<Link>, Integer> getCarCounts() {
         return carCounter;
     }
 
-    private boolean isBike(Id<Vehicle> vehId){
+    private boolean isBike(Id<Vehicle> vehId) {
         //I would prefer a solution that gets the vehicles from the scenario and gets the mode from the vehicle via the Id, as I'm not sure if the suffixes are consistent (although I suspect that)
         //and if toString is overwritten here (as the java default method will not give me the string and IntelliJ only refers me to the default method...)
         return vehId.toString().endsWith("bike");
     }
 
-    private boolean isCar(Id<Vehicle> vehId){
+    private boolean isCar(Id<Vehicle> vehId) {
         //I would prefer a solution that gets the vehicles from the scenario and gets the mode from the vehicle via the Id, as I'm not sure if the suffixes are consistent (although I suspect that)
         //and if toString is overwritten here (as the java default method will not give me the string and IntelliJ only refers me to the default method...)
         return vehId.toString().endsWith("car");
@@ -117,15 +117,15 @@ public class LinkCountHandler implements LinkEnterEventHandler, VehicleEntersTra
     public static class CountingNetwork {
         private static HashSet<CountingStation> countingStations;
 
-        public CountingNetwork(){
+        public CountingNetwork() {
             countingStations = new HashSet<>();
         }
 
-        public static void addCountingStation(CountingStation countingStation){
+        public static void addCountingStation(CountingStation countingStation) {
             countingStations.add(countingStation);
         }
 
-        public static Set<CountingStation> getCountingStations(){
+        public static Set<CountingStation> getCountingStations() {
             return countingStations;
         }
 
