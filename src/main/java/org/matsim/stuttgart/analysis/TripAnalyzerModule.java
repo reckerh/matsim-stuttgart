@@ -5,6 +5,7 @@ import org.apache.commons.lang3.StringUtils;
 import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.matsim.api.core.v01.Id;
+import org.matsim.api.core.v01.network.Link;
 import org.matsim.api.core.v01.network.Network;
 import org.matsim.api.core.v01.population.Person;
 import org.matsim.core.api.experimental.events.EventsManager;
@@ -180,13 +181,16 @@ public class TripAnalyzerModule extends AbstractModule {
         private PrinterConfigGroup printerConfigGroup;
 
         private TripEventHandler handler;
+        private LinkCountHandler linkCounter;
 
         @Override
         public void notifyBeforeMobsim(BeforeMobsimEvent event) {
 
             if (event.isLastIteration()) {
                 this.handler = new TripEventHandler(network);
+                this.linkCounter = new LinkCountHandler();
                 eventsManager.addHandler(this.handler);
+                eventsManager.addHandler(this.linkCounter);
             }
         }
 
@@ -238,6 +242,24 @@ public class TripAnalyzerModule extends AbstractModule {
                             modalDistanceShareHeader)
                             .write(modalDistanceShare);
                 }
+
+                //write bike counting station results
+                var bikeStationCountHeader = new String[]{"Station", "Link", "bikeCount"};
+                var bikeStationCounts = bikeStationCountResults();
+                log.info("----------------------- Trip Analyzer Module - Bike Counts on selected links ---------------------------");
+                new TabularLogger(bikeStationCountHeader).write(bikeStationCounts);
+                new CSVWriter(Paths.get(outputDirectoryHierarchy.getIterationFilename(event.getIteration(), "bikeCountingStationCounts.csv")), bikeStationCountHeader).write(bikeStationCounts);
+
+                //write bike counts in entire network
+                var bikeCountHeader = new String[]{"Link", "bikeCount"};
+                var bikeCounts = linkCountResults(linkCounter.getBikeCounts());
+                new CSVWriter(Paths.get(outputDirectoryHierarchy.getIterationFilename(event.getIteration(),"bikeLinkCounts.csv")),bikeCountHeader).write(bikeCounts);
+
+                //write car counts in entire network
+                var carCountHeader = new String[]{"Link", "carCount"};
+                var carCounts = linkCountResults(linkCounter.getCarCounts());
+                new CSVWriter(Paths.get(outputDirectoryHierarchy.getIterationFilename(event.getIteration(),"carLinkCounts.csv")),carCountHeader).write(carCounts);
+
             }
         }
 
@@ -295,6 +317,40 @@ public class TripAnalyzerModule extends AbstractModule {
             }
 
             return values;
+        }
+
+        private List<List<Object>> bikeStationCountResults(){
+
+            Set<CountingStation> countingStations = LinkCountHandler.CountingNetwork.getCountingStations();
+
+            List<List<Object>> res = new ArrayList<>();
+
+            for (CountingStation countingStation : countingStations){
+
+                for (Id<Link> observedLink : countingStation.bikeCounts.keySet()){
+
+                    res.add(List.of(countingStation.name, observedLink.toString(), countingStation.bikeCounts.get(observedLink)));
+
+                }
+
+            }
+
+            return res;
+
+        }
+
+        private List<List<Object>> linkCountResults(Map<Id<Link>, Integer> counts){
+
+            List<List<Object>> res = new ArrayList<>();
+
+            for (Id<Link> link : counts.keySet()){
+
+                res.add(List.of(link.toString(), counts.get(link)));
+
+            }
+
+            return res;
+
         }
 
         private String getDistanceKey(double distance, int[] distanceClasses) {
