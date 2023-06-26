@@ -244,11 +244,15 @@ public class TripAnalyzerModule extends AbstractModule {
                 }
 
                 //write bike counting station results
-                var bikeStationCountHeader = new String[]{"Station", "Link", "bikeCount"};
-                var bikeStationCounts = bikeStationCountResults();
-                log.info("----------------------- Trip Analyzer Module - Bike Counts on selected links ---------------------------");
-                new TabularLogger(bikeStationCountHeader).write(bikeStationCounts);
-                new CSVWriter(Paths.get(outputDirectoryHierarchy.getIterationFilename(event.getIteration(), "bikeCountingStationCounts.csv")), bikeStationCountHeader).write(bikeStationCounts);
+                if (LinkCountHandler.CountingNetwork.getCountingStations() != null){
+
+                    var bikeStationCountHeader = new String[]{"Station", "Link", "bikeCount"};
+                    var bikeStationCounts = bikeStationCountResults();
+                    log.info("----------------------- Trip Analyzer Module - Bike Counts on selected links ---------------------------");
+                    new TabularLogger(bikeStationCountHeader).write(bikeStationCounts);
+                    new CSVWriter(Paths.get(outputDirectoryHierarchy.getIterationFilename(event.getIteration(), "bikeCountingStationCounts.csv")), bikeStationCountHeader).write(bikeStationCounts);
+
+                }
 
                 //write bike counts in entire network
                 var bikeCountHeader = new String[]{"Link", "bikeCount"};
