@@ -13,7 +13,7 @@ public class NetworkAttributeAnalysis {
     //the purpose of this class is to read out selected network attributes and write them into a CSV for analysis in other software
 
     public static void main(String[] args) {
-        Network network = NetworkUtils.readNetwork("input/stuttgart-v3.0/matsim-stuttgart-v3.0.bikeFriendlyNetwork.xml.gz");
+        Network network = NetworkUtils.readNetwork("output/tests/stuttgart-test-sensitivityTest.output_network.xml.gz");
         String[] HEADER = new String[]{
                 "linkId", "capacity", "allowedModes", "fromNodeId", "toNodeId",
                 "fromX", "fromY", "fromZ",
@@ -23,7 +23,7 @@ public class NetworkAttributeAnalysis {
 
         try {
 
-            CSVPrinter csvPrinter = new CSVPrinter(IOUtils.getBufferedWriter("R_Analyses/input/stuttgart-v3.0/networkAttributesStuttgartBikeFriendly.csv"),
+            CSVPrinter csvPrinter = new CSVPrinter(IOUtils.getBufferedWriter("R_Analyses/input/stuttgart-v3.0/networkAttributesStuttgartSensitivityTest.csv"),
                     CSVFormat.DEFAULT.withDelimiter(',').withHeader(HEADER));
 
             for (Link link : network.getLinks().values()) {

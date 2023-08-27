@@ -2,16 +2,12 @@ package org.matsim.stuttgart.run;
 
 import ch.sbb.matsim.config.SwissRailRaptorConfigGroup;
 import ch.sbb.matsim.routing.pt.raptor.SwissRailRaptorModule;
-import com.jogamp.common.net.Uri;
-import org.apache.http.client.utils.URLEncodedUtils;
 import org.geotools.geometry.jts.JTS;
-import org.geotools.referencing.CRS;
 import org.locationtech.jts.geom.Geometry;
 import org.locationtech.jts.geom.prep.PreparedGeometry;
 import org.locationtech.jts.geom.prep.PreparedGeometryFactory;
 import org.matsim.api.core.v01.Scenario;
 import org.matsim.api.core.v01.TransportMode;
-import org.matsim.api.core.v01.population.*;
 import org.matsim.application.MATSimApplication;
 import org.matsim.contrib.bicycle.BicycleConfigGroup;
 import org.matsim.contrib.bicycle.Bicycles;
@@ -36,17 +32,12 @@ import org.opengis.referencing.FactoryException;
 import org.opengis.referencing.operation.MathTransform;
 import org.opengis.referencing.operation.TransformException;
 
-import java.io.File;
 import java.net.MalformedURLException;
-import java.net.URI;
 import java.net.URL;
-import java.nio.file.Files;
-import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
-import java.util.concurrent.ThreadLocalRandom;
 import java.util.stream.Collectors;
 
 import static org.matsim.core.config.groups.ControlerConfigGroup.RoutingAlgorithmType.FastAStarLandmarks;
@@ -120,66 +111,6 @@ public class RunStuttgart extends MATSimApplication {
     public static Scenario loadScenario(Config config) {
 
         Scenario scenario = ScenarioUtils.loadScenario(config);
-
-        //delete all routes from existing legs
-        /*for (Person person : scenario.getPopulation().getPersons().values()) {
-
-            for (Plan plan : person.getPlans()){
-
-                for (PlanElement planElement :  plan.getPlanElements()) {
-
-                    if (planElement.getAttributes().getAsMap().containsKey("mode")){
-
-                        Leg leg = (Leg) planElement;
-                        leg.setRoute(null);
-
-                    }
-
-                }
-
-            }
-
-        }*/
-
-        //in "cleaned" input files, all modes are set to walk; this can lead to the simulation needing far too many iterations,
-        //as (especially with "slow" strategies like changeSingleTripMode) the model needs many iterations just to introduce and try other modes
-        //I want to try to counteract this by assigning specific modes based on target values and rng;
-        //refinement by changing the target values based on beeline distance are also possible
-        //ATTENTION: This approach also ignores things such as chain modes
-        /*for (Person person : scenario.getPopulation().getPersons().values()) {
-
-            for (Plan plan : person.getPlans()){
-
-                for (PlanElement planElement : plan.getPlanElements()){
-
-                    if (planElement instanceof Leg) {
-
-                        Leg leg = (Leg) planElement;
-
-                        if (! leg.getMode().equals("freight") ) {
-
-                            double rand = ThreadLocalRandom.current().nextDouble(100.0);
-                            if ( rand <= 29.0 ) {
-                                leg.setMode(TransportMode.walk);
-                            } else if ( rand > 29.0 && rand <= 37.0 ) {
-                                leg.setMode(TransportMode.bike);
-                            } else if ( rand > 37.0 && rand <= 46.0 ) {
-                                leg.setMode(TransportMode.ride);
-                            } else if ( rand > 46.0 && rand <= 77.0 ) {
-                                leg.setMode(TransportMode.car);
-                            } else {
-                                leg.setMode(TransportMode.pt);
-                            }
-
-                        }
-
-                    }
-
-                }
-
-            }
-
-        }*/
 
         return scenario;
     }

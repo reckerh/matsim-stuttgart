@@ -26,8 +26,6 @@ public class PrepareBikeFriendlyScenario {
 
     public static void main(String[] args) throws MalformedURLException {
 
-        //noch auf Links in Stuttgart begrenzen!
-
         var svn = Paths.get("C:/users/schim/IdeaProjects/matsim-stuttgart");
 
         Network net = NetworkUtils.readNetwork(svn.resolve(inputNetwork).toString());
